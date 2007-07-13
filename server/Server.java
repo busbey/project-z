@@ -13,6 +13,11 @@ public class Server
 	public static final int DEFAULT_HUNTER_PORT = 1337;
 	public static final long DEFAULT_ROUND_TIME = 250;
 
+	public static Server fromFile(String path) throws IOException
+	{
+		return new Server(DEFAULT_BUG_PORT, DEFAULT_HUNTER_PORT, DEFAULT_DISPLAY_PORT, World.fromFile(path));
+	}
+
 	public Server() throws IOException
 	{
 		this(DEFAULT_BUG_PORT, DEFAULT_HUNTER_PORT, DEFAULT_DISPLAY_PORT);
@@ -54,11 +59,12 @@ public class Server
 	{
 		try
 		{
-			new Server();
+			Server.fromFile(args[0]);
 			System.in.read();
 		} catch (IOException ex)
 		{
 			System.err.println("Error: Couldn't create server.");
+			ex.printStackTrace();
 		}
 	}
 }

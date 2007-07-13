@@ -31,7 +31,12 @@ public class World implements Serializable
 
 	public boolean change(char agent, byte move)
 	{
-	
+		for(int i = 0; i < state.length; i++)
+		{
+			for(int j = 0; j < state[i].length; j++)
+			{
+			}
+		}
 		return false;
 	}
 
@@ -52,7 +57,7 @@ public class World implements Serializable
 		int rows	= 0;
 		BufferedReader in = new BufferedReader(new FileReader(path));
 		String curLine = in.readLine();
-		char[] valid = {' ', 'b', '1', '2', '3', '4', 'O'};
+		char[] valid = {' ', 'B', '1', '2', '3', '4', 'O', 'P'};
 		
 		Arrays.sort(valid);
 		
