@@ -29,6 +29,12 @@ public class World implements Serializable
 		}
 	}
 
+	public boolean change(char agent, byte move)
+	{
+	
+		return false;
+	}
+
 	public char get(int column, int row)
 	{
 		return state[row][column];
