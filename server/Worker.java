@@ -48,6 +48,20 @@ import java.net.*;
 							try
 							{
 								byte action = inStream.readByte();
+								/*
+								switch(action)
+								{
+									case 'l':
+									case 'r':
+									case 'u':
+									case 'd':
+										System.err.println("Not Warning: read valid action '"+action+"' from agent " + agent);
+										break;
+									default:
+										System.err.println("Warning: invalid action '"+action+"' read from agent " + agent);
+										break;
+								}
+								*/
 								synchronized(in)
 								{
 									in.put(agent, action);

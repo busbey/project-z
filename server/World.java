@@ -112,8 +112,17 @@ public class World implements Serializable
 				default:
 				break;
 			}
-		
+			assert( row != newRow && col != newCol);
 			char target = state[newRow][newCol];
+
+			if(target == agent)
+			{
+				System.err.println("----------------------------------------------------");
+				System.err.println("Warning: target and agent are the same. move was '"+move+"'");
+				System.err.println(" agent " + agent + "["+row+","+col+"] -- target " + target + "["+newRow+","+newCol+"]");
+				System.err.println("World {"+this.toString()+"\n}");
+				System.err.println("----------------------------------------------------");
+			}
 			if(EMPTY == target)
 			{
 				move(row, col, newRow, newCol);
