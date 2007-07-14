@@ -4,6 +4,8 @@ require 'yaml'
 require 'RMagick'
 include Magick
 require 'enumerator'
+require 'socket'
+require 'tk'
 
 class ZViewer
 	def initialize(rows, columns, max_width = 1200, max_height = 750)
@@ -65,25 +67,58 @@ def random_string(rows, columns)
 	text
 end
 
-def read_state(filename)
-	File.open(filename, "rb") { |f|
+def read_state(f)
+		def pc(x) 
+			puts sprintf("%x", x)
+		end
 		flag = f.getc
+		pc flag
 		representation = f.getc
+		pc representation
 		columns = f.read(4).unpack("N*")[0]
 		rows = f.read(4).unpack("N*")[0]
-		p columns, rows
+		pc columns
+		pc rows
 		text = ""
 		(rows * columns).times { text << f.getc }
+		puts text
 		return rows, columns, text 
-	}
 end
 
-rows, columns, text = read_state("test.dat")
+class ZDisplayClient
+	def connect(hostname, port=8668)
+		begin
+			t = TCPSocket.new(hostname, port)
+		rescue
+			puts "error: #{$!}"
+		else
+			viewer = nil
+			#window = TkRoot.new('title'=>'Project Z')
+
+			#canvas = TkCanvas.new(window)
+			#canvas.pack
+			
+			#Tk.mainloop()	
+			while true
+				rows, columns, text = read_state(t)
+				viewer ||= ZViewer.new(rows, columns)
+				image = viewer.render text
+				image.write("output.png")
+			end
+		end
+	end
+end
+
+ZDisplayClient.new.connect("shingu.local")
+
+#rows, columns, text = read_state(File.open("test.dat", "rb"))
 
 #rows = 20
 #columns = 20
 #text = random_string(rows, columns)
 
-viewer = ZViewer.new(rows, columns)
-image = viewer.render text
-image.display
+#viewer = ZViewer.new(rows, columns)
+#image = viewer.render text
+#image.display
+
+
