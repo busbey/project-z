@@ -177,6 +177,7 @@ public class World implements Serializable
 	{
 		if(location.containsKey(target))
 		{
+			System.err.println("Agent " + target + " killed by " + by);
 			int row = (int)(Math.random() * (state.length-1));
 			int col = (int)(Math.random() * (state[row].length-1));
 			while(EMPTY != state[row][col])
@@ -199,6 +200,7 @@ public class World implements Serializable
 	public void stun(char agent, char by)
 	{
 		/* stun */
+		System.err.println("Agent " + agent + " stunned by " + by);
 		byte curFlag = FLAGS_EMPTY;
 		if(agentFlags.containsKey(agent))
 		{
