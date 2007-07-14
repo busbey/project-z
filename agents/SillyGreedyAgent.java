@@ -77,7 +77,7 @@ public class SillyGreedyAgent extends Agent {
 			       myPosition.row() + ", " +
 			       myPosition.column() + ").  I am moving " +
 			       move);
-	    outStream.writeChar(move.getByte());
+	    outStream.writeByte(move.getByte());
 	    outStream.flush();
 	}
 	catch (Exception e) {
