@@ -24,7 +24,9 @@ public class RandomAgent extends Agent {
 
     public void respondToChange (State newState) {
 	try {
-	    outStream.writeChar(randomMove().getChar());
+	    Direction move = randomMove();
+	    System.out.println("I am moving " + move);
+	    outStream.writeChar(move.getByte());
 	    outStream.flush();
 	}
 	catch (Exception e) {

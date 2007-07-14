@@ -1,11 +1,12 @@
 import java.util.Random;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
 
 public class SillyGreedyAgent extends Agent {
     
     private Random random;
-    private char goal;
+    private byte goal;
 
     public static void main (String[] args) {
 	if (args.length < 3) {
@@ -15,13 +16,13 @@ public class SillyGreedyAgent extends Agent {
 	String hostname = args[0];
 	int port = Integer.parseInt(args[1]);
 	SillyGreedyAgent agent = 
-	    new SillyGreedyAgent(hostname, port, args[2].charAt(0));
+	    new SillyGreedyAgent(hostname, port, (byte)(args[2].charAt(0)));
 	if (!agent.openConnection())
 	    return;
 	agent.runAgent();
     }
 
-    public SillyGreedyAgent (String hostname, int port, char goal) {
+    public SillyGreedyAgent (String hostname, int port, byte goal) {
 	super(hostname, port);
 	this.goal = goal;
 	random = new Random();
@@ -29,8 +30,17 @@ public class SillyGreedyAgent extends Agent {
 	
     public void respondToChange (State newState) {
 	Direction move;
-	HashMap<Character, ArrayList<Position>> sortedByType = 
+	HashMap<Byte, ArrayList<Position>> sortedByType = 
 	    newState.sortByType();
+
+	//	for (Map.Entry<Byte, ArrayList<Position>> entry : sortedByType.entrySet()) {
+	//  byte type = entry.getKey();
+	//   for (Position position : entry.getValue()) {
+	//	System.out.println((char)type + " " + 
+	//			   position.row() + " " +
+	//			   position.column());
+	//    }
+	//}
 
 	Position myPosition =
 	    sortedByType.get(newState.getPlayer()).get(0);
@@ -45,13 +55,13 @@ public class SillyGreedyAgent extends Agent {
 	
 	double randomMove = random.nextDouble();
 	 
-	if (randomMove < verticalDistance / (totalDistance + 1.)) {
+	if (randomMove < 0.95 * verticalDistance / totalDistance) {
 	    if (myPosition.row() < goalPosition.row())
 		move = Direction.DOWN;
 	    else
 		move = Direction.UP;
 	}
-	else if (randomMove < totalDistance / (totalDistance + 1.)) {
+	else if (randomMove < 0.95) {
 	    if (myPosition.column() < goalPosition.column())
 		move = Direction.RIGHT;
 	    else
@@ -61,7 +71,13 @@ public class SillyGreedyAgent extends Agent {
 	    move = randomMove();
 
 	try {
-	    outStream.writeChar(move.getChar());
+	    System.out.println("The " + (char)(goal) + " is at (" +
+			       goalPosition.row() + ", " + 
+			       goalPosition.column() + "), I am at (" +
+			       myPosition.row() + ", " +
+			       myPosition.column() + ").  I am moving " +
+			       move);
+	    outStream.writeChar(move.getByte());
 	    outStream.flush();
 	}
 	catch (Exception e) {

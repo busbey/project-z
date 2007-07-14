@@ -13,13 +13,13 @@ public abstract class Agent {
 	LEFT ('l'),
 	RIGHT ('r');
 	
-	private final char direction;
+	private final byte direction;
 
 	Direction (char direction) {
-	    this.direction = direction;
+	    this.direction = (byte) direction;
 	}
 
-	public char getChar () { return direction; }
+	public byte getByte () { return direction; }
     }
 
     protected static final int HEADER_SIZE = 10;
@@ -80,14 +80,21 @@ public abstract class Agent {
 	    while (!socket.isClosed() && inStream.available() < 10) {}
 	    
 	    /* check for end of game (on first move? ridiculous) */
-	    char flag = inStream.readChar();
-	    if (flag == 0xff)
+	    byte flag = inStream.readByte();
+	   
+	    if ((flag & 0xff) == 0xff)
 		return;
 
-	    boolean killerBug = (flag == 0x01);
-	    char player = inStream.readChar();
+	    boolean killerBug = (flag & 0x01) == 0x01;
+	    byte player = inStream.readByte();
+	    
+	    System.out.println(Integer.toHexString((flag & 0xff)) + " " + 
+			       new String(new byte[] {player}, "ASCII") + " ");
+	    
 	    columns = inStream.readInt();
 	    rows = inStream.readInt();
+
+	    System.out.println("rows: " + rows + " columns: " + columns);
 	    boardSize = columns * rows;
 
 	    State state = new State(player, rows, columns);
@@ -97,7 +104,7 @@ public abstract class Agent {
 	    
 	    for (int i = 0; i < rows; i++) 
 		for (int j = 0; j < columns; j++) 
-		    state.changeBoard(i, j, inStream.readChar());
+		    state.changeBoard(i, j, inStream.readByte());
 				    
 	    respondToChange(state);
 
@@ -106,7 +113,7 @@ public abstract class Agent {
 		if (inStream.available() >= 
 		    (RandomAgent.HEADER_SIZE + boardSize)) {
 		    /* check for end of game */
-		    flag = inStream.readChar();
+		    flag = inStream.readByte();
 		    if (flag == 0xff)
 			return;
 		    state.setKillerBug(flag == 0x01);
@@ -114,7 +121,7 @@ public abstract class Agent {
 		    
 		    for (int i = 0; i < rows; i++) 
 			for (int j = 0; j < columns; j++) 
-			    state.changeBoard(i, j, inStream.readChar());
+			    state.changeBoard(i, j, inStream.readByte());
 		    
 		    respondToChange(state);
 		}
