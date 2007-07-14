@@ -333,12 +333,13 @@ public class World implements Serializable
 				}
 				retVal.state[rows][i] = entry;
 			}
+			rows++;
 			curLine = in.readLine();
 		}
 
 		if(null == retVal.state)
 		{
-			retVal.state = new char[1][1];
+			throw new RuntimeException("Couldn't read world properly from file.");
 		}
 		else
 		{

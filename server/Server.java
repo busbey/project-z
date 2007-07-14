@@ -11,7 +11,7 @@ public class Server
 	public static final int DEFAULT_DISPLAY_PORT = 8668;
 	public static final int DEFAULT_BUG_PORT = 7331;
 	public static final int DEFAULT_HUNTER_PORT = 1337;
-	public static final long DEFAULT_ROUND_TIME = 250;
+	public static final long DEFAULT_ROUND_TIME = 100;
 
 	public static Server fromFile(String path) throws IOException
 	{
@@ -63,8 +63,8 @@ public class Server
 	{
 		try
 		{
-			new Server();
-			//Server.fromFile(args[0]);
+			//new Server();
+			Server.fromFile(args[0]);
 			System.in.read();
 		} catch (IOException ex)
 		{
