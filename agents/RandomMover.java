@@ -4,7 +4,7 @@ public class RandomMover implements Mover {
     
     private Random random;
 
-    public RandomAgent (String args[]) {
+    public RandomMover () {
 	random = new Random();
     }
 
