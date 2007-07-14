@@ -28,7 +28,7 @@ public class SillyGreedyAgent extends Agent {
 	random = new Random();
     }
 	
-    public void respondToChange (State newState) {
+    public Direction respondToChange (State newState) {
 	Direction move;
 	HashMap<Byte, ArrayList<Position>> sortedByType = 
 	    newState.sortByType();
@@ -42,10 +42,18 @@ public class SillyGreedyAgent extends Agent {
 	//    }
 	//}
 
-	Position myPosition =
-	    sortedByType.get(newState.getPlayer()).get(0);
+	ArrayList<Position> myPositions =
+	    sortedByType.get(newState.getPlayer());
 
-	Position goalPosition = sortedByType.get(goal).get(0);
+	ArrayList<Position> goalPositions =
+	    sortedByType.get(goal);
+
+	if (myPositions.size() == 0 || goalPositions.size() == 0)
+	    return randomMove();
+	
+	Position myPosition = myPositions.get(0);
+
+	Position goalPosition = goalPositions.get(0);
 
 	int verticalDistance = Math.abs(myPosition.row() - 
 					goalPosition.row());
@@ -70,19 +78,14 @@ public class SillyGreedyAgent extends Agent {
 	else
 	    move = randomMove();
 
-	try {
-	    System.out.println("The " + (char)(goal) + " is at (" +
-			       goalPosition.row() + ", " + 
-			       goalPosition.column() + "), I am at (" +
-			       myPosition.row() + ", " +
-			       myPosition.column() + ").  I am moving " +
-			       move);
-	    outStream.writeByte(move.getByte());
-	    outStream.flush();
-	}
-	catch (Exception e) {
-	    e.printStackTrace();
-	}
+   
+	System.out.println("The " + (char)(goal) + " is at (" +
+			   goalPosition.row() + ", " + 
+			   goalPosition.column() + "), I am at (" +
+			   myPosition.row() + ", " +
+			   myPosition.column() + ").  I am moving " +
+			   move);
+	return move;
     }
 
     /* pick a move, yo! */

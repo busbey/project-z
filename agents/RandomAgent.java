@@ -22,21 +22,9 @@ public class RandomAgent extends Agent {
 	random = new Random();
     }
 
-    public void respondToChange (State newState) {
-	try {
-	    Direction move = randomMove();
-	    System.out.println("I am moving " + move);
-	    outStream.writeByte(move.getByte());
-	    outStream.flush();
-	}
-	catch (Exception e) {
-	    e.printStackTrace();
-	}
-    }
-
-    /* pick a move, yo! */
-    private Direction randomMove () {
+    public Direction respondToChange (State newState) {
 	Direction[] values = Direction.values();
 	return values[random.nextInt(values.length)];
     }
+
 }

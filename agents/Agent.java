@@ -72,12 +72,12 @@ public abstract class Agent {
 	return success;
     }
 
-    public abstract void respondToChange (State newState);
+    public abstract Direction respondToChange (State newState);
 
     public void runAgent () {
 	try {
 	    /* read first state to find size of board */
-	    while (!socket.isClosed() && inStream.available() < 10) {}
+	    //while (!socket.isClosed() && inStream.available() < 10) {}
 	    
 	    /* check for end of game (on first move? ridiculous) */
 	    byte flag = inStream.readByte();
@@ -89,7 +89,7 @@ public abstract class Agent {
 	    byte player = inStream.readByte();
 	    
 	    System.out.println(Integer.toHexString((flag & 0xff)) + " " + 
-			       new String(new byte[] {player}, "ASCII") + " ");
+			       (char)(player) + " ");
 	    
 	    columns = inStream.readInt();
 	    rows = inStream.readInt();
@@ -100,13 +100,22 @@ public abstract class Agent {
 	    State state = new State(player, rows, columns);
 	    state.setKillerBug(killerBug);
 	    
-	    while (!socket.isClosed() && inStream.available() < boardSize) {}
+	    //while (!socket.isClosed() && inStream.available() < boardSize) {}
 	    
 	    for (int i = 0; i < rows; i++) 
 		for (int j = 0; j < columns; j++) 
 		    state.changeBoard(i, j, inStream.readByte());
 				    
-	    respondToChange(state);
+	    Direction move = respondToChange(state);
+	    
+	    try {
+		System.out.println("I am moving " + move);
+		outStream.writeByte(move.getByte());
+		outStream.flush();
+	    }
+	    catch (Exception e) {
+		e.printStackTrace();
+	    }
 
 	    /* read the rest of them */
 	    while (!socket.isClosed()) {
@@ -123,7 +132,15 @@ public abstract class Agent {
 			for (int j = 0; j < columns; j++) 
 			    state.changeBoard(i, j, inStream.readByte());
 		    
-		    respondToChange(state);
+		    move = respondToChange(state);
+		    try {
+			System.out.println("I am moving " + move);
+			outStream.writeByte(move.getByte());
+			outStream.flush();
+		    }
+		    catch (Exception e) {
+			e.printStackTrace();
+		    }
 		}
 	    }
 	}
