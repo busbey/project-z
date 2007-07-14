@@ -175,11 +175,15 @@ public class World implements Serializable
 
 	public void kill(char target, char by)
 	{
+		System.err.println("Agent " + target + " killed by " + by);
 		if(location.containsKey(target))
 		{
-			System.err.println("Agent " + target + " killed by " + by);
-			int row = (int)(Math.random() * (state.length-1));
-			int col = (int)(Math.random() * (state[row].length-1));
+			long loc = location.get(target);
+			int row = (int)(loc & 0xFFFFFFFF);
+			int col = (int)(loc >>> 32);
+			state[row][col] = EMPTY;
+			row = (int)(Math.random() * (state.length-1));
+			col = (int)(Math.random() * (state[row].length-1));
 			while(EMPTY != state[row][col])
 			{
 				row = (int)(Math.random() * (state.length-1));
@@ -194,6 +198,10 @@ public class World implements Serializable
 			}
 			curFlags |= SET_AGENT_DIED;
 			agentFlags.put(target, curFlags);
+		}
+		else
+		{
+			System.err.println("Warning: target " + target + " killed but has no location.");
 		}
 	}
 
