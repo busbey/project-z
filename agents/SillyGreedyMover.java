@@ -3,30 +3,15 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-public class SmarterGreedyAgent extends Agent {
+public class SillyGreedyMover implements Mover {
     
     private Random random;
     private byte goal;
 
     private final double PROBABILITY = 0.85;
 
-    public static void main (String[] args) {
-	if (args.length < 3) {
-	    System.out.println("java SmarterGreedyAgent [hostname] [port] [goal]");
-	    return;
-	}
-	String hostname = args[0];
-	int port = Integer.parseInt(args[1]);
-	SmarterGreedyAgent agent = 
-	    new SmarterGreedyAgent(hostname, port, (byte)(args[2].charAt(0)));
-	if (!agent.openConnection())
-	    return;
-	agent.runAgent();
-    }
-
-    public SmarterGreedyAgent (String hostname, int port, byte goal) {
-	super(hostname, port);
-	this.goal = goal;
+    public SillyGreedyMover (String[] args) {
+	goal = (byte)(args[0].charAt(0));
 	random = new Random();
     }
 	
@@ -42,30 +27,16 @@ public class SmarterGreedyAgent extends Agent {
 
 	if (myPositions == null || goalPositions == null)
 	    return randomMove();
-
-	Position myPosition = myPositions.get(0);	
+	
+	Position myPosition = myPositions.get(0);
 	Position goalPosition = goalPositions.get(0);
 
-	int closestIndex = 0, closestDistance = 0,
-	    verticalDistance, horizontalDistance;
-	for (int i = 0; i < goalPositions.size(); i++) {
-	    Position testPosition = goalPositions.get(i);
-	    verticalDistance = Math.abs(myPosition.row() - 
-					testPosition.row());
-	    horizontalDistance = Math.abs(myPosition.column() - 
-					  testPosition.column());
-	    if ((verticalDistance + horizontalDistance) < closestDistance) {
-		closestIndex = i;
-	       goalPosition = testPosition;
-	    }
-	}
-
-	verticalDistance = Math.abs(myPosition.row() - 
-				    goalPosition.row());
-	horizontalDistance = Math.abs(myPosition.column() - 
-				      goalPosition.column());
+	int verticalDistance = Math.abs(myPosition.row() - 
+					goalPosition.row());
+	int horizontalDistance = Math.abs(myPosition.column() - 
+					  goalPosition.column());
 	int totalDistance = verticalDistance + horizontalDistance;
-
+	
 	double randomMove = random.nextDouble();
 	 
 	if (randomMove < PROBABILITY  * 
@@ -88,8 +59,7 @@ public class SmarterGreedyAgent extends Agent {
 			   goalPosition.row() + ", " + 
 			   goalPosition.column() + "), I am at (" +
 			   myPosition.row() + ", " +
-			   myPosition.column() + ").  I am moving " +
-			   move);
+			   myPosition.column() + ").");
 	return move;
     }
 

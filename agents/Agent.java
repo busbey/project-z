@@ -1,3 +1,4 @@
+import java.lang.reflect.Constructor;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.net.InetAddress;
@@ -5,36 +6,51 @@ import java.io.DataOutputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
 
-public abstract class Agent {
+public class Agent {
     
-    protected enum Direction {
-	UP ('u'),
-	DOWN ('d'),
-	LEFT ('l'),
-	RIGHT ('r');
-	
-	private final byte direction;
-
-	Direction (char direction) {
-	    this.direction = (byte) direction;
-	}
-
-	public byte getByte () { return direction; }
-    }
-
-    protected static final int HEADER_SIZE = 10;
+    private final int HEADER_SIZE = 10;
     
-    protected DataInputStream inStream;
-    protected DataOutputStream outStream;
-    protected Socket socket;
-    protected int columns, rows, boardSize;
-
     private String hostname;
     private int port;
 
-    public Agent (String hostname, int port) {
+    private DataInputStream inStream;
+    private DataOutputStream outStream;
+    private Socket socket;
+    
+    private int columns, rows, boardSize;
+
+    private Mover mover;
+
+    public static void main (String[] args) {
+       	if (args.length < 3) {
+	    System.out.println("java Agent [hostname] [port] [name of Mover class]");
+	    return;
+	}
+	String hostname = args[0];
+	int port = Integer.parseInt(args[1]);
+	try {
+	    Class moverClass = Class.forName(args[2]);
+	    Constructor<Mover> moverConstructor = 
+		moverClass.getConstructor(String[].class);
+	    String[] moverArgs = new String[args.length - 3];
+	    System.arraycopy(args, 3, moverArgs, 0, moverArgs.length); 
+	    Mover moverToUse = 
+		moverConstructor.newInstance((Object)moverArgs);
+	    Agent agent = new Agent(hostname, port, moverToUse);
+	    if (!agent.openConnection())
+		return;
+	    agent.runAgent();	
+	}
+	catch (Exception e) {
+	    e.printStackTrace();
+	}
+
+    }
+
+    public Agent (String hostname, int port, Mover mover) {
 	this.hostname = hostname;
 	this.port = port;
+	this.mover = mover;
     }
 
     public boolean openConnection () {
@@ -72,8 +88,6 @@ public abstract class Agent {
 	return success;
     }
 
-    public abstract Direction respondToChange (State newState);
-
     public void runAgent () {
 	try {
 	    /* read first state to find size of board */
@@ -82,14 +96,13 @@ public abstract class Agent {
 	    /* check for end of game (on first move? ridiculous) */
 	    byte flag = inStream.readByte();
 	   
-	    if ((flag & 0xff) == 0xff)
+	    if (flag == 0xff)
 		return;
 
 	    boolean killerBug = (flag & 0x01) == 0x01;
 	    byte player = inStream.readByte();
 	    
-	    System.out.println(Integer.toHexString((flag & 0xff)) + " " + 
-			       (char)(player) + " ");
+	    System.out.println("player: " + (char)(player));
 	    
 	    columns = inStream.readInt();
 	    rows = inStream.readInt();
@@ -106,41 +119,29 @@ public abstract class Agent {
 		for (int j = 0; j < columns; j++) 
 		    state.changeBoard(i, j, inStream.readByte());
 				    
-	    Direction move = respondToChange(state);
+	    Direction move = mover.respondToChange(state);
+	    System.out.println("I am moving " + move);
+	    outStream.writeByte(move.getByte());
+	    outStream.flush();
 	    
-	    try {
-		System.out.println("I am moving " + move);
-		outStream.writeByte(move.getByte());
-		outStream.flush();
-	    }
-	    catch (Exception e) {
-		e.printStackTrace();
-	    }
-
 	    /* read the rest of them */
-	    while (!socket.isClosed()) {
-		if (inStream.available() >= 
-		    (RandomAgent.HEADER_SIZE + boardSize)) {
+	    while (socket.isConnected()) {
+		if (inStream.available() >= (HEADER_SIZE + boardSize)) {
 		    /* check for end of game */
 		    flag = inStream.readByte();
 		    if (flag == 0xff)
 			return;
-		    state.setKillerBug(flag == 0x01);
-		    inStream.skip(RandomAgent.HEADER_SIZE - 1);
+		    state.setKillerBug((flag & 0x01) == 0x01);
+		    inStream.skip(HEADER_SIZE - 1);
 		    
 		    for (int i = 0; i < rows; i++) 
 			for (int j = 0; j < columns; j++) 
 			    state.changeBoard(i, j, inStream.readByte());
 		    
-		    move = respondToChange(state);
-		    try {
-			System.out.println("I am moving " + move);
-			outStream.writeByte(move.getByte());
-			outStream.flush();
-		    }
-		    catch (Exception e) {
-			e.printStackTrace();
-		    }
+		    move = mover.respondToChange(state);
+		    System.out.println("I am moving " + move);
+		    outStream.writeByte(move.getByte());
+		    outStream.flush();
 		}
 	    }
 	}

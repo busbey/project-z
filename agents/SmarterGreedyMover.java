@@ -3,30 +3,15 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-public class SmartHunterAgent extends Agent {
+public class SmarterGreedyMover implements Mover {
     
     private Random random;
     private byte goal;
 
     private final double PROBABILITY = 0.85;
 
-    public static void main (String[] args) {
-	if (args.length < 3) {
-	    System.out.println("java SmartHunterAgent [hostname] [port] [goal]");
-	    return;
-	}
-	String hostname = args[0];
-	int port = Integer.parseInt(args[1]);
-	SmartHunterAgent agent = 
-	    new SmartHunterAgent(hostname, port, (byte)(args[2].charAt(0)));
-	if (!agent.openConnection())
-	    return;
-	agent.runAgent();
-    }
-
-    public SmartHunterAgent (String hostname, int port, byte goal) {
-	super(hostname, port);
-	this.goal = goal;
+    public SmarterGreedyMover (String[] args) {
+	goal = (byte)(args[0].charAt(0));
 	random = new Random();
     }
 	
@@ -46,17 +31,19 @@ public class SmartHunterAgent extends Agent {
 	Position myPosition = myPositions.get(0);	
 	Position goalPosition = goalPositions.get(0);
 
-	int closestIndex = 0, closestDistance = 0,
-	    verticalDistance, horizontalDistance;
+	int closestDistance = Integer.MAX_VALUE, verticalDistance, 
+	    horizontalDistance, totalDistance;
+
 	for (int i = 0; i < goalPositions.size(); i++) {
 	    Position testPosition = goalPositions.get(i);
 	    verticalDistance = Math.abs(myPosition.row() - 
 					testPosition.row());
 	    horizontalDistance = Math.abs(myPosition.column() - 
 					  testPosition.column());
-	    if ((verticalDistance + horizontalDistance) < closestDistance) {
-		closestIndex = i;
-	       goalPosition = testPosition;
+	    totalDistance = verticalDistance + horizontalDistance;
+	    if (totalDistance < closestDistance) {
+		closestDistance = totalDistance;
+		goalPosition = testPosition;
 	    }
 	}
 
@@ -64,26 +51,22 @@ public class SmartHunterAgent extends Agent {
 				    goalPosition.row());
 	horizontalDistance = Math.abs(myPosition.column() - 
 				      goalPosition.column());
-	int totalDistance = verticalDistance + horizontalDistance;
+	totalDistance = verticalDistance + horizontalDistance;
 
 	double randomMove = random.nextDouble();
 	 
 	if (randomMove < PROBABILITY  * 
 	    verticalDistance / totalDistance) {
 	    if (myPosition.row() < goalPosition.row())
-		move = (newState.killerBug()) ? 
-		    Direction.DOWN : Direction.UP;
+		move = Direction.DOWN;
 	    else
-		move = (newState.killerBug()) ?
-		    Direction.UP : Direction.DOWN;
+		move = Direction.UP;
 	}
 	else if (randomMove < PROBABILITY) {
 	    if (myPosition.column() < goalPosition.column())
-		move = (newState.killerBug()) ?
-			Direction.RIGHT : Direction.LEFT;
+		move = Direction.RIGHT;
 	    else
-		move = (newState.killerBug()) ?
-			Direction.LEFT : Direction.RIGHT;
+		move = Direction.LEFT;
 	}
 	else
 	    move = randomMove();
@@ -92,8 +75,7 @@ public class SmartHunterAgent extends Agent {
 			   goalPosition.row() + ", " + 
 			   goalPosition.column() + "), I am at (" +
 			   myPosition.row() + ", " +
-			   myPosition.column() + ").  I am moving " +
-			   move);
+			   myPosition.column() + ").");
 	return move;
     }
 
