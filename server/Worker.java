@@ -86,6 +86,7 @@ import java.net.*;
 			}
 			}catch(Exception ex)
 			{
+				ex.printStackTrace();
 				System.exit(-1);
 			}
 		}

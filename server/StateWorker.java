@@ -86,8 +86,9 @@ import java.util.*;
 					{
 						if(state.isBug(agent) || state.isHunter(agent))
 						{
+							System.err.println("Error: problem writing to agent '"+ agent+"'\n");
+							System.err.println("World at Death {" + state.toString() + "\n}");
 							System.exit(-1);
-						//	System.err.println("Warning: problem writing to agent '"+ agent+"'\n");
 						}
 					}
 				}

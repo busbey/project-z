@@ -112,7 +112,6 @@ public class World implements Serializable
 				default:
 				break;
 			}
-			assert( row != newRow && col != newCol);
 			char target = state[newRow][newCol];
 
 			if(target == agent)
