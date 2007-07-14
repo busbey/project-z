@@ -5,6 +5,7 @@ require 'RMagick'
 include Magick
 require 'enumerator'
 require 'socket'
+require 'rubygame'
 require 'tk'
 
 class ZViewer
@@ -93,18 +94,24 @@ class ZDisplayClient
 			puts "error: #{$!}"
 		else
 			viewer = nil
-			#window = TkRoot.new('title'=>'Project Z')
 
-			#canvas = TkCanvas.new(window)
-			#canvas.pack
+			$root = TkRoot.new {title 'Scroll List'} 
+			frame = TkFrame.new($root)
+			image_w = TkPhotoImage.new
+			TkLabel.new(frame, 'image' => image_w).pack('side'=>'left') 
+			frame.pack
 			
-			#Tk.mainloop()	
-			while true
+			$timer = TkTimer.start(200, -1) {
 				rows, columns, text = read_state(t)
 				viewer ||= ZViewer.new(rows, columns)
 				image = viewer.render text
-				image.write("output.png")
-			end
+				image.write("output.gif")
+				tmp_img = TkPhotoImage.new('file'=> "output.gif")
+				image_w.copy(tmp_img)
+				tmp_img = nil
+				GC.start
+			}
+			Tk.mainloop()
 		end
 	end
 end
