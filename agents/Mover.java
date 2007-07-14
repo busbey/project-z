@@ -1,8 +1,12 @@
+/**
+ * Interface for Movers.  By default, the Mover will be constructed using
+ * the empty constructor.  If your Mover requires command-line arguments,
+ * create a constructor that takes a String[] argument.  That constructor
+ * will be called with any remaining arguments given in the call to 
+ * Agent. 
+ */
+
 public interface Mover {
-    
-    /* oh by the way you need to have a constructor that takes in
-       a String[] argument.  when your mover is called you get the
-       remaining command line arguments passed to you */
 
     public Direction respondToChange (State newState);
 
