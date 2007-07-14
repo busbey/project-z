@@ -25,7 +25,7 @@ public class Server
 
 	public Server(int bugPort, int hunterPort, int displayPort) throws IOException
 	{
-		this(bugPort, hunterPort, displayPort, new World(80,50));
+		this(bugPort, hunterPort, displayPort, new World(80, 20));
 	}
 	
 	public Server(int bugPort, int hunterPort, int displayPort, World state) throws IOException

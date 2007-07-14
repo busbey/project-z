@@ -23,7 +23,10 @@ import java.util.*;
 			while(state.gameRunning())
 			{
 				end = System.currentTimeMillis();
-
+				if(end%5 == 0)
+				{
+					System.err.println("World \n{" + state.toString() + "\n}");
+				}
 				long toSleep = roundTime - (end - last);
 				if(0 < toSleep)
 				{
@@ -83,7 +86,8 @@ import java.util.*;
 					{
 						if(state.isBug(agent) || state.isHunter(agent))
 						{
-							System.err.println("Warning: problem writing to agent '"+ agent+"'\n");
+							System.exit(-1);
+						//	System.err.println("Warning: problem writing to agent '"+ agent+"'\n");
 						}
 					}
 				}
