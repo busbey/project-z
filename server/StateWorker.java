@@ -3,43 +3,24 @@ import java.util.*;
 
 	class StateWorker implements Runnable
 	{
-	public static final byte FLAGS_EMPTY = 0x00;
-	public static final byte FLAGS_GAME_END = (byte)(0xff);
-	public static final byte SET_AGENT_DIED = 0x02;
-	
-		HashMap<Character, ObjectOutputStream> clients;
+		HashMap<Character, DataOutputStream> clients;
 		long roundTime;
 		World state;
 		HashMap<Character, Byte> actions;
-		HashMap<Character, Boolean> died;
-		boolean gameRunning = true;
-		byte flags = FLAGS_EMPTY;
 		
-		StateWorker(World state, HashMap<Character, Byte> actions, HashMap<Character, ObjectOutputStream> clients, long roundTime)
+		StateWorker(World state, HashMap<Character, Byte> actions, HashMap<Character, DataOutputStream> clients, long roundTime)
 		{
 			this.clients = clients;
 			this.roundTime = roundTime;
 			this.state = state;
 			this.actions = actions;
-			died = new HashMap<Character, Boolean>();
 		}
 
-		public void gameEnd()
-		{
-			gameRunning = false;
-			flags = FLAGS_GAME_END;
-		}
-
-		public void updateFlags(byte newFlags)
-		{
-			flags = newFlags;
-		}
-		
 		public void run()
 		{
 			long last = System.currentTimeMillis();
 			long end = System.currentTimeMillis();
-			while(gameRunning)
+			while(state.gameRunning())
 			{
 				end = System.currentTimeMillis();
 
@@ -66,11 +47,11 @@ import java.util.*;
 			{
 				synchronized(actions)
 				{
+					state.roundsPassed(1);
 					for(Map.Entry<Character, Byte> entry : actions.entrySet())
 					{
 						char agent = entry.getKey();
-						boolean agentDied = state.change(agent, entry.getValue());
-						died.put(agent, agentDied);
+						state.change(agent, entry.getValue());
 					}
 					actions.clear();
 				}
@@ -83,20 +64,20 @@ import java.util.*;
 			{
 			synchronized(state)
 			{
-				for(Map.Entry<Character, ObjectOutputStream> entry : clients.entrySet())
+				for(Map.Entry<Character, DataOutputStream> entry : clients.entrySet())
 				{
 					char agent = entry.getKey();
-					ObjectOutputStream out = entry.getValue();
-					byte agentFlags = flags;
-					if(died.containsKey(agent) && died.get(agent))
-					{
-						agentFlags |= SET_AGENT_DIED;
-					}
+					DataOutputStream out = entry.getValue();
+					byte agentFlags = state.flags(agent);
 					try
 					{
+						byte agentVal = (byte)agent;
+						System.err.println("---Starting Agent '"+ (char)(agentVal)+"' (0x"+Integer.toHexString(agentVal)+")");
+						System.err.println("Writing flags: 0x" + Integer.toHexString(agentFlags));
 						out.writeByte(agentFlags);
-						out.writeByte(agent);
-						out.writeObject(state);
+						out.writeByte((byte)agent);
+						System.err.println("Starting World");
+						state.serialize(out);
 					}
 					catch(IOException ex)
 					{

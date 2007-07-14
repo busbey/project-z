@@ -8,8 +8,34 @@ import java.util.*;
 
 public class World implements Serializable
 {
+	public static final byte FLAGS_EMPTY = 0x00;
+	public static final byte FLAGS_GAME_END = (byte)(0xff);
+	public static final byte SET_AGENT_STUN = 0x04;
+	public static final byte SET_AGENT_DIED = 0x02;
+	public static final byte SET_BUG_EATS = 0x1;
+	public static final byte CLEAR_AGENT_STUN = (byte)(0xFB);
+	public static final byte CLEAR_AGENT_DIED = (byte)(0xFD);
+	public static final byte CLEAR_BUG_EATS = (byte)(0xFE);
+	
+	public static final int DEFAULT_ROUNDS_TO_EAT = 40;
+	
+	protected int roundsToEat =0;
 
+	public static final char OBSTACLE = 'O';
+	public static final char BUG_MIN = 'B';
+	public static final char BUG_MAX = 'N';
+	public static final char HUNTER_MIN = '1';
+	public static final char HUNTER_MAX = '9';
+	public static final char POWERUP = 'P';
+	public static final char EMPTY = ' ';
+
+	
+	public static final double obstacle = 0.1;
+	public static final char[] valid = {' ', 'B', '1', '2', '3', '4', 'O', 'P'};
 	protected char[][] state = null; 
+	protected byte flags = FLAGS_EMPTY;
+	HashMap<Character, Byte> agentFlags = new HashMap<Character, Byte>();
+	HashMap<Character, Long> location = new HashMap<Character, Long>();
 
 	/** @brief create an uninitialized world */
 	protected World()
@@ -19,25 +45,208 @@ public class World implements Serializable
 	/** @brief create a blank world of a given size */
 	public World(int rowSize, int numRows)
 	{
-		state = new char[rowSize][numRows];
+		assert(4 < numRows && 4 < rowSize);
+		state = new char[numRows][rowSize];
 		for(int i = 0; i < numRows; i++)
 		{
 			for(int j = 0; j < rowSize; j++)
 			{
-				state[i][j] = ' ';
+				double type = Math.random();
+				if(obstacle > type)
+				{
+					state[i][j] = 'O';
+				}
+				else
+				{
+					state[i][j] = ' ';
+				}
+			}
+		}
+		state[0][0] = 'B';
+		state[numRows - 1][rowSize - 1] = 'P';
+		state[numRows - 2][rowSize - 2] = '1';
+		state[numRows - 3][rowSize - 3] = '2';
+		state[numRows - 4][rowSize - 4] = '3';
+		state[numRows - 5][rowSize - 5] = '4';
+		
+		location.put('B', ((long) 0) | (((long)0) << 32) );
+		location.put('1', ((long) numRows -2) | (((long)rowSize-2) << 32) );
+		location.put('2', ((long) numRows -3) | (((long)rowSize-3) << 32) );
+		location.put('3', ((long) numRows -4) | (((long)rowSize-4) << 32) );
+		location.put('4', ((long) numRows -5) | (((long)rowSize-5) << 32) );
+
+	}
+
+	public void change(char agent, byte move)
+	{
+		
+		if(location.containsKey(agent))
+		{
+			long loc = location.get(agent);
+			int row = (int)(loc & (0xFFFFFFFF));
+			int col = (int)(loc >>> 32);
+			int newRow = row;
+			int newCol = col;
+			switch(move)
+			{
+				case 'u':
+					newRow--;
+					while(0 > newRow)
+					{
+						newRow += state.length;
+					}
+					break;
+				case 'd':
+					newRow = (newRow + 1) % state.length;
+					break;
+				case 'l':
+					newCol = (newCol + 1) % state.length;
+					break;
+				case 'r':
+					newCol--;
+					while(0 > newCol)
+					{
+						newCol += state[row].length;
+					}
+					break;
+				default:
+				break;
+			}
+		
+			char target = state[newRow][newCol];
+			if(EMPTY == target)
+			{
+				move(row, col, newRow, newCol);
+			}
+			else if(POWERUP == target)
+			{
+				if(isBug(agent))
+				{
+					flags |= SET_BUG_EATS;
+					roundsToEat = DEFAULT_ROUNDS_TO_EAT;
+				}
+				move(row, col, newRow, newCol);
+			}
+			else if(OBSTACLE != target)
+			{
+				if(	(isHunter(agent) && isHunter(target)) ||
+					(isBug(agent) && isBug(target)) )
+				{
+					stun(target, agent);
+				}
+				else
+				{
+					boolean bugLoses = 0 == (flags & SET_BUG_EATS);
+					if(isHunter(agent))
+					{
+						if(bugLoses)
+						{
+							kill(target, agent);
+							move(row, col, newRow, newCol);
+						}
+						else
+						{
+							kill(agent, target);
+						}
+					}
+					else if(isBug(agent))
+					{
+						if(bugLoses)
+						{
+							kill(agent, target);
+						}
+						else
+						{
+							kill(target, agent);
+							move(row, col, newRow, newCol);
+						}
+					}
+				}
 			}
 		}
 	}
 
-	public boolean change(char agent, byte move)
+	public void move(int fromRow, int fromCol, int toRow, int toCol)
 	{
-		for(int i = 0; i < state.length; i++)
+		location.put(state[fromRow][fromCol],( ((long)toRow) | (((long)toCol) << 32)));
+		state[toRow][toCol] = state[fromRow][fromCol];
+		state[fromRow][fromCol] = EMPTY;
+	}
+
+	public void kill(char target, char by)
+	{
+		if(location.containsKey(target))
 		{
-			for(int j = 0; j < state[i].length; j++)
-			{
-			}
 		}
-		return false;
+		int row = (int)(Math.random() * (state.length-1));
+		int col = (int)(Math.random() * (state[row].length-1));
+		while(EMPTY != state[row][col])
+		{
+			row = (int)(Math.random() * (state.length-1));
+			col = (int)(Math.random() * (state[row].length-1));
+		}
+		state[row][col] = target;
+		location.put(target, ( ((long) row) | (((long) col) << 32) ));
+		byte curFlags = agentFlags.get(target);
+		curFlags |= SET_AGENT_DIED;
+		agentFlags.put(target, curFlags);
+	}
+
+	public void stun(char agent, char by)
+	{
+		/* stun */
+		byte curFlag = agentFlags.get(agent);
+		curFlag |= SET_AGENT_STUN;
+		agentFlags.put(agent, curFlag);
+		curFlag = agentFlags.get(by);
+		curFlag |= SET_AGENT_STUN;
+		agentFlags.put(by, curFlag);
+	}
+
+	public void roundsPassed(int num)
+	{
+		roundsToEat -= num;
+		if(0 > roundsToEat)
+		{
+			flags &= CLEAR_BUG_EATS;
+		}
+		
+		for(Character agent : agentFlags.keySet())
+		{
+			byte curFlag = agentFlags.get(agent);
+			curFlag &= CLEAR_AGENT_DIED & CLEAR_AGENT_STUN;
+			agentFlags.put(agent, curFlag);
+		}
+	}
+
+	public boolean isBug(char agent)
+	{
+		return BUG_MIN <=agent && BUG_MAX >= agent;
+	}
+
+	public boolean isHunter(char agent)
+	{
+		return HUNTER_MIN <= agent && HUNTER_MAX >= agent;
+	}
+
+	public byte flags(char agent)
+	{
+		byte ret = flags;
+		if(agentFlags.containsKey(agent))
+		{
+			ret |= agentFlags.get(agent);
+		}
+		return ret;
+	}
+
+	public boolean gameRunning()
+	{
+		return FLAGS_GAME_END != flags;
+	}
+
+	public void end()
+	{
+		flags = FLAGS_GAME_END;
 	}
 
 	public char get(int column, int row)
@@ -57,7 +266,6 @@ public class World implements Serializable
 		int rows	= 0;
 		BufferedReader in = new BufferedReader(new FileReader(path));
 		String curLine = in.readLine();
-		char[] valid = {' ', 'B', '1', '2', '3', '4', 'O', 'P'};
 		
 		Arrays.sort(valid);
 		
@@ -87,6 +295,11 @@ public class World implements Serializable
 				{
 					throw new IOException("invalid world state map.");
 				}
+				if( (BUG_MIN <= entry && BUG_MAX >= entry) ||
+					((HUNTER_MIN) <= entry && HUNTER_MAX >= entry))
+				{
+					retVal.location.put(entry, ((long)rows) | (((long)i) << 32));
+				}
 				retVal.state[rows][i] = entry;
 			}
 			curLine = in.readLine();
@@ -94,7 +307,7 @@ public class World implements Serializable
 
 		if(null == retVal.state)
 		{
-			retVal.state = new char[0][0];
+			retVal.state = new char[1][1];
 		}
 		else
 		{
@@ -113,19 +326,55 @@ public class World implements Serializable
 
 	public static World random()
 	{
-		return new World(8,8);
+	    int numRows = (int)(Math.random()*100) + 6;
+		int rowSize = (int)(Math.random()*100) + 6;
+		World returnVal = new World(rowSize, numRows);
+		
+		return returnVal;
 	}
 
-	private void writeObject(java.io.ObjectOutputStream out) throws IOException
+	public void serialize(java.io.DataOutputStream out) throws IOException
 	{
-		out.writeInt(state[0].length);
-		out.writeInt(state.length);
+		//System.err.println("Serializing World:");
+		int rowSize = 0;
+		int numRows = state.length;
+		if(0 < numRows)
+		{
+			rowSize = state[0].length;
+		}
+		//System.err.println("\tsize of row: " + rowSize);
+		//System.err.println("\tnumber of rows: " + numRows);
+		out.writeInt(rowSize);
+		out.writeInt(numRows);
 		for(int i = 0; i < state.length; i++)
 		{
+			//System.err.println("\t writing out row " + i);
 			for(int j=0; j < state[i].length; j++)
 			{
+				//System.err.println("\t\twriting out entry " + j);
 				out.writeByte(state[i][j]);
 			}
 		}
+	}
+	
+	public String toString()
+	{
+		StringBuffer ret= new StringBuffer();
+		for(int i = 0 ; i < state.length; i++)
+		{
+			ret.append("\n|");
+			for(int j = 0; j < state[i].length; j++)
+			{
+				if(' ' != state[i][j])
+				{
+					ret.append(state[i][j]);
+				}
+				else
+				{
+					ret.append('_');
+				}
+			}
+		}
+		return ret.toString();
 	}
 }

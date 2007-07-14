@@ -5,12 +5,12 @@ import java.net.*;
 	class Worker implements Runnable
 	{
 		ServerSocket incoming;
-		HashMap<Character, ObjectOutputStream> out;
+		HashMap<Character, DataOutputStream> out;
 		HashMap<Character, Byte> in;
 		boolean gameRunning = true;
 		char agentStart = '\0';
 		
-		Worker(char agentStart, ServerSocket incoming, HashMap<Character, ObjectOutputStream> out, HashMap<Character, Byte> in)
+		Worker(char agentStart, ServerSocket incoming, HashMap<Character, DataOutputStream> out, HashMap<Character, Byte> in)
 		{
 			this.incoming = incoming;
 			this.out = out;
@@ -29,10 +29,11 @@ import java.net.*;
 			{
 			while(gameRunning)
 			{
+				Socket client = incoming.accept();
 				final char agent = agentStart;
 				agentStart++;
-				Socket client = incoming.accept();
-				ObjectOutputStream outStream = new ObjectOutputStream(client.getOutputStream());
+				System.err.println("New connection for Agent " + agent);
+				DataOutputStream outStream = new DataOutputStream(client.getOutputStream());
 				final DataInputStream inStream = new DataInputStream(client.getInputStream());
 				
 				
@@ -41,6 +42,7 @@ import java.net.*;
 					public void run()
 					{
 						boolean running = true;
+						System.err.println("action thread started for " + agent);
 						while(running)
 						{
 							try
@@ -65,6 +67,7 @@ import java.net.*;
 				synchronized(out)
 				{
 					out.put(agent, outStream);
+					System.err.println("state monitoring registered for " + agent);
 				}
 			}
 			}catch(Exception ex)

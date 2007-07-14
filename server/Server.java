@@ -25,7 +25,7 @@ public class Server
 
 	public Server(int bugPort, int hunterPort, int displayPort) throws IOException
 	{
-		this(bugPort, hunterPort, displayPort, World.random());
+		this(bugPort, hunterPort, displayPort, new World(80,50));
 	}
 	
 	public Server(int bugPort, int hunterPort, int displayPort, World state) throws IOException
@@ -36,20 +36,24 @@ public class Server
 	public Server(int bugPort, int hunterPort, int displayPort, World state, long roundTime) throws IOException
 	{
 		HashMap<Character, Byte> actions = new HashMap<Character, Byte>();
-		HashMap<Character, ObjectOutputStream> clients = new HashMap<Character, ObjectOutputStream>();
+		HashMap<Character, DataOutputStream> clients = new HashMap<Character, DataOutputStream>();
 		StateWorker update = new StateWorker(state, actions, clients, roundTime);
 		Worker bug = new Worker('B', new ServerSocket(bugPort), clients, actions);
 		Worker hunter = new Worker('1', new ServerSocket(hunterPort), clients, actions);
 		Worker display = new Worker('d', new ServerSocket(displayPort), clients, actions);
+		System.err.println("Starting state monitor thread.");
 		Thread stateThread = new Thread(update);
 		stateThread.setDaemon(true);
 		stateThread.start();
+		System.err.println("Starting bug port thread.");
 		Thread bugThread = new Thread(bug);
 		bugThread.setDaemon(true);
 		bugThread.start();
+		System.err.println("Starting hunter port thread.");
 		Thread hunterThread = new Thread(hunter);
 		hunterThread.setDaemon(true);
 		hunterThread.start();
+		System.err.println("Starting display port thread.");
 		Thread displayThread = new Thread(display);
 		displayThread.setDaemon(true);
 		displayThread.start();
@@ -59,7 +63,8 @@ public class Server
 	{
 		try
 		{
-			Server.fromFile(args[0]);
+			new Server();
+			//Server.fromFile(args[0]);
 			System.in.read();
 		} catch (IOException ex)
 		{
