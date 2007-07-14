@@ -29,7 +29,7 @@ public class World implements Serializable
 	public static final char POWERUP = 'P';
 	public static final char EMPTY = ' ';
 
-	
+	public static final double powerup = 0.02;	
 	public static final double obstacle = 0.1;
 	public static final char[] valid = {' ', 'B', '1', '2', '3', '4', 'O', 'P'};
 	protected char[][] state = null; 
@@ -190,15 +190,7 @@ public class World implements Serializable
 			int row = (int)(loc & 0xFFFFFFFF);
 			int col = (int)(loc >>> 32);
 			state[row][col] = EMPTY;
-			row = (int)(Math.random() * (state.length-1));
-			col = (int)(Math.random() * (state[row].length-1));
-			while(EMPTY != state[row][col])
-			{
-				row = (int)(Math.random() * (state.length-1));
-				col = (int)(Math.random() * (state[row].length-1));
-			}
-			state[row][col] = target;
-			location.put(target, ( ((long) row) | (((long) col) << 32) ));
+			setRandomEmpty(target);
 			byte curFlags = FLAGS_EMPTY;
 			if(agentFlags.containsKey(target))
 			{
@@ -235,18 +227,36 @@ public class World implements Serializable
 
 	public void roundsPassed(int num)
 	{
-		roundsToEat -= num;
-		if(0 > roundsToEat)
+		if(0 != (flags & SET_BUG_EATS))
 		{
-			flags &= CLEAR_BUG_EATS;
+			roundsToEat -= num;
+			if(0 > roundsToEat)
+			{
+				flags &= CLEAR_BUG_EATS;
+				setRandomEmpty(POWERUP);
+			}
 		}
-		
 		for(Character agent : agentFlags.keySet())
 		{
 			byte curFlag = agentFlags.get(agent);
 			curFlag &= CLEAR_AGENT_DIED & CLEAR_AGENT_STUN;
 			agentFlags.put(agent, curFlag);
 		}
+
+	}
+
+	public void setRandomEmpty(char target)
+	{
+
+		int row = (int)(Math.random() * (state.length-1));
+		int col = (int)(Math.random() * (state[row].length-1));
+		while(EMPTY != state[row][col])
+		{
+			row = (int)(Math.random() * (state.length-1));
+			col = (int)(Math.random() * (state[row].length-1));
+		}
+		state[row][col] = target;
+		location.put(target, ( ((long) row) | (((long) col) << 32) ));
 	}
 
 	public boolean isBug(char agent)
@@ -306,7 +316,7 @@ public class World implements Serializable
 		
 		while(null != curLine)
 		{
-			if(rows > retVal.state.length)
+			if(rows >= retVal.state.length)
 			{
 				char[][] state = new char[retVal.state.length*2][retVal.state[0].length];
 				for(int i = 0; i < retVal.state.length; i++)
