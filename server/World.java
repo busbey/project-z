@@ -99,10 +99,10 @@ public class World implements Serializable
 				case 'd':
 					newRow = (newRow + 1) % state.length;
 					break;
-				case 'l':
+				case 'r':
 					newCol = (newCol + 1) % state.length;
 					break;
-				case 'r':
+				case 'l':
 					newCol--;
 					while(0 > newCol)
 					{
