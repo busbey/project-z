@@ -195,12 +195,15 @@ public class World implements Serializable
 	public void stun(char agent, char by)
 	{
 		/* stun */
-		byte curFlag = agentFlags.get(agent);
-		curFlag |= SET_AGENT_STUN;
-		agentFlags.put(agent, curFlag);
-		curFlag = agentFlags.get(by);
-		curFlag |= SET_AGENT_STUN;
-		agentFlags.put(by, curFlag);
+		if(agentFlags.containsKey(agent) && agentFlags.containsKey(by))
+		{
+			byte curFlag = agentFlags.get(agent);
+			curFlag |= SET_AGENT_STUN;
+			agentFlags.put(agent, curFlag);
+			curFlag = agentFlags.get(by);
+			curFlag |= SET_AGENT_STUN;
+			agentFlags.put(by, curFlag);
+		}
 	}
 
 	public void roundsPassed(int num)
