@@ -72,16 +72,19 @@ import java.util.*;
 					try
 					{
 						byte agentVal = (byte)agent;
-						System.err.println("---Starting Agent '"+ (char)(agentVal)+"' (0x"+Integer.toHexString(agentVal)+")");
-						System.err.println("Writing flags: 0x" + Integer.toHexString(agentFlags));
+				//		System.err.println("---Starting Agent '"+ (char)(agentVal)+"' (0x"+Integer.toHexString(agentVal)+")");
+				//		System.err.println("Writing flags: 0x" + Integer.toHexString(agentFlags));
 						out.writeByte(agentFlags);
 						out.writeByte((byte)agent);
-						System.err.println("Starting World");
+				//		System.err.println("Starting World");
 						state.serialize(out);
 					}
 					catch(IOException ex)
 					{
-						System.err.println("Warning: problem writing to agent '"+ agent+"'\n");
+						if(state.isBug(agent) || state.isHunter(agent))
+						{
+							System.err.println("Warning: problem writing to agent '"+ agent+"'\n");
+						}
 					}
 				}
 			}

@@ -177,33 +177,42 @@ public class World implements Serializable
 	{
 		if(location.containsKey(target))
 		{
+			int row = (int)(Math.random() * (state.length-1));
+			int col = (int)(Math.random() * (state[row].length-1));
+			while(EMPTY != state[row][col])
+			{
+				row = (int)(Math.random() * (state.length-1));
+				col = (int)(Math.random() * (state[row].length-1));
+			}
+			state[row][col] = target;
+			location.put(target, ( ((long) row) | (((long) col) << 32) ));
+			byte curFlags = FLAGS_EMPTY;
+			if(agentFlags.containsKey(target))
+			{
+				curFlags = agentFlags.get(target);
+			}
+			curFlags |= SET_AGENT_DIED;
+			agentFlags.put(target, curFlags);
 		}
-		int row = (int)(Math.random() * (state.length-1));
-		int col = (int)(Math.random() * (state[row].length-1));
-		while(EMPTY != state[row][col])
-		{
-			row = (int)(Math.random() * (state.length-1));
-			col = (int)(Math.random() * (state[row].length-1));
-		}
-		state[row][col] = target;
-		location.put(target, ( ((long) row) | (((long) col) << 32) ));
-		byte curFlags = agentFlags.get(target);
-		curFlags |= SET_AGENT_DIED;
-		agentFlags.put(target, curFlags);
 	}
 
 	public void stun(char agent, char by)
 	{
 		/* stun */
-		if(agentFlags.containsKey(agent) && agentFlags.containsKey(by))
+		byte curFlag = FLAGS_EMPTY;
+		if(agentFlags.containsKey(agent))
 		{
-			byte curFlag = agentFlags.get(agent);
-			curFlag |= SET_AGENT_STUN;
-			agentFlags.put(agent, curFlag);
-			curFlag = agentFlags.get(by);
-			curFlag |= SET_AGENT_STUN;
-			agentFlags.put(by, curFlag);
+			curFlag = agentFlags.get(agent);
 		}
+		curFlag |= SET_AGENT_STUN;
+		agentFlags.put(agent, curFlag);
+		curFlag = FLAGS_EMPTY;
+		if(agentFlags.containsKey(by))
+		{
+			curFlag = agentFlags.get(by);
+		}
+		curFlag |= SET_AGENT_STUN;
+		agentFlags.put(by, curFlag);
 	}
 
 	public void roundsPassed(int num)
