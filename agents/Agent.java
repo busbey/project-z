@@ -13,15 +13,15 @@ public class Agent {
     
     private String hostname;
     private int port;
-
+    
     private DataInputStream inStream;
     private DataOutputStream outStream;
     private Socket socket;
     
     private int columns, rows, boardSize;
-
+    
     private Mover mover;
-
+    
     public static void main (String[] args) {
        	if (args.length < 3) {
 	    System.out.println("java Agent [hostname] [port] [name of Mover class]");
@@ -51,9 +51,9 @@ public class Agent {
 	catch (Exception e) {
 	    e.printStackTrace();
 	}
-
+	
     }
-
+    
     public Agent (String hostname, int port, Mover mover) {
 	this.hostname = hostname;
 	this.port = port;
@@ -98,71 +98,63 @@ public class Agent {
     public void runAgent () {
 	try {
 	    /* read first state to find size of board */
-	    //while (!socket.isClosed() && inStream.available() < 10) {}
-	    
+	    	    
 	    /* check for end of game (on first move? ridiculous) */
 	    byte flag = inStream.readByte();
-	   
+	    
 	    if (flag == 0xff)
 		return;
-
-	    boolean killerBug = (flag & 0x01) == 0x01;
+	    
 	    byte player = inStream.readByte();
 	    
 	    System.out.println("player: " + (char)(player));
 	    
 	    columns = inStream.readInt();
 	    rows = inStream.readInt();
-
+	    
 	    System.out.println("rows: " + rows + " columns: " + columns);
 	    boardSize = columns * rows;
-
-	    State state = new State(player, rows, columns);
-	    state.setKillerBug(killerBug);
 	    
-	    //while (!socket.isClosed() && inStream.available() < boardSize) {}
+	    State state = new State(player, rows, columns);
+	    state.setKillerBug((flag & 0x01) == 0x01);
 	    
 	    for (int i = 0; i < rows; i++) 
 		for (int j = 0; j < columns; j++) 
 		    state.changeBoard(i, j, inStream.readByte());
-				    
+	    
 	    Direction move = mover.respondToChange(state);
-		if(Direction.NONE != move)
-		{
-	    	System.out.println("I am moving " + move);
-			outStream.writeByte(move.getByte());
-			outStream.flush();
+	    if (Direction.NONE != move) {
+		System.out.println("I am moving " + move);
+		outStream.writeByte(move.getByte());
+		outStream.flush();
 	    }
 	    
 	    /* read the rest of them */
 	    while (!socket.isInputShutdown()) {
 		//if (inStream.available() >= (HEADER_SIZE + boardSize)) {
-		    /* check for end of game */
-		    flag = inStream.readByte();
-		    if (flag == 0xff)
-			{
-				break;
-			}
-		    state.setKillerBug((flag & 0x01) == 0x01);
-		    inStream.skip(HEADER_SIZE - 1);
-		    
-		    for (int i = 0; i < rows; i++) 
-			for (int j = 0; j < columns; j++) 
-			    state.changeBoard(i, j, inStream.readByte());
-		    
-		    move = mover.respondToChange(state);
-		    if (Direction.NONE != move) 
-			{
-		    	System.out.println("I am moving " + move);
-				outStream.writeByte(move.getByte());
-				outStream.flush();
-		    }
+		/* check for end of game */
+		flag = inStream.readByte();
+		if (flag == 0xff) {
+		    break;
+		}
+		state.setKillerBug((flag & 0x01) == 0x01);
+		inStream.skip(HEADER_SIZE - 1);
+		
+		for (int i = 0; i < rows; i++) 
+		    for (int j = 0; j < columns; j++) 
+			state.changeBoard(i, j, inStream.readByte());
+		
+		move = mover.respondToChange(state);
+		if (Direction.NONE != move) {
+		    System.out.println("I am moving " + move);
+		    outStream.writeByte(move.getByte());
+		    outStream.flush();
+		}
 		//}
 	    }
 	}
-	catch(EOFException eof)
-	{
-		System.out.println("Game has ended.");
+	catch(EOFException eof) {
+	    System.out.println("Game has ended.");
 	}
 	catch (Exception e) {
 	    e.printStackTrace();
