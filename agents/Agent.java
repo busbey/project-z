@@ -126,7 +126,6 @@ public class Agent {
 	    
 	    /* read the rest of them */
 	    while (!socket.isInputShutdown()) {
-		//if (inStream.available() >= (HEADER_SIZE + boardSize)) {
 		/* check for end of game */
 		flag = inStream.readByte();
 		if (flag == 0xff) {
@@ -140,7 +139,6 @@ public class Agent {
 			state.changeBoard(i, j, inStream.readByte());
 		
 		writeMove(mover.respondToChange(state));
-	       //}
 	    }
 	}
 	catch(EOFException eof) {
