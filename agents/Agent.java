@@ -101,17 +101,14 @@ public class Agent {
 	    	    
 	    /* check for end of game (on first move? ridiculous) */
 	    byte flag = inStream.readByte();
-	    
 	    if (flag == 0xff)
 		return;
 	    
 	    byte player = inStream.readByte();
-	    
 	    System.out.println("player: " + (char)(player));
 	    
 	    columns = inStream.readInt();
 	    rows = inStream.readInt();
-	    
 	    System.out.println("rows: " + rows + " columns: " + columns);
 	    boardSize = columns * rows;
 	    
