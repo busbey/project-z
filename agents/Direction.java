@@ -1,5 +1,6 @@
 public enum Direction {
 
+	NONE ('n'),
     UP ('u'),
     DOWN ('d'),
     LEFT ('l'),

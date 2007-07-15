@@ -11,7 +11,21 @@ public class Server
 	public static final int DEFAULT_DISPLAY_PORT = 8668;
 	public static final int DEFAULT_BUG_PORT = 7331;
 	public static final int DEFAULT_HUNTER_PORT = 1337;
-	public static final long DEFAULT_ROUND_TIME = 100;
+	public static final long DEFAULT_ROUND_TIME = 250;
+
+	Worker bug = null;
+	Worker hunter = null;
+	Worker display = null;
+
+	StateWorker state = null;
+
+	public void close()
+	{
+		state.close();
+		bug.close();
+		hunter.close();
+		display.close();
+	}
 
 	public static Server fromFile(String path) throws IOException
 	{
@@ -38,10 +52,11 @@ public class Server
 		HashMap<Character, Byte> actions = new HashMap<Character, Byte>();
 		HashMap<Character, DataOutputStream> clients = new HashMap<Character, DataOutputStream>();
 		StateWorker update = new StateWorker(state, actions, clients, roundTime);
-		Worker bug = new Worker('B', new ServerSocket(bugPort), clients, actions);
-		Worker hunter = new Worker('1', new ServerSocket(hunterPort), clients, actions);
-		Worker display = new Worker('d', new ServerSocket(displayPort), clients, actions);
+		bug = new Worker('B', new ServerSocket(bugPort), clients, actions);
+		hunter = new Worker('1', new ServerSocket(hunterPort), clients, actions);
+		display = new Worker('d', new ServerSocket(displayPort), clients, actions);
 		System.err.println("Starting state monitor thread.");
+		this.state = update;
 		Thread stateThread = new Thread(update);
 		stateThread.setDaemon(true);
 		stateThread.start();
@@ -64,8 +79,9 @@ public class Server
 		try
 		{
 			//new Server();
-			Server.fromFile(args[0]);
+			Server server = Server.fromFile(args[0]);
 			System.in.read();
+			server.close();
 		} catch (IOException ex)
 		{
 			System.err.println("Error: Couldn't create server.");

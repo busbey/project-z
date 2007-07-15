@@ -4,6 +4,7 @@ import java.net.UnknownHostException;
 import java.net.InetAddress;
 import java.io.DataOutputStream;
 import java.io.DataInputStream;
+import java.io.EOFException;
 import java.io.IOException;
 
 public class Agent {
@@ -126,19 +127,22 @@ public class Agent {
 		    state.changeBoard(i, j, inStream.readByte());
 				    
 	    Direction move = mover.respondToChange(state);
-	    System.out.println("I am moving " + move);
-	    if (move != Direction.NONE) {
-		outStream.writeByte(move.getByte());
-		outStream.flush();
+		if(Direction.NONE != move)
+		{
+	    	System.out.println("I am moving " + move);
+			outStream.writeByte(move.getByte());
+			outStream.flush();
 	    }
 	    
 	    /* read the rest of them */
-	    while (socket.isConnected()) {
-		if (inStream.available() >= (HEADER_SIZE + boardSize)) {
+	    while (!socket.isInputShutdown()) {
+		//if (inStream.available() >= (HEADER_SIZE + boardSize)) {
 		    /* check for end of game */
 		    flag = inStream.readByte();
 		    if (flag == 0xff)
-			return;
+			{
+				break;
+			}
 		    state.setKillerBug((flag & 0x01) == 0x01);
 		    inStream.skip(HEADER_SIZE - 1);
 		    
@@ -147,13 +151,18 @@ public class Agent {
 			    state.changeBoard(i, j, inStream.readByte());
 		    
 		    move = mover.respondToChange(state);
-		    System.out.println("I am moving " + move);
-		    if (move != Direction.NONE) {
-			outStream.writeByte(move.getByte());
-			outStream.flush();
+		    if (Direction.NONE != move) 
+			{
+		    	System.out.println("I am moving " + move);
+				outStream.writeByte(move.getByte());
+				outStream.flush();
 		    }
-		}
+		//}
 	    }
+	}
+	catch(EOFException eof)
+	{
+		System.out.println("Game has ended.");
 	}
 	catch (Exception e) {
 	    e.printStackTrace();

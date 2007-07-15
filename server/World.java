@@ -29,7 +29,7 @@ public class World implements Serializable
 	public static final char POWERUP = 'P';
 	public static final char EMPTY = ' ';
 
-	public static final double powerup = 0.02;	
+	public static final double powerup = 0.002;	
 	public static final double obstacle = 0.1;
 	public static final char[] valid = {' ', 'B', '1', '2', '3', '4', 'O', 'P'};
 	protected char[][] state = null; 
@@ -130,8 +130,7 @@ public class World implements Serializable
 			{
 				if(isBug(agent))
 				{
-					flags |= SET_BUG_EATS;
-					roundsToEat = DEFAULT_ROUNDS_TO_EAT;
+					bugEats();
 				}
 				move(row, col, newRow, newCol);
 			}
@@ -172,6 +171,12 @@ public class World implements Serializable
 				}
 			}
 		}
+	}
+
+	public void bugEats()
+	{
+		flags |= SET_BUG_EATS;
+		roundsToEat = DEFAULT_ROUNDS_TO_EAT;
 	}
 
 	public void move(int fromRow, int fromCol, int toRow, int toCol)
@@ -227,6 +232,10 @@ public class World implements Serializable
 
 	public void roundsPassed(int num)
 	{
+		if(FLAGS_GAME_END == flags)
+		{
+			return;
+		}
 		if(0 != (flags & SET_BUG_EATS))
 		{
 			roundsToEat -= num;
@@ -235,6 +244,10 @@ public class World implements Serializable
 				flags &= CLEAR_BUG_EATS;
 				setRandomEmpty(POWERUP);
 			}
+		}
+		else if(powerup > Math.random() )
+		{
+			setRandomEmpty(POWERUP);
 		}
 		for(Character agent : agentFlags.keySet())
 		{
@@ -250,10 +263,14 @@ public class World implements Serializable
 
 		int row = (int)(Math.random() * (state.length-1));
 		int col = (int)(Math.random() * (state[row].length-1));
-		while(EMPTY != state[row][col])
+		while(EMPTY != state[row][col] && POWERUP != state[row][col])
 		{
 			row = (int)(Math.random() * (state.length-1));
 			col = (int)(Math.random() * (state[row].length-1));
+		}
+		if(POWERUP == state[row][col] && isBug(target))
+		{
+			bugEats();
 		}
 		state[row][col] = target;
 		location.put(target, ( ((long) row) | (((long) col) << 32) ));
@@ -286,6 +303,7 @@ public class World implements Serializable
 
 	public void end()
 	{
+		System.err.println("Ending game...");
 		flags = FLAGS_GAME_END;
 	}
 
