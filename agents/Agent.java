@@ -127,8 +127,10 @@ public class Agent {
 				    
 	    Direction move = mover.respondToChange(state);
 	    System.out.println("I am moving " + move);
-	    outStream.writeByte(move.getByte());
-	    outStream.flush();
+	    if (move != Direction.NONE) {
+		outStream.writeByte(move.getByte());
+		outStream.flush();
+	    }
 	    
 	    /* read the rest of them */
 	    while (socket.isConnected()) {
@@ -146,8 +148,10 @@ public class Agent {
 		    
 		    move = mover.respondToChange(state);
 		    System.out.println("I am moving " + move);
-		    outStream.writeByte(move.getByte());
-		    outStream.flush();
+		    if (move != Direction.NONE) {
+			outStream.writeByte(move.getByte());
+			outStream.flush();
+		    }
 		}
 	    }
 	}
