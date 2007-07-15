@@ -122,12 +122,7 @@ public class Agent {
 		for (int j = 0; j < columns; j++) 
 		    state.changeBoard(i, j, inStream.readByte());
 	    
-	    Direction move = mover.respondToChange(state);
-	    if (Direction.NONE != move) {
-		System.out.println("I am moving " + move);
-		outStream.writeByte(move.getByte());
-		outStream.flush();
-	    }
+	    writeMove(mover.respondToChange(state));
 	    
 	    /* read the rest of them */
 	    while (!socket.isInputShutdown()) {
@@ -144,13 +139,8 @@ public class Agent {
 		    for (int j = 0; j < columns; j++) 
 			state.changeBoard(i, j, inStream.readByte());
 		
-		move = mover.respondToChange(state);
-		if (Direction.NONE != move) {
-		    System.out.println("I am moving " + move);
-		    outStream.writeByte(move.getByte());
-		    outStream.flush();
-		}
-		//}
+		writeMove(mover.respondToChange(state));
+	       //}
 	    }
 	}
 	catch(EOFException eof) {
@@ -158,6 +148,19 @@ public class Agent {
 	}
 	catch (Exception e) {
 	    e.printStackTrace();
+	}
+    }
+
+    private void writeMove (Direction move) {
+	System.out.println("I am moving " + move);
+	if (Direction.NONE != move) {	    
+	    try {
+		outStream.writeByte(move.getByte());
+		outStream.flush();
+	    }
+	    catch (Exception e) {
+		e.printStackTrace();
+	    }
 	}
     }
 
