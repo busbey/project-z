@@ -81,7 +81,6 @@ def random_string(rows, columns)
 end
 
 def read_state(f)
-<<<<<<< .mine
 	def pc(x) 
 		puts sprintf("%x", x)
 	end
@@ -98,27 +97,6 @@ def read_state(f)
 	puts text
 	text.gsub!(/[B-N]/) {|agent| agent.downcase } if (0x01 == flag & 0x01)
 	return rows, columns, text 
-=======
-		def pc(x) 
-			puts sprintf("%x", x)
-		end
-		flag = f.getc
-		pc flag
-		representation = f.getc
-		pc representation
-		columns = f.read(4).unpack("N*")[0]
-		rows = f.read(4).unpack("N*")[0]
-		pc columns
-		pc rows
-		text = ""
-		(rows * columns).times { text << f.getc }
-		if(0x01 == flag & 0x01)
-		{
-			text.gsub!(/[B-N]/) {|agent| agent.downcase }
-		}
-		puts text
-		return rows, columns, text 
->>>>>>> .r72
 end
 
 class ZDisplayClient
