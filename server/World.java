@@ -17,7 +17,7 @@ public class World implements Serializable
 	public static final byte CLEAR_AGENT_DIED = (byte)(0xFD);
 	public static final byte CLEAR_BUG_EATS = (byte)(0xFE);
 	
-	public static final int DEFAULT_ROUNDS_TO_EAT = 40;
+	public static final int DEFAULT_ROUNDS_TO_EAT = 100;
 	
 	protected int roundsToEat =0;
 
@@ -29,9 +29,9 @@ public class World implements Serializable
 	public static final char POWERUP = 'P';
 	public static final char EMPTY = ' ';
 
-	public static final double powerup = 0.002;	
+	public static final double powerup = 0.05;	
 	public static final double obstacle = 0.1;
-	public static final char[] valid = {' ', 'B', '1', '2', '3', '4', 'O', 'P'};
+	public static final char[] valid = {' ', 'B', 'C', '1', '2', '3', '4', 'O', 'P'};
 	protected char[][] state = null; 
 	protected byte flags = FLAGS_EMPTY;
 	HashMap<Character, Byte> agentFlags = new HashMap<Character, Byte>();
@@ -239,7 +239,7 @@ public class World implements Serializable
 		if(0 != (flags & SET_BUG_EATS))
 		{
 			roundsToEat -= num;
-			if(0 > roundsToEat)
+			if(0 >= roundsToEat)
 			{
 				flags &= CLEAR_BUG_EATS;
 				setRandomEmpty(POWERUP);
