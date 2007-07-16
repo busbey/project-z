@@ -55,6 +55,7 @@ class ZViewer < PApplet
 	end
 
 	def draw
+		background 0
 		vertical_offset = @small_tile_height / 2
 	
 		(0..@rows - 1).each { |r|
