@@ -29,7 +29,7 @@ public class World implements Serializable
 	public static final char POWERUP = 'P';
 	public static final char EMPTY = ' ';
 
-	public static final double powerup = 0.02;	
+	public static final double powerup = 0.007;	
 	public static final double obstacle = 0.1;
 	public static final char[] valid = {' ', 'B', 'C', '1', '2', '3', '4', 'O', 'P'};
 	protected char[][] state = null; 
