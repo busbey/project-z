@@ -129,4 +129,6 @@ def create_window(rows, columns)
 	applet
 end
 
-ZDisplayClient.new.connect("localhost")
+host = ARGV[0]
+host ||= "localhost"
+ZDisplayClient.new.connect(host)
