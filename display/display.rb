@@ -82,6 +82,10 @@ def read_state(f)
 		pc rows
 		text = ""
 		(rows * columns).times { text << f.getc }
+		if(0x01 == flag & 0x01)
+		{
+			text.gsub!(/[B-N]/) {|agent| agent.downcase }
+		}
 		puts text
 		return rows, columns, text 
 end
