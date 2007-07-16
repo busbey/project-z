@@ -1,13 +1,16 @@
+/**
+ * @file move according to input from a joystick
+ */
 import net.java.games.input.*;
 
-public class JoystickMover implements Mover
+public class JoystickMover extends UserInputMover
 {
-	public final static long POLL_WAIT = 5;
-
 	Component pad = null;
+	Controller controller = null;
 	
-	public JoystickMover(String[] args)
+	public JoystickMover()
 	{
+		super();
 		Controller[] controllers = ControllerEnvironment.getDefaultEnvironment().getControllers();
 		Controller joystick = null;
 		/* find the first joystick or gamepad. */
@@ -24,31 +27,17 @@ public class JoystickMover implements Mover
 		{
 			throw new RuntimeException("No controllers connected.");
 		}
-		final Controller controller = joystick;
-		System.err.println("Using controller '" + controller.getName() +"'");
-		pad = controller.getComponent(Component.Identifier.Axis.POV);
-	    Thread poll = new Thread(new Runnable()
-		{
-			public void run()
-			{
-				while(true)
-				{
-					controller.poll();
-					try
-					{
-						Thread.sleep(POLL_WAIT);
-					}
-					catch(Exception ex)
-					{
-					}
-				}
-			}
-		} ,"Controller Polling");	
-		poll.setDaemon(true);
-		poll.start();
+		System.err.println("Using controller '" + joystick.getName() +"'");
+		pad = joystick.getComponent(Component.Identifier.Axis.POV);
+		controller = joystick;
 	}
 
-    public Direction respondToChange (State newState)
+	protected void poll()
+	{
+		controller.poll();
+	}
+
+	protected Direction getData()
 	{
 		Direction ret = Direction.NONE;
 		float data = pad.getPollData();
