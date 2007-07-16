@@ -6,12 +6,12 @@ import java.util.Map;
 public class SmarterGreedyMover implements Mover {
     
     private Random random;
-    private byte goal;
+    private String goalRegex;
 
-    private final double PROBABILITY = 0.85;
+    private final double PROBABILITY = 0.7;
 
     public SmarterGreedyMover (String[] args) {
-	goal = (byte)(args[0].charAt(0));
+	goalRegex = args[0];
 	random = new Random();
     }
 	
@@ -22,8 +22,11 @@ public class SmarterGreedyMover implements Mover {
 
 	ArrayList<Position> myPositions =
 	    sortedByType.get(newState.getPlayer());
-	ArrayList<Position> goalPositions =
-	    sortedByType.get(goal);
+	
+	ArrayList<Position> goalPositions = new ArrayList<Position>();
+	for (byte type : sortedByType.keySet()) 
+	    if ((new String(new byte[] {type})).matches(goalRegex)) 
+		goalPositions.addAll(sortedByType.get(type));
 
 	if (myPositions == null || goalPositions == null)
 	    return randomMove();
@@ -71,7 +74,7 @@ public class SmarterGreedyMover implements Mover {
 	else
 	    move = randomMove();
    
-	System.out.println("The " + (char)(goal) + " is at (" +
+	System.out.println("The " + goalRegex + " is at (" +
 			   goalPosition.row() + ", " + 
 			   goalPosition.column() + "), I am at (" +
 			   myPosition.row() + ", " +
@@ -81,7 +84,8 @@ public class SmarterGreedyMover implements Mover {
 
     /* pick a move, yo! */
     private Direction randomMove () {
-	Direction[] values = Direction.values();
+	Direction[] values = {Direction.LEFT, Direction.RIGHT,
+			      Direction.UP, Direction.DOWN};
 	return values[random.nextInt(values.length)];
     }
     
