@@ -125,6 +125,7 @@ def create_window(rows, columns)
 	frame.content_pane.add applet
 	frame.default_close_operation = javax.swing.JFrame::EXIT_ON_CLOSE
 	applet.init
+	sleep 0.1
 	frame.pack
 	frame.visible = true
 	applet
