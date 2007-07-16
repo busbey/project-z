@@ -100,7 +100,7 @@ public class World implements Serializable
 					newRow = (newRow + 1) % state.length;
 					break;
 				case 'r':
-					newCol = (newCol + 1) % state.length;
+					newCol = (newCol + 1) % state[row].length;
 					break;
 				case 'l':
 					newCol--;
