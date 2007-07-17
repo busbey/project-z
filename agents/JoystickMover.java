@@ -34,28 +34,34 @@ public class JoystickMover extends UserInputMover
 
 	protected void poll()
 	{
-		controller.poll();
+		if(null != controller)
+		{
+			controller.poll();
+		}
 	}
 
 	protected Direction getData()
 	{
 		Direction ret = Direction.NONE;
-		float data = pad.getPollData();
-		if(Component.POV.UP == data)
+		if(null != pad)
 		{
-			ret = Direction.UP;
-		}
-		else if(Component.POV.DOWN == data)
-		{
-			ret = Direction.DOWN;
-		}
-		else if(Component.POV.LEFT == data)
-		{
-			ret = Direction.LEFT;
-		}
-		else if(Component.POV.RIGHT == data)
-		{
-			ret = Direction.RIGHT;
+			float data = pad.getPollData();
+			if(Component.POV.UP == data)
+			{
+				ret = Direction.UP;
+			}
+			else if(Component.POV.DOWN == data)
+			{
+				ret = Direction.DOWN;
+			}
+			else if(Component.POV.LEFT == data)
+			{
+				ret = Direction.LEFT;
+			}
+			else if(Component.POV.RIGHT == data)
+			{
+				ret = Direction.RIGHT;
+			}
 		}
 		return ret;
 	}

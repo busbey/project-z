@@ -76,12 +76,37 @@ public class Server
 
 	public static void main(String[] args)
 	{
+		boolean block = true;
+		Server server;
 		try
 		{
-			//new Server();
-			Server server = Server.fromFile(args[0]);
-			System.in.read();
-			server.close();
+			if(args.length > 0)
+			{
+				if("-b".equals(args[0]))
+				{
+					block = false;
+				}
+				if(!("-b".equals(args[args.length - 1])))
+				{
+					server = Server.fromFile(args[args.length - 1]);
+				}
+				else
+				{
+					server = new Server();
+				}
+			}
+			else
+			{
+				server = new Server();
+			}
+			if(block)
+			{
+				System.in.read();
+			}
+			else
+			{
+				while(true);
+			}
 		} catch (IOException ex)
 		{
 			System.err.println("Error: Couldn't create server.");

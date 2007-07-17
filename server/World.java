@@ -171,6 +171,10 @@ public class World implements Serializable
 				}
 			}
 		}
+		else
+		{
+			setRandomEmpty(agent);
+		}
 	}
 
 	public void bugEats()

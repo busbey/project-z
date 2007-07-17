@@ -30,23 +30,32 @@ public class Agent {
 	String hostname = args[0];
 	int port = Integer.parseInt(args[1]);
 	try {
-	    Class moverClass = Class.forName(args[2]);
-	    Mover moverToUse;
-	    try {
-		Constructor<Mover> moverConstructor = 
-		    moverClass.getConstructor(String[].class);
-		String[] moverArgs = new String[args.length - 3];
-		System.arraycopy(args, 3, moverArgs, 0, moverArgs.length); 
-		moverToUse = 
-		    moverConstructor.newInstance((Object)moverArgs);
-	    }
-	    catch (NoSuchMethodException e) {
-		moverToUse = (Mover) moverClass.newInstance();
-	    }
-	    Agent agent = new Agent(hostname, port, moverToUse);
-	    if (!agent.openConnection())
-		return;
-	    agent.runAgent();	
+		Class<Mover> moverClass = Mover.class;
+	    Class argClass = (Class.forName(args[2]));
+		if(moverClass.isAssignableFrom(argClass))
+		{
+			Object argClassInstance;
+	    	try {
+				Constructor argClassConstructor = argClass.getConstructor(String[].class);
+				String[] moverArgs = new String[args.length - 3];
+				System.arraycopy(args, 3, moverArgs, 0, moverArgs.length); 
+				argClassInstance = argClassConstructor.newInstance((Object)moverArgs);
+	    	}
+	    	catch (NoSuchMethodException e) {
+				argClassInstance = argClass.newInstance();
+	    	}
+			Mover moverToUse = moverClass.cast(argClassInstance);
+	    	Agent agent = new Agent(hostname, port, moverToUse);
+	    	if (!agent.openConnection())
+			{
+				return;
+			}
+	    	agent.runAgent();	
+		}
+		else
+		{
+			System.err.println("Could not instantiate your mover.  Make sure it implements Mover.");
+		}
 	}
 	catch (Exception e) {
 	    e.printStackTrace();

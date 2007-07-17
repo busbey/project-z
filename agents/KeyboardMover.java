@@ -12,6 +12,7 @@ public class KeyboardMover extends UserInputMover
 		{
 			if(0 < System.in.available())
 			{
+				System.in.skip(System.in.available() - 1);
 				lastKey = (char)System.in.read();
 			}
 		}
