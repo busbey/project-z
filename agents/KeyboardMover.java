@@ -1,45 +1,66 @@
 /**
  * @file move according to input from a keyboard
  */
+import net.java.games.input.*;
 
 public class KeyboardMover extends UserInputMover
 {
-	volatile char lastKey = 'n';
+	Keyboard keyboard = null;
 	
-	protected void poll()
+	public KeyboardMover()
 	{
-		try
+		super();
+		Controller[] controllers = ControllerEnvironment.getDefaultEnvironment().getControllers();
+		/* find the first joystick or gamepad. */
+		for(int i = 0; i < controllers.length; i++)
 		{
-			if(0 < System.in.available())
+			Controller.Type type = controllers[i].getType();
+			if(Controller.Type.KEYBOARD == type )
 			{
-				System.in.skip(System.in.available() - 1);
-				lastKey = (char)System.in.read();
+				keyboard = (Keyboard)controllers[i];
 			}
 		}
-		catch(Exception ex)
+
+		if(null == keyboard)
 		{
+			throw new RuntimeException("No keyboard connected.");
+		}
+		System.err.println("Using controller '" + keyboard.getName() +"'");
+	}
+
+	protected void poll()
+	{
+		if(null != keyboard)
+		{
+			keyboard.poll();
 		}
 	}
 
 	protected Direction getData()
 	{
 		Direction ret = Direction.NONE;
-		switch(lastKey)
+		if(null != keyboard)
 		{
-			case 'w':
+			if(keyboard.isKeyDown(Component.Identifier.Key.UP) ||
+				keyboard.isKeyDown(Component.Identifier.Key.W))
+			{
 				ret = Direction.UP;
-				break;
-			case 's':
+			}
+			else if(keyboard.isKeyDown(Component.Identifier.Key.DOWN) ||
+				keyboard.isKeyDown(Component.Identifier.Key.S))
+			{
 				ret = Direction.DOWN;
-				break;
-			case 'a':
+			}
+			else if(keyboard.isKeyDown(Component.Identifier.Key.LEFT) ||
+				keyboard.isKeyDown(Component.Identifier.Key.A))
+			{
 				ret = Direction.LEFT;
-				break;
-			case 'd':
+			}
+			else if(keyboard.isKeyDown(Component.Identifier.Key.RIGHT) ||
+				keyboard.isKeyDown(Component.Identifier.Key.D))
+			{
 				ret = Direction.RIGHT;
-				break;
-			default:
-				break;
+			}
 		}
 		return ret;
 	}
