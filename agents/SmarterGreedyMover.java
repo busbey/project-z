@@ -28,7 +28,7 @@ public class SmarterGreedyMover implements Mover {
 	    if ((new String(new byte[] {type})).matches(goalRegex)) 
 		goalPositions.addAll(sortedByType.get(type));
 
-	if (myPositions == null || goalPositions == null)
+	if (myPositions == null || goalPositions == null || goalPositions.size() == 0)
 	    return randomMove();
 
 	Position myPosition = myPositions.get(0);	
