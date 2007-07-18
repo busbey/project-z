@@ -25,7 +25,12 @@ import java.util.*;
 				end = System.currentTimeMillis();
 				if(end%5 == 0)
 				{
-					System.err.println("World \n{" + state.toString() + "\n}");
+					HashMap<Character, Long> score = state.getScores();
+					if(0 < score.size())
+					{
+						System.err.println("Current Scores: " + state.getScores().toString());
+					}
+				//	System.err.println("World \n{" + state.toString() + "\n}");
 				}
 				long toSleep = roundTime - (end - last);
 				if(0 < toSleep)
@@ -75,8 +80,8 @@ import java.util.*;
 					try
 					{
 						byte agentVal = (byte)agent;
-						System.err.println("---Starting Agent '"+ (char)(agentVal)+"' (0x"+Integer.toHexString(agentVal)+")");
-						System.err.println("Writing flags: 0x" + Integer.toHexString(agentFlags));
+			//			System.err.println("---Starting Agent '"+ (char)(agentVal)+"' (0x"+Integer.toHexString(agentVal)+")");
+			//			System.err.println("Writing flags: 0x" + Integer.toHexString(agentFlags));
 						out.writeByte(agentFlags);
 						out.writeByte((byte)agent);
 				//		System.err.println("Starting World");

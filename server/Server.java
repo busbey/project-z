@@ -102,6 +102,7 @@ public class Server
 			if(block)
 			{
 				System.in.read();
+				server.close();
 			}
 			else
 			{

@@ -19,6 +19,9 @@ public class World implements Serializable
 	
 	public static final int DEFAULT_ROUNDS_TO_EAT = 100;
 	
+	public static final long SCORE_BUG_KILL = 400;
+	public static final long SCORE_HUNTER_KILL = 100;
+	
 	protected int roundsToEat =0;
 
 	public static final char OBSTACLE = 'O';
@@ -36,6 +39,7 @@ public class World implements Serializable
 	protected byte flags = FLAGS_EMPTY;
 	HashMap<Character, Byte> agentFlags = new HashMap<Character, Byte>();
 	HashMap<Character, Long> location = new HashMap<Character, Long>();
+	HashMap<Character, Long> score = new HashMap<Character, Long>();
 
 	/** @brief create an uninitialized world */
 	protected World()
@@ -124,10 +128,12 @@ public class World implements Serializable
 			}
 			if(EMPTY == target)
 			{
+				//System.err.println("Target square is empty");
 				move(row, col, newRow, newCol);
 			}
 			else if(POWERUP == target)
 			{
+				//System.err.println("Agent " + agent + " has consumed powerup at [ " + row + " , " + col + " ]");
 				if(isBug(agent))
 				{
 					bugEats();
@@ -143,29 +149,37 @@ public class World implements Serializable
 				}
 				else
 				{
-					boolean bugLoses = 0 == (flags & SET_BUG_EATS);
+					boolean bugLoses = (0 == (flags & SET_BUG_EATS));
 					if(isHunter(agent))
 					{
 						if(bugLoses)
 						{
+							//System.err.println("Hunter " + agent + " kills Bug " + target);
 							kill(target, agent);
 							move(row, col, newRow, newCol);
+							setRandomEmpty(target);
 						}
 						else
 						{
+							//System.err.println("Hunter " + agent + " runs into Bug " + target + " and dies");
 							kill(agent, target);
+							setRandomEmpty(agent);
 						}
 					}
 					else if(isBug(agent))
 					{
 						if(bugLoses)
 						{
+							//System.err.println("Bug " + agent + " runs into Hunter " + target + " and dies");
 							kill(agent, target);
+							setRandomEmpty(agent);
 						}
 						else
 						{
+							//System.err.println("Bug " + agent + " kills Hunter " + target);
 							kill(target, agent);
 							move(row, col, newRow, newCol);
+							setRandomEmpty(target);
 						}
 					}
 				}
@@ -173,6 +187,7 @@ public class World implements Serializable
 		}
 		else
 		{
+			System.err.println("New Agent " + agent + " first appears.");
 			setRandomEmpty(agent);
 		}
 	}
@@ -185,21 +200,31 @@ public class World implements Serializable
 
 	public void move(int fromRow, int fromCol, int toRow, int toCol)
 	{
-		location.put(state[fromRow][fromCol],( ((long)toRow) | (((long)toCol) << 32)));
+		char agent = state[fromRow][fromCol];
+		//System.err.println("Moving " +agent+ " [ "+fromRow+" , "+fromCol+" ] =>  "+state[toRow][toCol]+" [ " + toRow +" , " + toCol + " ]");
+		location.put(agent, ( ((long)toRow) | (((long)toCol) << 32)));
+		//System.err.println("Previous World \n{" + this.toString() + "\n}");
 		state[toRow][toCol] = state[fromRow][fromCol];
 		state[fromRow][fromCol] = EMPTY;
+		//System.err.println("Current World \n{" + this.toString() + "\n}");
 	}
 
 	public void kill(char target, char by)
 	{
 		System.err.println("Agent " + target + " killed by " + by);
+		long oldScore = 0l;
+		if(score.containsKey(by))
+		{
+			oldScore = score.get(by);
+		}
+		oldScore += isBug(target) ? SCORE_BUG_KILL : SCORE_HUNTER_KILL;
+		score.put(by, oldScore);
 		if(location.containsKey(target))
 		{
 			long loc = location.get(target);
 			int row = (int)(loc & 0xFFFFFFFF);
 			int col = (int)(loc >>> 32);
 			state[row][col] = EMPTY;
-			setRandomEmpty(target);
 			byte curFlags = FLAGS_EMPTY;
 			if(agentFlags.containsKey(target))
 			{
@@ -276,7 +301,10 @@ public class World implements Serializable
 		{
 			bugEats();
 		}
+		//System.err.println("Spawning " + target + " [ "+row+" , "+col+" ]");
+		//System.err.println("Previous World \n{" + this.toString() + "\n}");
 		state[row][col] = target;
+		//System.err.println("Current World \n{" + this.toString() + "\n}");
 		location.put(target, ( ((long) row) | (((long) col) << 32) ));
 	}
 
@@ -308,6 +336,7 @@ public class World implements Serializable
 	public void end()
 	{
 		System.err.println("Ending game...");
+		System.err.println("\tScores: " + score.toString());
 		flags = FLAGS_GAME_END;
 	}
 
@@ -318,6 +347,7 @@ public class World implements Serializable
 	
 	public void put(int column, int row, char value)
 	{
+		//System.err.println("Setting "+ value +" [ "+row+" , "+column + " ]");
 		state[row][column] = value;
 	}
 
@@ -439,5 +469,12 @@ public class World implements Serializable
 			}
 		}
 		return ret.toString();
+	}
+
+	public HashMap<Character, Long> getScores()
+	{
+		HashMap<Character, Long> returnVal = new HashMap<Character, Long>();
+		returnVal.putAll(score);
+		return returnVal;
 	}
 }
