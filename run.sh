@@ -39,7 +39,7 @@ echo ". pid ${dspPid}"
 popd > /dev/null 2>&1
 
 # Attach agents
-pushd agents > /dev/null 2>&1
+pushd agents/java > /dev/null 2>&1
 if [ ! -f "Agent.class" ]; then
 	echo "Compiling agents..."
     javac Agent.java
