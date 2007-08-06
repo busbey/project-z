@@ -7,16 +7,18 @@ import java.net.*;
 		ServerSocket incoming;
 		HashMap<Character, DataOutputStream> out;
 		HashMap<Character, Byte> in;
+		HashMap<Character, ChatMessage> chats;
 		boolean gameRunning = true;
 		char agentStart = '\0';
 
 		ArrayList<AgentThread> clients = new ArrayList<AgentThread>();
 		
-		Worker(char agentStart, ServerSocket incoming, HashMap<Character, DataOutputStream> out, HashMap<Character, Byte> in)
+		Worker(char agentStart, ServerSocket incoming, HashMap<Character, DataOutputStream> out, HashMap<Character, Byte> in, HashMap<Character, ChatMessage> chats)
 		{
 			this.incoming = incoming;
 			this.out = out;
 			this.in = in;
+			this.chats = chats;
 			this.agentStart = agentStart;
 		}
 
@@ -93,25 +95,57 @@ import java.net.*;
 						{
 							try
 							{
-								byte action = inStream.readByte();
-								/*
-								switch(action)
+								byte firstByte = inStream.readByte();
+								/* XXX I apologize.  Java is not my friend for parsing and validating single characters. */
+								switch(firstByte)
 								{
 									case 'l':
 									case 'r':
 									case 'u':
 									case 'd':
-										System.err.println("Not Warning: read valid action '"+action+"' from agent " + agent);
+									case 'n':
+										/* 'i move' case */
+										synchronized(in)
+										{
+											in.put(agent, firstByte);
+										}
 										break;
 									default:
-										System.err.println("Warning: invalid action '"+action+"' read from agent " + agent);
+										/* 
+											validate 'i say' case 
+										   	in case of invalid message, 
+										   	throw away what we have an move on. 
+										 */
+										if(	('1' <= firstByte && '9' >= firstByte) ||
+											('B' <= firstByte && 'N' >= firstByte))
+										{
+											byte speaker = firstByte;
+											byte subject = inStream.readByte();
+											byte action = inStream.readByte();
+											if( ('1' <= subject && '9' >= subject) ||
+												('B' <= subject && 'N' >= subject))
+											{
+												/* valid subject */
+												switch(action)
+												{
+													case 'l':
+													case 'r':
+													case 'u':
+													case 'd':
+													case 'n':
+														/* valid action */
+														synchronized(chats)
+														{
+															chats.put(agent, new ChatMessage(speaker, subject, action));
+														}
+													default:
+													break;
+												}
+											}
+										}
 										break;
 								}
-								*/
-								synchronized(in)
-								{
-									in.put(agent, action);
-								}
+									
 							}
 							catch(Exception ex)
 							{

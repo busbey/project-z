@@ -7,13 +7,15 @@ import java.util.*;
 		long roundTime;
 		World state;
 		HashMap<Character, Byte> actions;
+		HashMap<Character, ChatMessage> chats;
 		
-		StateWorker(World state, HashMap<Character, Byte> actions, HashMap<Character, DataOutputStream> clients, long roundTime)
+		StateWorker(World state, HashMap<Character, Byte> actions, HashMap<Character, ChatMessage> chats, HashMap<Character, DataOutputStream> clients, long roundTime)
 		{
 			this.clients = clients;
 			this.roundTime = roundTime;
 			this.state = state;
 			this.actions = actions;
+			this.chats = chats;
 		}
 
 		public void run()
@@ -72,6 +74,8 @@ import java.util.*;
 			{
 			synchronized(state)
 			{
+			synchronized(chats)
+			{
 				for(Map.Entry<Character, DataOutputStream> entry : clients.entrySet())
 				{
 					char agent = entry.getKey();
@@ -86,6 +90,10 @@ import java.util.*;
 						out.writeByte((byte)agent);
 				//		System.err.println("Starting World");
 						state.serialize(out);
+						for(Map.Entry<Character, ChatMessage> message : chats.entrySet())
+						{
+							message.getValue().serialize(out);
+						}
 						out.flush();
 					}
 					catch(IOException ex)
@@ -100,6 +108,7 @@ import java.util.*;
 						}
 					}
 				}
+			}
 			}
 			}
 		}

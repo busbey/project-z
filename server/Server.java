@@ -51,10 +51,13 @@ public class Server
 	{
 		HashMap<Character, Byte> actions = new HashMap<Character, Byte>();
 		HashMap<Character, DataOutputStream> clients = new HashMap<Character, DataOutputStream>();
-		StateWorker update = new StateWorker(state, actions, clients, roundTime);
-		bug = new Worker('B', new ServerSocket(bugPort), clients, actions);
-		hunter = new Worker('1', new ServerSocket(hunterPort), clients, actions);
-		display = new Worker('d', new ServerSocket(displayPort), clients, actions);
+		HashMap<Character, ChatMessage> chats = new HashMap<Character, ChatMessage>();
+		
+		StateWorker update = new StateWorker(state, actions, chats, clients, roundTime);
+		bug = new Worker('B', new ServerSocket(bugPort), clients, actions, chats);
+		hunter = new Worker('1', new ServerSocket(hunterPort), clients, actions, chats);
+		display = new Worker('d', new ServerSocket(displayPort), clients, actions, chats);
+		
 		System.err.println("Starting state monitor thread.");
 		this.state = update;
 		Thread stateThread = new Thread(update);
