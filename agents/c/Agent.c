@@ -3,25 +3,33 @@
  */
 
 #include "Agent.h"
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <netdb.h>
-#include <unistd.h>
-#include <arpa/inet.h>
-#include <stdlib.h>
+#include <sys/socket.h>	/* socket, connect */
+#include <netinet/in.h> /* sockaddr_in */
+#include <netdb.h> 		/* gethostinfo */
+#include <unistd.h> 	/* read write */
+#include <arpa/inet.h> 	/* ntohl */
+#include <stdlib.h> 	/* strtol */
+#include <stdio.h> 		/* fprintf */
+#include <string.h> 	/* memset */
 
 #define FLAGS_GAME_END 0xFF
 #define FLAGS_BUG_KILLS 0x01
 #define FLAGS_AGENT_DIED 0x02
 #define FLAGS_AGENT_STUN 0x04
 
+#ifdef DEBUG
+	#define DBG_PRINT(x) fprintf x
+#else
+	#define DBG_PRINT(x) 
+#endif
+
 /** @brief set up our socket. */
 int
-create_socket(char* hostname, unsigned short int port)
+createSocket(char* hostname, unsigned short int port)
 {
 	struct hostent* host;
 	struct sockaddr_in address = {0};
-	int socket = -1;
+	int socketfd = -1;
 
 	if(NULL == hostname)
 	{
@@ -34,25 +42,25 @@ create_socket(char* hostname, unsigned short int port)
 	host = gethostbyname(hostname);
 	if(NULL == host)
 	{
-		herror("Could not resolve server name");
+		herror("Could not resolve server name\n");
 		exit(-1);
 	}
 
 	address.sin_addr = *((struct in_addr *)(host->h_addr));
 
-	socket = socket(PF_INET, SOCK_STREAM, 0);
-	if(-1 == socket)
+	socketfd = socket(PF_INET, SOCK_STREAM, 0);
+	if(-1 == socketfd)
 	{
 		fprintf(stderr, "Failed to create socket.\n");
 		exit(-1);
 	}
 
-	if(-1 == connect(socket, (struct sockaddr *)(&address), sizeof(address)))
+	if(-1 == connect(socketfd, (struct sockaddr *)(&address), sizeof(address)))
 	{
-		fprintf(stderr, "Failed to connect socket to server.");
+		fprintf(stderr, "Failed to connect socket to server.\n");
 		exit(-1);
 	}
-	return socket;
+	return socketfd;
 }
 
 /** @brief write given move to the server */
@@ -96,21 +104,21 @@ void releaseState(State* state)
 {
 	if(NULL != state)
 	{
-		if(NULL != board)
+		if(NULL != state->board)
 		{
 			int index;
-			for(index = 0; index < numRows; index++)
+			for(index = 0; index < state->rows; index++)
 			{
-				if(NULL != board[index])
+				if(NULL != state->board[index])
 				{
-					free(board[index]);
+					free(state->board[index]);
 				}
 			}
-			free(board);
+			free(state->board);
 		}
 		if(NULL != state->messages)
 		{
-			free(messages);
+			free(state->messages);
 		}
 		free(state);
 	}
@@ -122,8 +130,8 @@ readState(int socket)
 {
 	union 
 	{
-		unsigned char byte,
-		unsigned int  integer,
+		unsigned char byte;
+		unsigned int  integer;
 	}				buf = {0};
 	ssize_t			bytesRead = -1;
 	unsigned int	index = 0;
@@ -136,6 +144,7 @@ readState(int socket)
 		fprintf(stderr, "Error reading game state flags.\n");
 		exit(-1);
 	}
+	DBG_PRINT((stderr, "Game flags %#8X\n", buf.byte));
 	if((FLAGS_GAME_END & (buf.byte)) == FLAGS_GAME_END)
 	{
 		state->gameOver = TRUE;
@@ -161,11 +170,12 @@ readState(int socket)
 		fprintf(stderr, "Error reading agent's character.\n");
 		exit(-1);
 	}
+	DBG_PRINT((stderr, "Running as Agent %c\n", buf.byte));
 	state->player = buf.byte;
 	bytesRead = read(socket, &(buf.integer), 4);
 	if(4 != bytesRead)
 	{
-		fprintf(stderr, "Error reading number of columns\n");
+		fprintf(stderr, "Error reading number of columns.  only read %d bytes\n", (unsigned int)bytesRead);
 		exit(-1);
 	}
 	buf.integer = ntohl(buf.integer);
@@ -173,11 +183,12 @@ readState(int socket)
 	bytesRead = read(socket, &(buf.integer), 4);
 	if(4 != bytesRead)
 	{
-		fprintf(stderr, "Error reading number of rows\n");
+		fprintf(stderr, "Error reading number of rows. only read %d bytes\n", (unsigned int)bytesRead);
 		exit(-1);
 	}
 	buf.integer = ntohl(buf.integer);
 	state->rows = buf.integer;
+	DBG_PRINT((stderr, "Board is %dx%d\n", state->rows, state->cols));
 	state->board = malloc(state->rows * sizeof(*(state->board)));
 	if(NULL == state->board)
 	{
@@ -207,17 +218,18 @@ readState(int socket)
 		exit(-1);
 	}
 	buf.integer = ntohl(buf.integer);
-	state->numChats = buf.integer;
-	if(0 < state->numChats)
+	state->numMessages = buf.integer;
+	DBG_PRINT((stderr, "%d chat messages this turn.\n", state->numMessages));
+	if(0 < state->numMessages)
 	{
-		state->chats = malloc(state->numChats * sizeof(ChatMessage));
-		if(NULL == state->chats)
+		state->messages = malloc(state->numMessages * sizeof(ChatMessage));
+		if(NULL == state->messages)
 		{
-			fprintf(stderr, "Error allocating memory for chats");
+			fprintf(stderr, "Error allocating memory for chats\n");
 			exit(-1);
 		}
-		memset(state->chats, 0, state->numChats*sizeof(ChatMessage));
-		for(index = 0; index < state->numChats; index++)
+		memset(state->messages, 0, state->numMessages * sizeof(ChatMessage));
+		for(index = 0; index < state->numMessages; index++)
 		{
 			bytesRead = read(socket, &(buf.byte),1); 
 			if(1 != bytesRead)
@@ -225,30 +237,30 @@ readState(int socket)
 				fprintf(stderr, "Error reading chat message.\n");
 				exit(-1);
 			}
-			(state->chats[index]).speaker = buf.byte;
+			(state->messages[index]).speaker = buf.byte;
 			bytesRead = read(socket, &(buf.byte),1); 
 			if(1 != bytesRead)
 			{
 				fprintf(stderr, "Error reading chat message.\n");
 				exit(-1);
 			}
-			(state->chats[index]).subject = buf.byte;
+			(state->messages[index]).subject = buf.byte;
 			bytesRead = read(socket, &(buf.byte),1); 
 			if(1 != bytesRead)
 			{
 				fprintf(stderr, "Error reading chat message.\n");
 				exit(-1);
 			}
-			(state->chats[index]).action = buf.byte;
+			(state->messages[index]).action = buf.byte;
 		}
 	}
 	return state;
 }
 
 static
-void usage()
+void usage(char* name)
 {
-	fprintf(stdout, "usage: agent [-h host] [-p port] [args*]\n");
+	fprintf(stdout, "usage: %s [-h host] [-p port] [args*]\n", name);
 }
 
 /** @brief program execution */
@@ -263,24 +275,34 @@ main(int argc, char **argv)
 
 	if(1 < argc)
 	{
-		if(argv[0][0] == '-')
+		if((argv[1][0] == '-' && argv[1][1] == '?') ||
+			(0 == strncasecmp("--help", argv[1], 7)))
 		{
-			if(argv[0][1] == 'h')
+				usage(argv[0]);
+				exit(0);
+		}
+	}
+	argsUsed++;
+	if(2 < argc)
+	{
+		if(argv[1][0] == '-')
+		{
+			if(argv[1][1] == 'h')
 			{
-				host = argv[1];
+				host = argv[2];
 				argsUsed+=2;
 				if(3 < argc)
 				{
-					if(argv[2][0] == '-' && argv[2][1] == 'p')
+					if(argv[3][0] == '-' && argv[3][1] == 'p')
 					{
-						port = strtol(argv[3], NULL, 0);
+						port = strtol(argv[4], NULL, 0);
 						argsUsed+=2;
 					}
 				}
 			}
-			else if(argv[0][1] == 'p')
+			else if(argv[1][1] == 'p')
 			{
-				port = strtol(argv[1], NULL, 0);
+				port = strtol(argv[2], NULL, 0);
 				argsUsed+=2;
 			}
 		}
@@ -306,4 +328,5 @@ main(int argc, char **argv)
 	}
 	close(socket);
 	fprintf(stdout, "Game has ended.\n");
+	return (0);
 }

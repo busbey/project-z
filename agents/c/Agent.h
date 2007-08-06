@@ -16,17 +16,16 @@ typedef struct ChatMessage
 
 typedef struct State
 {
-	unsigned char	bugKills:1,
+	unsigned int	bugKills:1,
 					stunned:1,
-					killed:1
-					gameOver:1,
-					:5;
+					killed:1,
+					gameOver:1;
 	unsigned char 	player;
 	unsigned int 	rows;
 	unsigned int 	cols;
 	unsigned char**	board;
-	unsigned int	numChats;
-	ChatMessage		messages[];
+	unsigned int	numMessages;
+	ChatMessage*	messages;
 } State;
 
 /** Functions you'll have to implement */
