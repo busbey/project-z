@@ -90,6 +90,7 @@ import java.util.*;
 						out.writeByte((byte)agent);
 				//		System.err.println("Starting World");
 						state.serialize(out);
+						out.writeInt(chats.size());
 						for(Map.Entry<Character, ChatMessage> message : chats.entrySet())
 						{
 							message.getValue().serialize(out);
