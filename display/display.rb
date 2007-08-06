@@ -86,18 +86,21 @@ def read_state(f)
 		puts sprintf("%x", x)
 	end
 	flag = f.getc
-	pc flag
+	puts "flags: " + flag.to_s(16)
 	representation = f.getc
-	pc representation
+	puts "I'm display '" + representation.chr + "'"
 	columns = f.read(4).unpack("N*")[0]
 	rows = f.read(4).unpack("N*")[0]
-	pc columns
-	pc rows
+	puts "board is col x row: " + columns.to_s + " x " + rows.to_s
 	text = ""
 	(rows * columns).times { text << f.getc }
-	puts text
 	text.gsub!(/[B-N]/) {|agent| agent.downcase } if (0x01 == flag & 0x01)
-	return rows, columns, text 
+	puts "board : " + text
+	numChats = f.read(4).unpack("N*")[0]
+	puts "chat messages this round: " + numChats.to_s
+	chats = Array.new
+	numChats.times { chats << [f.getc, f.getc, f.getc] }
+	return rows, columns, text, chats 
 end
 
 class ZDisplayClient
@@ -108,9 +111,14 @@ class ZDisplayClient
 			puts "error: #{$!}"
 		else
 			while true
-				rows, columns, text = read_state(t)
+				rows, columns, text, chats = read_state(t)
 				viewer ||= create_window(rows, columns)
 				viewer.text = text
+				unless chats.empty?
+					chats.each do |speaker, subject, action| 
+						puts "'" + speaker + "' says " + subject + " should move " + action + "\n"
+					end
+				end
 			end
 		end
 	end
@@ -119,7 +127,7 @@ end
 #rows, columns, text = read_state(File.open("test.dat", "rb"))
 
 def create_window(rows, columns)
-	frame = javax.swing.JFrame.new "RGB Cube"
+	frame = javax.swing.JFrame.new "Bug Hunter"
 	applet = ZViewer.new(rows, columns)
 	applet.text = " " * rows * columns
 	frame.content_pane.add applet
