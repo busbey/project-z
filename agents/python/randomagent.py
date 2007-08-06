@@ -27,7 +27,8 @@ class RandomAgent(agent.Agent):
     moves = ['u', 'd', 'l', 'r', 'n']
     
     def respondToChange (self):
-        return random.choice(RandomAgent.moves)
+        self.writeMove(random.choice(RandomAgent.moves))
+        self.sendMessage(self.state.player, self.state.player, random.choice(RandomAgent.moves))
 
 if __name__ == '__main__':
     main(sys.argv[1:])
