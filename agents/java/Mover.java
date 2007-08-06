@@ -8,6 +8,6 @@
 
 public interface Mover {
 
-    public Direction respondToChange (State newState);
+    public void respondToChange (State newState);
 
 }
