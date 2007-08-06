@@ -29,14 +29,14 @@ class Agent(object):
         self.port = port
         self.state = None
         self.openSocket()
-        self.handleCommunications()
+        self.runAgent()
         sys.exit(0)
 
     def openSocket (self):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.connect( (self.host, int(self.port)) )
 
-    def handleCommunications (self):
+    def runAgent (self):
         while True:
             flag = struct.unpack("B", self.sock.recv(1))[0]
             if (flag == 0xff):
@@ -62,7 +62,7 @@ class Agent(object):
             for i in range(0, rows):
                 for j in range(0, columns):
                     self.state.changeBoard(i, j, self.sock.recv(1))
-            print 'board: \n' + self.state.boardString
+            print 'board: \n' + self.state.boardString()
                         
             messages = self.readInteger()
             print 'messages: %d' % messages 
@@ -123,8 +123,11 @@ class State:
 
     def boardString (self):
         result = ''
-        for i in range(0, rows):
-            result = result + ''.join(board[(i * columns):((i + 1) * columns) - 1]) + '\n'
+        for i in range(0, self.rows):
+            result = result + ''.join(self.board[(i * self.columns):((i + 1) * self.columns)])
+            if (i < self.rows - 1):
+                result = result + '\n'
+
         return result
 
 if __name__ == '__main__':
