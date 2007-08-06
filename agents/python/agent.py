@@ -62,7 +62,7 @@ class Agent(object):
             for i in range(0, rows):
                 for j in range(0, columns):
                     self.state.changeBoard(i, j, self.sock.recv(1))
-            print 'board: ' + str(self.state.board)
+            print 'board: \n' + self.state.boardString
                         
             messages = self.readInteger()
             print 'messages: %d' % messages 
@@ -120,6 +120,12 @@ class State:
 
     def addMessage (self, speaker, subject, action):
         self.messages.append( (speaker, subject, action) )
+
+    def boardString (self):
+        result = ''
+        for i in range(0, rows):
+            result = result + ''.join(board[(i * columns):((i + 1) * columns) - 1]) + '\n'
+        return result
 
 if __name__ == '__main__':
     main(sys.argv[1:])
