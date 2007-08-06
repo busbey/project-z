@@ -38,7 +38,7 @@ class SmarterAgent(agent.Agent):
     def respondToChange (self):
         searcher = re.compile(self.regex)
         places = []
-        playerPosition = ()
+        position = ()
         for i in range(0, self.state.rows):
             for j in range(0, self.state.columns):
                 if (searcher.search(self.state.readBoard(i, j))):
