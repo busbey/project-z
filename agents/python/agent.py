@@ -49,14 +49,16 @@ class Agent(object):
             print 'player: ' + player
 
             columns = self.readInteger()
-            print 'columns: %d' % columns
-            
             rows = self.readInteger()
-            print 'rows: %d' % rows
+            print 'rows: %d columns: %d' % (rows, columns)
             
             if (self.state == None):
                 self.state = State(player, rows, columns)
+
             self.state.killerBug = ((flag & 0x01) == 0x01)
+            self.state.wasKilled = ((flag & 0x02) == 0x02)
+            self.state.wasStunned = ((flag & 0x04) == 0x04)
+
             for i in range(0, rows):
                 for j in range(0, columns):
                     self.state.changeBoard(i, j, self.sock.recv(1))
@@ -97,6 +99,8 @@ class Agent(object):
 class State:
     def __init__ (self, player, rows, columns):
         self.killerBug = False
+        self.wasStunned = False
+        self.wasKilled = False
         self.player = player
         self.rows = rows
         self.columns = columns
