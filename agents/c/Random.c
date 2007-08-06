@@ -15,6 +15,12 @@ void respondToChange(int socket, State* newState)
 {
 	const unsigned char MOVES[] = {'u','d','l','r','n'};
 	int move = (rand())%sizeof(MOVES);
+	ChatMessage message={0};
 	(void)newState;
 	writeMoveToServer(socket, MOVES[move]);
+	move = (rand())%sizeof(MOVES);
+	message.speaker = newState->player;
+	message.subject = newState->player;
+	message.action = move;
+	writeChatToServer(socket, &message);
 }
