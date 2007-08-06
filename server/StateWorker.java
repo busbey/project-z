@@ -108,6 +108,7 @@ import java.util.*;
 						}
 					}
 				}
+				chats.clear();
 			}
 			}
 			}
