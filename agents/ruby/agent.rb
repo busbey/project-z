@@ -28,7 +28,7 @@ end
 class Agent
 	attr_reader :socket
 	@@moves = {:up => 'u', :down => 'd', :left => 'l', :right => 'r', :none => 'n' }
-	def initialize(hostname, port)
+	def initialize(hostname, port, params)
 		@socket = TCPSocket::new(hostname, port)
 	end
 
@@ -74,7 +74,7 @@ class Agent
 
 			columns = read_int
 			rows = read_int
-			debug "rows: #{rows} colunns: #{columns}"
+			debug "rows: #{rows} columns: #{columns}"
 			@state ||= State.new(player, rows, columns)
 			@state.killer_bug = ((flag & 0x01) == 0x01)
 			@state.was_killed = ((flag & 0x02) == 0x02)
@@ -96,20 +96,17 @@ class Agent
 				debug 'message: ' + speaker + ' says ' + subject + ' should move ' + action
 				@state.messages << [speaker, subject, action]
 			}
-			respond_to_change
+			respond_to_change @state
 		end
 	end
 end
 
-def start_agent(agent_name)
-	opts = GetoptLong.new(
-		[ '--help', GetoptLong::NO_ARGUMENT],
-      		[ '--host', '-h', GetoptLong::REQUIRED_ARGUMENT ],
-      		[ '--port', '-p', GetoptLong::REQUIRED_ARGUMENT ]
-	)
-
+def start_agent(agent_name, *extra_opts)
+	extra_opts << [ '--help', GetoptLong::NO_ARGUMENT] << [ '--host', '-h', GetoptLong::REQUIRED_ARGUMENT ] << ['--port', '-p', GetoptLong::REQUIRED_ARGUMENT ]
+	opts = GetoptLong.new(*extra_opts)
     	hostname = "localhost"
 	port = nil
+	params = {}
 	opts.each do |opt, arg|
 		case opt
         	when '--help'
@@ -118,10 +115,12 @@ def start_agent(agent_name)
           		hostname = arg
         	when '--port'
           		port = arg.to_i
-      		end
+      		else
+			params[opt] = arg 
+		end
     	end
 	if port
-		Kernel.const_get(agent_name).new(hostname, port).run
+		Kernel.const_get(agent_name).new(hostname, port, params).run
 	else
 		usage
 	end
