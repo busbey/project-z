@@ -5,7 +5,7 @@ require 'rdoc/ri/ri_paths'
 require 'rdoc/usage'
 
 class State
-	attr_accessor :messages, :killer_bug, :was_killed, :player, :rows, :columns, :board
+	attr_accessor :messages, :killer_bug, :was_stunned, :was_killed, :player, :rows, :columns, :board
 	def initialize(player, rows, columns)
 		@killer_bug = false
 		@was_stunned = false
@@ -36,12 +36,12 @@ class Agent
 		puts msg
 	end
 	def write_move(move)
-		move_str = @@moves[state]
+		move_str = @@moves[move]
 		raise "Invalid move: #{move}" unless move
-		@socket.send move_str
+		@socket << move_str
 	end
 	
-	def write_chat(speaker, subject, action)
+	def write_message(speaker, subject, action)
 		debug "sending: #{speaker} says #{subject} should move #{action}"
 		[speaker, subject, action].each {|m| @socket << m}
 	end
@@ -52,11 +52,11 @@ class Agent
 	end
 
 	def read_int
-		@socket.readbytes(4).unpack('N')[0]
+		@socket.read(4).unpack('N')[0]
 	end
 
 	def read_char
-		@socket.readbytes(1)
+		@socket.read(1)
 	end
 
 	def run
@@ -66,6 +66,7 @@ class Agent
 				@socket.close
 				return
 			end
+			flag = flag[0]
 			debug "flag: #{flag}"
 
 			player = read_char
@@ -80,18 +81,20 @@ class Agent
 			@state.was_stunned = ((flag & 0x04) == 0x04)
 			(0...rows).each { |r|
 				(0...columns).each { |c|
-					@state[r][c] = read_char
+					@state.board[r][c] = read_char
 				}
 			}
 			debug "board:"
-			debug state.board_string
+			debug @state.board_string
 			
+			@state.messages.clear
 			message_count = read_int
 			(0...message_count).each { |i|
 				speaker = read_char
 				subject = read_char
 				action = read_char
 				debug 'message: ' + speaker + ' says ' + subject + ' should move ' + action
+				@state.messages << [speaker, subject, action]
 			}
 			respond_to_change
 		end
@@ -118,7 +121,7 @@ def start_agent(agent_name)
       		end
     	end
 	if port
-		Kernel.const_get(agent_name).new(hostname, port)
+		Kernel.const_get(agent_name).new(hostname, port).run
 	else
 		usage
 	end
