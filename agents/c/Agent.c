@@ -67,6 +67,7 @@ createSocket(char* hostname, unsigned short int port)
 void writeMoveToServer(int socket, char move)
 {
 	ssize_t bytesWritten = -1;
+	DBG_PRINT((stdout, "Telling server to perform move '%c'\n", move));
 	bytesWritten = write(socket, &(move), 1);
 	if(1 != bytesWritten)
 	{
@@ -79,6 +80,7 @@ void writeMoveToServer(int socket, char move)
 void writeChatToServer(int socket, ChatMessage* chat)
 {
 	ssize_t bytesWritten = -1;
+	DBG_PRINT((stdout, "Writing chat message: %c says %c should move '%c'\n",chat->speaker, chat->subject, chat->action));
 	bytesWritten = write(socket, &(chat->speaker), 1);
 	if(1 != bytesWritten)
 	{
@@ -131,6 +133,7 @@ readState(int socket)
 	union 
 	{
 		unsigned char byte;
+		unsigned char intbytes[4];
 		unsigned int  integer;
 	}				buf = {0};
 	ssize_t			bytesRead = -1;
@@ -172,19 +175,39 @@ readState(int socket)
 	}
 	DBG_PRINT((stderr, "Running as Agent %c\n", buf.byte));
 	state->player = buf.byte;
-	bytesRead = read(socket, &(buf.integer), 4);
-	if(4 != bytesRead)
+	bytesRead = read(socket, &(buf.intbytes[0]), 4);
+	if(0 >= bytesRead)
 	{
-		fprintf(stderr, "Error reading number of columns.  only read %d bytes\n", (unsigned int)bytesRead);
+		fprintf(stderr, "Error reading number of columns.\n");
 		exit(-1);
+	}
+	while(4 > bytesRead)
+	{
+		int result = read(socket, &(buf.intbytes[bytesRead]), 4 - bytesRead);
+		if(0 >= result)
+		{
+			fprintf(stderr, "Error reading number of columns.\n");
+			exit(-1);
+		}
+		bytesRead += result;
 	}
 	buf.integer = ntohl(buf.integer);
 	state->cols = buf.integer;
 	bytesRead = read(socket, &(buf.integer), 4);
-	if(4 != bytesRead)
+	if(0 >= bytesRead)
 	{
-		fprintf(stderr, "Error reading number of rows. only read %d bytes\n", (unsigned int)bytesRead);
+		fprintf(stderr, "Error reading number of rows.\n");
 		exit(-1);
+	}
+	while(4 > bytesRead)
+	{
+		int result = read(socket, &(buf.intbytes[bytesRead]), 4 - bytesRead);
+		if(0 >= result)
+		{
+			fprintf(stderr, "Error reading number of rows.\n");
+			exit(-1);
+		}
+		bytesRead += result;
 	}
 	buf.integer = ntohl(buf.integer);
 	state->rows = buf.integer;
@@ -205,17 +228,42 @@ readState(int socket)
 			exit(-1);
 		}
 		memset(state->board[index], 0, state->cols * sizeof(**(state->board)));
-		bytesRead = read(socket, state->board[index], state->cols);
+		bytesRead = read(socket, &(state->board[index][0]), state->cols);
+		if(0 >= bytesRead)
+		{
+			fprintf(stderr, "Error reading row %d of game board.\n", index);
+			exit(-1);
+		}
+		while(state->cols > bytesRead)
+		{
+			int result = read(socket, &(state->board[index][bytesRead]), state->cols - bytesRead);
+			if(0 >= result)
+			{
+				fprintf(stderr, "Error reading row %d of game board.\n", index);
+				exit(-1);
+			}
+			bytesRead += result;
+		}
 		if(state->cols != bytesRead)
 		{
 			fprintf(stderr, "Error reading in the game board.\n");
 		}
 	}
 	bytesRead = read(socket, &(buf.integer), 4);
-	if(4 != bytesRead)
+	if(0 >= bytesRead)
 	{
-		fprintf(stderr, "Error reading number of chat messages\n");
+		fprintf(stderr, "Error reading number of chat messages.\n");
 		exit(-1);
+	}
+	while(4 > bytesRead)
+	{
+		int result = read(socket, &(buf.intbytes[bytesRead]), 4 - bytesRead);
+		if(0 >= result)
+		{
+			fprintf(stderr, "Error reading number of chat messages.\n");
+			exit(-1);
+		}
+		bytesRead += result;
 	}
 	buf.integer = ntohl(buf.integer);
 	state->numMessages = buf.integer;

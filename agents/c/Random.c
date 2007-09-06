@@ -21,6 +21,6 @@ void respondToChange(int socket, State* newState)
 	move = (rand())%sizeof(MOVES);
 	message.speaker = newState->player;
 	message.subject = newState->player;
-	message.action = move;
+	message.action = MOVES[move];
 	writeChatToServer(socket, &message);
 }

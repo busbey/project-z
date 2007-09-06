@@ -23,7 +23,7 @@ typedef struct State
 	unsigned char 	player;
 	unsigned int 	rows;
 	unsigned int 	cols;
-	unsigned char**	board;
+	char**			board;
 	unsigned int	numMessages;
 	ChatMessage*	messages;
 } State;
