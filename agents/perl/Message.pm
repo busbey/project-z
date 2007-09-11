@@ -31,7 +31,7 @@ sub fromFile
 		$curRead = read($file, $chunk, 3 - $bytesRead);
 		if(0 >= $curRead)
 		{
-			printf stderr "Problem reading chat message.\n";
+			printf STDERR "Problem reading chat message.\n";
 			exit(-1);
 		}
 		$buffer = $buffer . $chunk;

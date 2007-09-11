@@ -41,7 +41,7 @@ sub readState
 	$bytesRead = read($file, $buffer, 1);
 	if(1 != $bytesRead)
 	{
-		printf stderr "Problem reading world state.\n";
+		printf STDERR "Problem reading world state.\n";
 		exit(-1);
 	}
 	if(FLAGS_GAME_END == (FLAGS_GAME_END & $buffer))
@@ -67,11 +67,11 @@ sub readState
 	$bytesRead = read($file, $buffer, 1);
 	if(1 != $bytesRead)
 	{
-		printf stderr "Problem reading agent's character.\n";
+		printf STDERR "Problem reading agent's character.\n";
 		exit(-1);
 	}
-	printf stderr ("Running as Agent %c\n", $buffer);
-	$self->{player} = $buffer;
+	$self->{player} = unpack "C", $buffer;
+	printf STDERR ("Running as Agent %c\n", $self->{player});
 	$buffer = undef;
 	$bytesRead = 0;
 	do
@@ -79,7 +79,7 @@ sub readState
 		my $temp = read ($file, $chunk, 4 - $bytesRead);
 		if(0 >= $temp)
 		{
-			printf stderr "Problem reading number of columns.\n";
+			printf STDERR "Problem reading number of columns.\n";
 			exit(-1);
 		}
 		$buffer = $buffer . $chunk;
@@ -93,14 +93,14 @@ sub readState
 		my $temp = read ($file, $chunk, 4 - $bytesRead);
 		if(0 >= $temp)
 		{
-			printf stderr "Problem reading number of rows.\n";
+			printf STDERR "Problem reading number of rows.\n";
 			exit(-1);
 		}
 		$buffer = $buffer . $chunk;
 		$bytesRead += $temp;
 	} while(4 > $bytesRead);
 	$self->{rows} = unpack("N", $buffer);	
-	printf stderr ("Board is %d x %d\n",$self->{rows}, $self->{cols});
+	printf STDERR ("Board is %d x %d\n",$self->{rows}, $self->{cols});
 	my $row = 0;
 	my $col = 0;
 	my @board = ();
@@ -112,9 +112,10 @@ sub readState
 			$bytesRead = read($file, $buffer, 1);
 			if(1 != $bytesRead)
 			{
-				printf stderr "Problem reading game board";
+				printf STDERR "Problem reading game board";
 				exit(-1);
 			}
+			$buffer = unpack "C", $buffer;
 			push @newRow, $buffer;
 		}
 		push @board, \@newRow;
@@ -127,14 +128,14 @@ sub readState
 		my $temp = read ($file, $chunk, 4 - $bytesRead);
 		if(0 >= $temp)
 		{
-			printf stderr "Problem reading number of chat messages.\n";
+			printf STDERR "Problem reading number of chat messages.\n";
 			exit(-1);
 		}
 		$buffer = $buffer . $chunk;
 		$bytesRead += $temp;
 	} while(4 > $bytesRead);
 	$self->{numMessages} = unpack("N", $buffer);
-	printf stderr ("%d chat messages this turn.\n", $self->{numMessages});
+	printf STDERR ("%d chat messages this turn.\n", $self->{numMessages});
 	my @messages = ();
 	my $message = 0;
 	for($message = 0; $message < $self->{numMessages}; $message++)
