@@ -17,8 +17,9 @@ sub new
 {
 	my $class = shift;
 	my $self = { };
-	my $host = shift || "localhost";
-	my $port = shift || 1337;
+	my $argRef = shift;
+	my $host = shift @$argRef || "localhost";
+	my $port = shift @$argRef || 1337;
 	printf STDERR ("Connecting to %s:%d\n", $host, $port);
 	my $socket = new IO::Socket::INET(	PeerAddr => $host,
 										PeerPort => $port,
@@ -73,8 +74,9 @@ sub main
 	# make a new Agent
 	my $package = shift;
 	printf "Starting up $package\n";
-	my $agent = ($package)->new(@ARGV);
-	$agent->init(@ARGV);
+	my $argref = \@ARGV;
+	my $agent = ($package)->new($argref);
+	$agent->init(@$argref);
 	my $state = new State;
 	
 	STDERR->autoflush(1);

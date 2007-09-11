@@ -26,20 +26,35 @@ public class Server
 		hunter.close();
 		display.close();
 	}
-
+	
 	public static Server fromFile(String path) throws IOException
 	{
-		return new Server(DEFAULT_BUG_PORT, DEFAULT_HUNTER_PORT, DEFAULT_DISPLAY_PORT, World.fromFile(path));
+		return fromFile(path, -1);
+	}
+
+	public static Server fromFile(String path, int rounds) throws IOException
+	{
+		return new Server(DEFAULT_BUG_PORT, DEFAULT_HUNTER_PORT, DEFAULT_DISPLAY_PORT, World.fromFile(path, rounds));
 	}
 
 	public Server() throws IOException
 	{
 		this(DEFAULT_BUG_PORT, DEFAULT_HUNTER_PORT, DEFAULT_DISPLAY_PORT);
 	}
+	
+	public Server(int rounds) throws IOException
+	{
+		this(DEFAULT_BUG_PORT, DEFAULT_HUNTER_PORT, DEFAULT_DISPLAY_PORT, rounds);
+	}
 
 	public Server(int bugPort, int hunterPort, int displayPort) throws IOException
 	{
-		this(bugPort, hunterPort, displayPort, new World(80, 20));
+		this(bugPort, hunterPort, displayPort, -1);
+	}
+
+	public Server(int bugPort, int hunterPort, int displayPort, int rounds) throws IOException
+	{
+		this(bugPort, hunterPort, displayPort, new World(80, 20, rounds));
 	}
 	
 	public Server(int bugPort, int hunterPort, int displayPort, World state) throws IOException
@@ -80,6 +95,7 @@ public class Server
 	public static void main(String[] args)
 	{
 		boolean block = true;
+		int rounds = -1;
 		Server server;
 		try
 		{
@@ -88,14 +104,21 @@ public class Server
 				if("-b".equals(args[0]))
 				{
 					block = false;
+					try
+					{
+						rounds = Integer.parseInt(args[1]);
+					}
+					catch(NumberFormatException ec)
+					{
+					}
 				}
 				if(!("-b".equals(args[args.length - 1])))
 				{
-					server = Server.fromFile(args[args.length - 1]);
+					server = Server.fromFile(args[args.length - 1], rounds);
 				}
 				else
 				{
-					server = new Server();
+					server = new Server(rounds);
 				}
 			}
 			else

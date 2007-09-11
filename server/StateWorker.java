@@ -27,6 +27,11 @@ import java.util.*;
 				end = System.currentTimeMillis();
 				if(end%5 == 0)
 				{
+					int rounds = state.getRounds();
+					if(0 < rounds)
+					{
+						System.err.println("Rounds remaining: " + rounds);
+					}
 					HashMap<Character, Long> score = state.getScores();
 					if(0 < score.size())
 					{

@@ -28,15 +28,6 @@ sub respondToChange
 	my $row = 0;
 	my $col = 0;
 
-	for($row = 0; $row < $state->rows; $row++)
-	{
-		for($col=0; $col < $state->cols; $col++)
-		{
-			printf " %c", $board->[$row][$col];
-		}
-		printf "\n";
-	}
-	printf "\n";
 	#find our player.
 	for($row = 0; $row < $state->rows && (!defined($myRow)) && (!defined($myCol)); $row++)
 	{

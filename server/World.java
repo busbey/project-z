@@ -41,13 +41,24 @@ public class World implements Serializable
 	HashMap<Character, Long> location = new HashMap<Character, Long>();
 	HashMap<Character, Long> score = new HashMap<Character, Long>();
 
+	protected int rounds = -1;
+
 	/** @brief create an uninitialized world */
 	protected World()
 	{
 	}
 
+	protected World(int rounds)
+	{
+		this.rounds = rounds;
+	}
+
 	/** @brief create a blank world of a given size */
 	public World(int rowSize, int numRows)
+	{
+		this(rowSize, numRows, -1);
+	}
+	public World(int rowSize, int numRows, int rounds)
 	{
 		assert(4 < numRows && 4 < rowSize);
 		state = new char[numRows][rowSize];
@@ -78,12 +89,15 @@ public class World implements Serializable
 		location.put('2', ((long) numRows -3) | (((long)rowSize-3) << 32) );
 		location.put('3', ((long) numRows -4) | (((long)rowSize-4) << 32) );
 		location.put('4', ((long) numRows -5) | (((long)rowSize-5) << 32) );
-
+		this.rounds = rounds;
 	}
 
 	public void change(char agent, byte move)
 	{
-		
+		if('n' == move)
+		{
+			return;
+		}
 		if(location.containsKey(agent))
 		{
 			long loc = location.get(agent);
@@ -259,11 +273,22 @@ public class World implements Serializable
 		agentFlags.put(by, curFlag);
 	}
 
+	/** XXX this is not thread safe, on the assumption
+			that the game world will be in one thread.
+	*/
 	public void roundsPassed(int num)
 	{
 		if(FLAGS_GAME_END == flags)
 		{
 			return;
+		}
+		if(-1 != rounds)
+		{
+			rounds -= num;
+			if(0 >= rounds)
+			{
+				end();
+			}
 		}
 		if(0 != (flags & SET_BUG_EATS))
 		{
@@ -330,7 +355,7 @@ public class World implements Serializable
 
 	public boolean gameRunning()
 	{
-		return FLAGS_GAME_END != flags;
+		return FLAGS_GAME_END != (FLAGS_GAME_END & flags);
 	}
 
 	public void end()
@@ -354,7 +379,12 @@ public class World implements Serializable
 	/** @brief read in an ascii file that shows an initial world state */
 	public static World fromFile(String path) throws IOException
 	{
-		World retVal = new World();
+		return fromFile(path, -1);
+	}
+
+	public static World fromFile(String path, int rounds) throws IOException
+	{
+		World retVal = new World(rounds);
 		int rows	= 0;
 		BufferedReader in = new BufferedReader(new FileReader(path));
 		String curLine = in.readLine();
@@ -469,6 +499,11 @@ public class World implements Serializable
 			}
 		}
 		return ret.toString();
+	}
+
+	public int getRounds()
+	{
+		return rounds;
 	}
 
 	public HashMap<Character, Long> getScores()
