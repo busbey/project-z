@@ -7,6 +7,12 @@
 #define TRUE 1
 #define FALSE 0
 
+#define NONE 'n'
+#define LEFT 'l'
+#define RIGHT 'r'
+#define UP 'u'
+#define DOWN 'd'
+
 typedef struct ChatMessage
 {
 	unsigned char speaker;

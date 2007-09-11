@@ -54,7 +54,6 @@ void respondToChange(int socket, State* newState)
 	if(myRow == -1 || myCol == -1)
 	{
 		fprintf(stderr, "Warning: Couldn't find myself on the board.\n");
-		return;
 	}
 	/* Look for closest goal */
 	goalRow = goalCol = -1;
@@ -69,16 +68,17 @@ void respondToChange(int socket, State* newState)
 			newState->board[row][col+1] = nextChar;
 			if(0 == goalMatch)
 			{
+				const int dist = ((row - myRow) * (row - myRow)) + ((col - myCol) * (col - myCol));
 				/* is it closer than previous goals? */
 				if(-1 == goalRow && -1 == goalCol)
 				{
 					/* no previous goal */
 					goalRow = row;
 					goalCol = col;
+					oldGoalDist = dist;
 				}
 				else 
 				{
-					const int dist = ((row - myRow) * (row - myRow)) + ((col - myCol) * (col - myCol));
 					if(dist < oldGoalDist)
 					{
 						goalRow = row;
@@ -100,11 +100,11 @@ void respondToChange(int socket, State* newState)
 			/* move in the row direction */
 			if(myRow > goalRow)
 			{
-				move = 'l';
+				move = UP;
 			}
 			else
 			{
-				move = 'r';
+				move = DOWN;
 			}
 		}
 		else
@@ -112,11 +112,11 @@ void respondToChange(int socket, State* newState)
 			/* move in the col direction */
 			if(myCol > goalCol)
 			{
-				move = 'u';
+				move = LEFT;
 			}
 			else
 			{
-				move = 'd';
+				move = RIGHT;
 			}
 		}
 	}

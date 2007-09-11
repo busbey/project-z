@@ -13,7 +13,7 @@ init(int argc, char** argv)
 /** @brief given a world state, pick a new action */
 void respondToChange(int socket, State* newState)
 {
-	const unsigned char MOVES[] = {'u','d','l','r','n'};
+	const unsigned char MOVES[] = {UP, DOWN, LEFT, RIGHT, NONE};
 	int move = (rand())%sizeof(MOVES);
 	ChatMessage message={0};
 	(void)newState;

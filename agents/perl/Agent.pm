@@ -33,7 +33,6 @@ sub new
 		exit(-1);
 	}
 	bless $self, $class;
-	$self->init(@_);
 	return $self;
 }
 
@@ -47,13 +46,6 @@ sub writeMoveToServer
 	printf STDERR ("Telling server to perform move '%c'\n", $move);
 	$move = pack "C", $move;
 	print $socket $move;
-	#
-	#$bytesWritten = write($self->{sock}, $move, 1);
-	#if(1 != $bytesWritten)
-	#{
-	#	printf STDERR "Problem writing move to server.\n";
-	#	exit(-1);
-	#}
 }
 
 #send a chat message to the server
@@ -67,13 +59,6 @@ sub writeMessageToServer
 	my $data = undef;
 	$data = pack "C[3]", [$message->sender, $message->subject, $message->move];
 	print $socket $data;
-	#
-	#$bytesWritten = write($self->{sock}, $data, 3);
-	#if(3 != $bytesWritten)
-	#{
-	#	printf STDERR "Problem writing chat message to server. Wrote %d/3 bytes\n", $bytesWritten;
-	#	exit(-1);
-	#}
 }
 
 sub getState
@@ -87,10 +72,9 @@ sub main
 {
 	# make a new Agent
 	my $package = shift;
-	printf "Starting up ";
-	printf $package;
-	printf "\n";
-	my $agent = new $package;
+	printf "Starting up $package\n";
+	my $agent = ($package)->new(@ARGV);
+	$agent->init(@ARGV);
 	my $state = new State;
 	
 	STDERR->autoflush(1);
@@ -120,6 +104,7 @@ sub respondToChange
 	my $move = NONE;
 	# in the default case we'll just do nothing. and say so.
 	my $message = new Message($state->player, $state->player, $move);
+
 	$self->writeMessageToServer($message);
 	$self->writeMoveToServer($move);
 }
