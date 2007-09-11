@@ -36,8 +36,8 @@ sub fromFile
 		}
 		$buffer = $buffer . $chunk;
 		$bytesRead += $curRead;
-	}while(3 > $bytesRead)
-	$sender, $subject, $move = unpack("C[3]", $buffer);
+	}while(3 > $bytesRead);
+	$sender, $subject, $move = unpack "C[3]", $buffer;
 	
 	return $class->new($sender, $subject, $move);
 }

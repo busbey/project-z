@@ -25,8 +25,8 @@ sub new
 		printf stderr "Problem establishing connection to server.\n";
 		exit(-1);
 	}
-	init @_;
 	bless $self, $class;
+	$self->init(@_);
 	return $self;
 }
 
@@ -36,7 +36,7 @@ sub writeMoveToServer
 	my $self = shift;
 	my $move = shift;
 	my $bytesWritten = -1;
-	printf (stderr, "Telling server to perform move '%c'\n", $move);
+	printf stderr ("Telling server to perform move '%c'\n", $move);
 	$bytesWritten = write($self->{sock}, $move, 1);
 	if(1 != $bytesWritten)
 	{
@@ -51,7 +51,7 @@ sub writeMessageToServer
 	my $self = shift;
 	my $message = shift;
 	my $bytesWritten = -1;
-	printf (stderr, "Writing chat message: %c says %c should move '%c'\n", $message->sender, $message->subject, $message->move);
+	printf stderr ("Writing chat message: %c says %c should move '%c'\n", $message->sender, $message->subject, $message->move);
 	$bytesWritten = write($self->{sock}, $message->sender, 1);
 	if(1 != $bytesWritten)
 	{
@@ -74,8 +74,8 @@ sub writeMessageToServer
 
 sub getState
 {
-	$self = shift;
-	$state = shift;
+	my $self = shift;
+	my $state = shift;
 	return $state->readState($self->{sock});
 }
 
@@ -91,14 +91,11 @@ sub main
 	{
 		$state = $agent->getState($state);
 		$agent->respondToChange($state);
-	} while(! $state->gameOver )
+	} while(! $state->gameOver );
 	printf "Game Ended";
 }
 
 # Things to override for your implementation.
-
-# you should copy this line explicitly
-__PACKAGE__->main unless caller; #invoke main unless we're a module.
 
 # handle command line args.
 sub init
@@ -107,14 +104,16 @@ sub init
 }
 
 # given a world state, pick a new action
-sub respondToChnage
+sub respondToChange
 {
-	$self = shift;
-	$state = shift;
+	my $self = shift;
+	my $state = shift;
 	# in the default case we'll just do nothing. and say so.
-	$message = new Message($state->agent, $state->agent, 'n');
+	my $message = new Message($state->player, $state->player, 'n');
 	$self->writeMessageToServer($message);
 	$self->writeMoveToServer('n');
 }
 
+# you should copy this line explicitly
+__PACKAGE__->main unless caller; #invoke main unless we're a module.
 

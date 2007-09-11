@@ -30,9 +30,10 @@ sub new
 }
 
 # read a new game state from the network.
-sub readState ( $file )
+sub readState
 {
 	my $self = shift;
+	my $file = shift;
 	my $buffer = undef;
 	my $bytesRead = 0;
 	my $chunk = undef;
@@ -69,7 +70,7 @@ sub readState ( $file )
 		printf stderr "Problem reading agent's character.\n";
 		exit(-1);
 	}
-	printf(stderr,"Running as Agent %c\n", $buffer);
+	printf stderr ("Running as Agent %c\n", $buffer);
 	$self->{player} = $buffer;
 	$buffer = undef;
 	$bytesRead = 0;
@@ -83,7 +84,7 @@ sub readState ( $file )
 		}
 		$buffer = $buffer . $chunk;
 		$bytesRead += $temp;
-	} while(4 > $bytesRead)
+	} while(4 > $bytesRead);
 	$self->{cols} = unpack("N", $buffer);	
 	$buffer = undef;
 	$bytesRead = 0;
@@ -97,9 +98,9 @@ sub readState ( $file )
 		}
 		$buffer = $buffer . $chunk;
 		$bytesRead += $temp;
-	} while(4 > $bytesRead)
+	} while(4 > $bytesRead);
 	$self->{rows} = unpack("N", $buffer);	
-	printf(stderr, "Board is %d x %d\n",$self->{rows}, $self->{cols});
+	printf stderr ("Board is %d x %d\n",$self->{rows}, $self->{cols});
 	my $row = 0;
 	my $col = 0;
 	my @board = ();
@@ -131,9 +132,9 @@ sub readState ( $file )
 		}
 		$buffer = $buffer . $chunk;
 		$bytesRead += $temp;
-	} while(4 > $bytesRead)
+	} while(4 > $bytesRead);
 	$self->{numMessages} = unpack("N", $buffer);
-	printf(stderr, "%d chat messages this turn.\n", $self->{numMessages});
+	printf stderr ("%d chat messages this turn.\n", $self->{numMessages});
 	my @messages = ();
 	my $message = 0;
 	for($message = 0; $message < $self->{numMessages}; $message++)
