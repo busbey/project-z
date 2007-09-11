@@ -1,5 +1,7 @@
 #!/bin/bash
 
+PATH=$PATH:/bin
+
 java server/Server ./map > results &
 pid=$!
 
