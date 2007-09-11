@@ -89,10 +89,11 @@ sub main
 	# loop for updates until we get a game over.
 	do
 	{
+		printf "New Round.\n";
 		$state = $agent->getState($state);
 		$agent->respondToChange($state);
-	} while(! $state->gameOver );
-	printf "Game Ended";
+	} while(State::FALSE == $state->gameOver );
+	printf "Game Ended\n";
 }
 
 # Things to override for your implementation.
