@@ -25,5 +25,5 @@ class RandomAgent < Agent
 end
 
 if __FILE__ == $0
-	start_agent "RandomAgent"
+	start_agent(RandomAgent.new)
 end

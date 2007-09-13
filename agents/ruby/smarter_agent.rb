@@ -13,16 +13,21 @@
 #  You should have received a copy of the GNU General Public License along with
 #  this program.  If not, see <http://www.gnu.org/licenses/>.
 #  
-
 require 'agent'
 
 class SmarterAgent < Agent
-	
-	def initialize (hostname, port, params)
-		super(hostname, port, params)
-		@regex = Regexp.new(params['--regex'])
-	end
+  #example of adding an option. see optparse documentation for more information
+  def add_options(opts)
+    opts.on("-r", "--regex REGEX", "Regular expression representing target") { |r| @regex_string = Regexp.new(r) }
+  end
 
+  #example of verifying an option's value.  any exception thrown in this method will trigger the usage statement being thrown
+  def verify
+    raise "Regular expression not specified" unless @regex_string
+    @regex = Regexp.new(@regex_string)
+  end
+  
+  
 	def respond_to_change state
 		places = []
 		position = nil
@@ -57,6 +62,5 @@ class SmarterAgent < Agent
 end
 
 if __FILE__ == $0
-	start_agent "SmarterAgent", ["--regex", GetoptLong::REQUIRED_ARGUMENT]
-	
+	start_agent SmarterAgent.new
 end

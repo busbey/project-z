@@ -16,9 +16,7 @@
 
 
 require 'socket'
-require 'getoptlong'
-require 'rdoc/ri/ri_paths'
-require 'rdoc/usage'
+require 'optparse'
 
 class State
 	attr_accessor :messages, :killer_bug, :was_stunned, :was_killed, :player, :rows, :columns, :board
@@ -43,14 +41,18 @@ end
 
 class Agent
 	attr_reader :socket
-	@@moves = {:up => 'u', :down => 'd', :left => 'l', :right => 'r', :none => 'n' }
-	def initialize(hostname, port, params)
-		@socket = TCPSocket::new(hostname, port)
+  @@moves = {:up => 'u', :down => 'd', :left => 'l', :right => 'r', :none => 'n' }
+  
+  def add_options(opts)
+  end
+
+  def verify
+  end
+  
+	def debug msg
+		puts msg if @debug_flag
 	end
 
-	def debug msg
-		puts msg
-	end
 	def write_move(move)
 		move_str = @@moves[move]
 		raise "Invalid move: #{move}" unless move
@@ -75,7 +77,9 @@ class Agent
 		@socket.read(1)
 	end
 
-	def run
+	def run(hostname, port, debug_flag)
+    @debug_flag = debug_flag
+		@socket = TCPSocket::new(hostname, port)
 		loop do
 			flag = read_char
 			if !flag || flag[0] == 0xff
@@ -117,39 +121,33 @@ class Agent
 	end
 end
 
-def start_agent(agent_name, *extra_opts)
-	extra_opts << [ '--help', GetoptLong::NO_ARGUMENT] << [ '--host', '-h', GetoptLong::REQUIRED_ARGUMENT ] << ['--port', '-p', GetoptLong::REQUIRED_ARGUMENT ]
-	opts = GetoptLong.new(*extra_opts)
-    	hostname = "localhost"
-	port = nil
-	params = {}
-	opts.each do |opt, arg|
-		case opt
-        	when '--help'
-			usage
-        	when '--host'
-          		hostname = arg
-        	when '--port'
-          		port = arg.to_i
-      		else
-			params[opt] = arg 
-		end
-    	end
-	if port
-		Kernel.const_get(agent_name).new(hostname, port, params).run
-	else
-		usage
-	end
+def start_agent(agent, &block)
+  hostname = "localhost"
+  port = nil
+  debug_flag = false
+  opts = OptionParser.new { |opts|
+    opts.on("-n", "--hostname HOSTNAME") { |hn| hostname = hn }
+    opts.on("-v", "--verbose") { debug_flag = true }
+    opts.on("-p", "--port PREFIX") { |p| port = p }
+    opts.on_tail("-h", "--help", "Show this usage statement")
+    agent.add_options(opts)
+  }
+
+  port_num = nil
+  begin
+    opts.parse!(ARGV)
+    raise "Please specify port" unless port
+    raise "Invalid port" unless port =~ /\d+/
+    port_num = port.to_i
+    agent.verify
+ rescue Exception => e
+    puts e, "", opts
+    exit
+  end
+	
+	agent.run(hostname, port_num, debug_flag)
 end
 
-def usage
-puts <<EOF
-
-	Usage: #{$0} --port PORT [--hostname HOSTNAME]
-		By default, localhost is used.
-
-EOF
-end
 if __FILE__ == $0
-	start_agent("Agent")
+	start_agent(Agent.new)
 end
