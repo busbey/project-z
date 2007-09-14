@@ -21,6 +21,6 @@ random: Message.pm State.pm Agent.pm Random.pm
 smart: Message.pm State.pm Agent.pm Smart.pm
 clean:
 hunter1go: smart
-	./Smart.pm -h $(DEFAULT_HOST) -p $(DEFAULT_PORT) $(BUG_PATTERN)
+	./Smart.pm $(DEFAULT_HOST) $(DEFAULT_PORT) $(BUG_PATTERN)
 hunter2go: random
-	./Random.pm -h $(DEFAULT_HOST) -p $(DEFAULT_PORT)
+	./Random.pm $(DEFAULT_HOST) $(DEFAULT_PORT)
