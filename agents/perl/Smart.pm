@@ -23,7 +23,7 @@ __PACKAGE__->main() unless caller;
 # usage statment
 sub usage
 {
-   die "Usage: $0 -h host -p port [regex for goal]\n\tex: $0 -h localhost -p 1337 [B-N]\n";
+   die "Usage: $0 host port [regex for goal]\n\tex: $0 localhost 1337 [B-N]\n";
 }
 
 #handle args
@@ -31,7 +31,7 @@ sub init
 {
 	$self = shift;
 	#first arg, if present is a regular expression of what to chase.
-	$goalreg = shift || "[B-N]";
+	$goalreg = shift @ARGV || "[B-N]";
 	$self->{'goal'} = $goalreg;
 	#printf STDERR "Moving towards goal '%s'\n", $self->{'goal'};
 }

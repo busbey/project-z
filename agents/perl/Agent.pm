@@ -40,14 +40,23 @@ sub new
 	my $self = { };
 	my $argRef = shift;
 
+<<<<<<< .mine
+        $class->usage() if "@ARGV" =~ /-help|-\?/;
+=======
     use Getopt::Std;
     my %opt;
     my $opt_string = "h:p:";
     getopts( $opt_string, \%opt );
     $class->usage() unless $opt{h} and $opt{p};
+>>>>>>> .r177
 
+<<<<<<< .mine
+        my $host = shift @ARGV || "localhost";
+        my $port = shift @ARGV || "1337";
+=======
     my $host = $opt{h};
     my $port = $opt{p};
+>>>>>>> .r177
 
 	#printf STDERR ("Connecting to %s:%d\n", $host, $port);
 	my $socket = new IO::Socket::INET(	PeerAddr => $host,
@@ -123,7 +132,7 @@ sub main
 # usage statment
 sub usage
 {
-   die "Usage: $0 -h host -p port [args *]\n";
+   die "Usage: $0 host port [args *]\n\tex: $0 localhost 1337 [other things...]\n";
 }
 
 # handle command line args.
