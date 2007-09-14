@@ -18,7 +18,7 @@ require 'agent'
 class SmarterAgent < Agent
   #example of adding an option. see optparse documentation for more information
   def add_options(opts)
-    opts.on("-r", "--regex REGEX", "Regular expression representing target") { |r| @regex_string = Regexp.new(r) }
+    opts.on("-r", "--regex REGEX", "Regular expression representing target") { |r| @regex_string = r }
   end
 
   #example of verifying an option's value.  any exception thrown in this method will trigger the usage statement being thrown
@@ -26,7 +26,6 @@ class SmarterAgent < Agent
     raise "Regular expression not specified" unless @regex_string
     @regex = Regexp.new(@regex_string)
   end
-  
   
 	def respond_to_change state
 		places = []
@@ -57,7 +56,9 @@ class SmarterAgent < Agent
 		else
 			closest[1] - position[1] < 0 ? :left : :right
 		end
-		write_move move
+		puts "Goal '#{@regex_string}' is at (#{closest.join(', ')}); I am at (#{position.join(', ')})"
+
+    write_move move
 	end
 end
 

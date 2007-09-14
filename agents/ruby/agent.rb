@@ -29,19 +29,20 @@ class State
 		@columns = columns
 		@board = Array.new(rows) { Array.new(columns) { ' ' } }
 		@messages = []
-	end
+  end
 
 	def board_string
 		result = ""
 		@board.each { |row| result << row.join << "\n" }
 		result
 	end
-
 end
 
 class Agent
 	attr_reader :socket
   @@moves = {:up => 'u', :down => 'd', :left => 'l', :right => 'r', :none => 'n' }
+  @@reverse_moves = {}
+  @@moves.each { |k,v| @@reverse_moves[v] = k } 
   
   def add_options(opts)
   end
@@ -50,12 +51,14 @@ class Agent
   end
   
 	def write_move(move)
-		move_str = @@moves[move]
+		puts "moving #{move.to_s.upcase}"
+    move_str = @@moves[move]
 		raise "Invalid move: #{move}" unless move
 		@socket << move_str
 	end
 	
 	def write_message(speaker, subject, action)
+    puts "sending '#{speaker}' says '#{subject}' should move #{action.to_s.upcase}"
 		[speaker, subject, action].each {|m| @socket << m}
 	end
 
@@ -104,7 +107,19 @@ class Agent
 				action = read_char
 				@state.messages << [speaker, subject, action]
 			}
-			respond_to_change @state
+			
+      #output
+      flag_text = []
+      flag_text << "Bugs kill Hunters" if @state.killer_bug
+      flag_text << "Player died last round" if @state.was_killed
+      flag_text << "Player stunned last round" if @state.was_stunned
+      puts "flags: " + flag_text.join(', ')
+      puts "player: '#{@state.player}'"
+      puts "rows: #{@state.rows} columns: #{@state.columns}"
+      puts "messages: #{@state.messages.length}"
+      @state.messages.each { |msg| puts "message: '#{msg[0]}' says '#{msg[1]}' should move #{@@reverse_moves[msg[2]].to_s.upcase}" }
+      
+      respond_to_change @state
 		end
 	end
 end
