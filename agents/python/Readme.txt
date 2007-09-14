@@ -21,7 +21,7 @@ In this kit:
 	* Readme.txt	- this guide
 	* Makefile	- a GNU make file for building and running this sample and your implementation
 	* agent.py	- the base class for all agents
-	* randomagent.py	- a studid agent
+	* randomagent.py	- a stupid agent
 	* smarteragent.py	- a smarter agent
 
 To build examples:
