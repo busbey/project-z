@@ -49,10 +49,6 @@ class Agent
   def verify
   end
   
-	def debug msg
-		puts msg if @debug_flag
-	end
-
 	def write_move(move)
 		move_str = @@moves[move]
 		raise "Invalid move: #{move}" unless move
@@ -60,7 +56,6 @@ class Agent
 	end
 	
 	def write_message(speaker, subject, action)
-		debug "sending: #{speaker} says #{subject} should move #{action}"
 		[speaker, subject, action].each {|m| @socket << m}
 	end
 
@@ -77,8 +72,7 @@ class Agent
 		@socket.read(1)
 	end
 
-	def run(hostname, port, debug_flag)
-    @debug_flag = debug_flag
+	def run(hostname, port)
 		@socket = TCPSocket::new(hostname, port)
 		loop do
 			flag = read_char
@@ -87,14 +81,11 @@ class Agent
 				return
 			end
 			flag = flag[0]
-			debug "flag: #{flag}"
 
 			player = read_char
-			debug "player: #{player}"
 
 			columns = read_int
 			rows = read_int
-			debug "rows: #{rows} columns: #{columns}"
 			@state ||= State.new(player, rows, columns)
 			@state.killer_bug = ((flag & 0x01) == 0x01)
 			@state.was_killed = ((flag & 0x02) == 0x02)
@@ -104,8 +95,6 @@ class Agent
 					@state.board[r][c] = read_char
 				}
 			}
-			debug "board:"
-			debug @state.board_string
 			
 			@state.messages.clear
 			message_count = read_int
@@ -113,7 +102,6 @@ class Agent
 				speaker = read_char
 				subject = read_char
 				action = read_char
-				debug 'message: ' + speaker + ' says ' + subject + ' should move ' + action
 				@state.messages << [speaker, subject, action]
 			}
 			respond_to_change @state
@@ -124,10 +112,8 @@ end
 def start_agent(agent, &block)
   hostname = "localhost"
   port = nil
-  debug_flag = false
   opts = OptionParser.new { |opts|
     opts.on("-n", "--hostname HOSTNAME") { |hn| hostname = hn }
-    opts.on("-v", "--verbose") { debug_flag = true }
     opts.on("-p", "--port PREFIX") { |p| port = p }
     opts.on_tail("-h", "--help", "Show this usage statement")
     agent.add_options(opts)
@@ -145,7 +131,7 @@ def start_agent(agent, &block)
     exit
   end
 	
-	agent.run(hostname, port_num, debug_flag)
+	agent.run(hostname, port_num)
 end
 
 if __FILE__ == $0
