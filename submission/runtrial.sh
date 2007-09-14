@@ -20,26 +20,95 @@ mkdir chroot
 
 sudo rsync -av common/ chroot/
 
-BUG=`ls bugs/ | ./randomline.awk`
-echo "bug is ${BUG}"
-rsync -av bugs/$BUG/ chroot/bug
-pushd chroot/bug
-make > /dev/null 2>&1
-popd
+rm bugblacklist hunterblacklist
+touch bugblacklist hunterblacklist
 
-HUNTER1=`ls hunters/ | ./randomline.awk`
-echo "hunter1 is ${HUNTER1}"
-rsync -av hunters/$HUNTER1/ chroot/firsthunters
-pushd chroot/firsthunters
-make > /dev/null 2>&1
-popd
+result=0
+while [ $result -eq 0 ]
+do
+	BUG=`ls bugs/ | sort | comm -23 - bugblacklist | ./randomline.awk`
+	if [ "${BUG}" = "" ]
+	then
+			exit
+  fi
+	rsync -av "bugs/${BUG}/" chroot/bug
+	pushd chroot/bug
+	if make all > ../../bug.buildlog 2>&1
+	then
+			result=1
+			popd
+	else
+			popd
+			rm -rf chroot/bug
+			mkdir "results/${RESULTS_DIR}/${BUG}"
+			cp bug.buildlog "results/${RESULTS_DIR}/${BUG}"
+			pushd "${RESULTS_DIR}"
+			tar cvfj "${BUG}.tar.bz2" "${BUG}/"
+			popd
+			echo $BUG >> bugblacklist
+			sort -o bugblacklist bugblacklist
+	fi
+done
 
-HUNTER2=`ls hunters/ | grep -v $HUNTER1 | ./randomline.awk`
-echo "hunter2 is ${HUNTER2}"
-rsync -av hunters/$HUNTER2/ chroot/secondhunters
-pushd chroot/secondhunters
-make > /dev/null 2>&1
-popd
+echo $BUG >> hunterblacklist
+
+result=0
+while [ $result -eq 0 ]
+do
+	HUNTER1=`ls hunters/ | sort | comm -23 - hunterblacklist | ./randomline.awk`
+	if [ "${HUNTER1}" = "" ]
+	then
+			exit
+  fi
+	rsync -av "hunters/${HUNTER1}/" chroot/firsthunters
+	pushd chroot/firsthunters
+	if make all > ../../firsthunters.buildlog 2>&1
+	then
+			result=1
+			popd
+	else
+			popd
+			rm -rf chroot/firsthunters
+			mkdir "results/${RESULTS_DIR}/${HUNTER1}"
+			cp firsthunters.buildlog "results/${RESULTS_DIR}/${HUNTER1}"
+			pushd "${RESULTS_DIR}"
+			tar cvfj "${HUNTER1}.tar.bz2" "${HUNTER1}/"
+			popd
+			echo $HUNTER1 >> hunterblacklist
+			sort -o hunterblacklist hunterblacklist
+	fi
+done
+
+echo $HUNTER1 >> hunterblacklist
+
+result=0
+while [ $result -eq 0 ]
+do
+	HUNTER2=`ls hunters/ | sort | comm -23 - hunterblacklist | ./randomline.awk`
+	if [ "${HUNTER2}" = "" ]
+	then
+			exit
+  fi
+	rsync -av "hunters/${HUNTER2}/" chroot/secondhunters
+	pushd chroot/secondhunters
+	if make all > ../../secondhunters.buildlog 2>&1
+	then
+			result=1
+			popd
+	else
+			popd
+			rm -rf chroot/secondhunters
+			mkdir "results/${RESULTS_DIR}/${HUNTER2}"
+			cp secondhunters.buildlog "results/${RESULTS_DIR}/${HUNTER2}"
+			pushd "${RESULTS_DIR}"
+			tar cvfj "${HUNTER2}.tar.bz2" "${HUNTER2}/"
+			popd
+			echo $HUNTER2 >> hunterblacklist
+			sort -o hunterblacklist hunterblacklist
+	fi
+done
+
+echo $HUNTER2 >> hunterblacklist
 
 MAP=`ls maps/ | ./randomline.awk`
 cp maps/$MAP chroot/map
@@ -58,8 +127,12 @@ cp chroot/results/server.* "results/${RESULTS_DIR}/${HUNTER1}"
 cp chroot/results/server.* "results/${RESULTS_DIR}/${HUNTER2}"
 
 cp chroot/results/bug.* "results/${RESULTS_DIR}/${BUG}"
-cp chroot/results/bug.* "results/${RESULTS_DIR}/${HUNTER1}"
-cp chroot/results/bug.* "results/${RESULTS_DIR}/${HUNTER2}"
+cp chroot/results/firsthunters* "results/${RESULTS_DIR}/${HUNTER1}"
+cp chroot/results/secondhunters* "results/${RESULTS_DIR}/${HUNTER2}"
+
+cp bug.buildlog "results/${RESULTS_DIR}/${BUG}"
+cp firsthunters.buildlog "results/${RESULTS_DIR}/${HUNTER1}"
+cp secondhunters.buildlog "results/${RESULTS_DIR}/${HUNTER2}"
 
 pushd results
 tar cvfj "${BUG}.tar.bz2" "${BUG}/"

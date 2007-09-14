@@ -37,7 +37,7 @@ popd
 
 pushd secondhunters
 make hunter1go > ../results/secondhunters1.out 2> ../results/secondhunters1.err &
-make hunter2go > ../results/secondhunters2.out 2> ../results/secondhunters1.err &
+make hunter2go > ../results/secondhunters2.out 2> ../results/secondhunters2.err &
 popd
 
 while [ 2 -eq `ps -p $pid | wc -l | xargs expr` ]
