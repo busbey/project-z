@@ -121,7 +121,8 @@ class Agent
       puts "messages: #{@state.messages.length}"
       @state.messages.each { |msg| puts "message: '#{msg[0]}' says '#{msg[1]}' should move #{@@reverse_moves[msg[2]].to_s.upcase}" }
       respond_to_change @state
-		end
+	    @socket.flush	
+    end
 	end
 end
 
