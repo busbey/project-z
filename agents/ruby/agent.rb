@@ -20,27 +20,27 @@ require 'socket'
 require 'optparse'
 
 class State
-	attr_accessor :messages, :game_over, :killer_bug, :was_stunned, :was_killed, :player, :rows, :columns, :board
-	def initialize(player, rows, columns)
-		@killer_bug = false
-		@was_stunned = false
-		@was_killed = false
-		@player = player
-		@rows = rows
-		@columns = columns
-		@board = Array.new(rows) { Array.new(columns) { ' ' } }
-		@messages = []
+  attr_accessor :messages, :game_over, :killer_bug, :was_stunned, :was_killed, :player, :rows, :columns, :board
+  def initialize(player, rows, columns)
+    @killer_bug = false
+    @was_stunned = false
+    @was_killed = false
+    @player = player
+    @rows = rows
+    @columns = columns
+    @board = Array.new(rows) { Array.new(columns) { ' ' } }
+    @messages = []
   end
 
-	def board_string
-		result = ""
-		@board.each { |row| result << row.join << "\n" }
-		result
-	end
+  def board_string
+    result = ""
+    @board.each { |row| result << row.join << "\n" }
+    result
+  end
 end
 
 class Agent
-	attr_reader :socket
+  attr_reader :socket
   @@moves = {:up => 'u', :down => 'd', :left => 'l', :right => 'r', :none => 'n' }
   @@reverse_moves = {}
   @@moves.each { |k,v| @@reverse_moves[v] = k } 
@@ -51,66 +51,66 @@ class Agent
   def verify
   end
   
-	def write_move(move)
-		puts "moving #{move.to_s.upcase}"
+  def write_move(move)
+    puts "moving #{move.to_s.upcase}"
     move_str = @@moves[move]
-		raise "Invalid move: #{move}" unless move
-		@socket << move_str
-	end
-	
-	def write_message(speaker, subject, action)
+    raise "Invalid move: #{move}" unless move
+    @socket << move_str
+  end
+  
+  def write_message(speaker, subject, action)
     puts "sending '#{speaker}' says '#{subject}' should move #{action.to_s.upcase}"
-		[speaker, subject, action].each {|m| @socket << m}
-	end
+    [speaker, subject, action].each {|m| @socket << m}
+  end
 
-	def respond_to_change(state)
-		#EXTEND ME
-		write_move(:none)
-	end
+  def respond_to_change(state)
+    #EXTEND ME
+    write_move(:none)
+  end
 
-	def read_int
-		@socket.read(4).unpack('N')[0]
-	end
+  def read_int
+    @socket.read(4).unpack('N')[0]
+  end
 
-	def read_char
-		@socket.read(1)
-	end
+  def read_char
+    @socket.read(1)
+  end
 
-	def run(hostname, port)
-		@socket = TCPSocket::new(hostname, port)
-		loop do
-			puts 
+  def run(hostname, port)
+    @socket = TCPSocket::new(hostname, port)
+    loop do
+      puts 
       flag = read_char
-			if !flag || flag[0] == 0xff
-				@socket.close
+      if !flag || flag[0] == 0xff
+        @socket.close
         puts "Game has ended..."
-				return
-			end
-			flag = flag[0]
+        return
+      end
+      flag = flag[0]
 
-			player = read_char
+      player = read_char
 
-			columns = read_int
-			rows = read_int
-			@state ||= State.new(player, rows, columns)
-			@state.killer_bug = ((flag & 0x01) == 0x01)
-			@state.was_killed = ((flag & 0x02) == 0x02)
-			@state.was_stunned = ((flag & 0x04) == 0x04)
+      columns = read_int
+      rows = read_int
+      @state ||= State.new(player, rows, columns)
+      @state.killer_bug = ((flag & 0x01) == 0x01)
+      @state.was_killed = ((flag & 0x02) == 0x02)
+      @state.was_stunned = ((flag & 0x04) == 0x04)
       (0...rows).each { |r|
-				(0...columns).each { |c|
-					@state.board[r][c] = read_char
-				}
-			}
-			
-			@state.messages.clear
-			message_count = read_int
+        (0...columns).each { |c|
+          @state.board[r][c] = read_char
+        }
+      }
+      
+      @state.messages.clear
+      message_count = read_int
       (0...message_count).each { |i|
-				speaker = read_char
-				subject = read_char
-				action = read_char
-				@state.messages << [speaker, subject, action]
-			}
-			
+        speaker = read_char
+        subject = read_char
+        action = read_char
+        @state.messages << [speaker, subject, action]
+      }
+      
       #output
       flag_text = []
       flag_text << "[Bugs kill hunters]" if @state.killer_bug
@@ -122,9 +122,9 @@ class Agent
       puts "messages: #{@state.messages.length}"
       @state.messages.each { |msg| puts "message: '#{msg[0]}' says '#{msg[1]}' should move #{@@reverse_moves[msg[2]].to_s.upcase}" }
       respond_to_change @state
-	    @socket.flush	
+      @socket.flush  
     end
-	end
+  end
 end
 
 def start_agent(agent, &block)
@@ -144,14 +144,14 @@ def start_agent(agent, &block)
     raise "Invalid port" unless port =~ /\d+/
     port_num = port.to_i
     agent.verify
- rescue Exception => e
+  rescue Exception => e
     puts e, "", opts
     exit
   end
-	
-	agent.run(hostname, port_num)
+  
+  agent.run(hostname, port_num)
 end
 
 if __FILE__ == $0
-	start_agent(Agent.new)
+  start_agent(Agent.new)
 end
