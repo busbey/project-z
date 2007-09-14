@@ -15,27 +15,32 @@
 #  this program.  If not, see <http://www.gnu.org/licenses/>.
 #  
 
-
 PATH=$PATH:/bin
 
-java server/Server ./map > results &
+mkdir results
+
+pushd server
+java Server ./map > ../results/server.out 2> ../results/server.err &
 pid=$!
+popd
+
+sleep 20
 
 pushd bug
-make buggo > /dev/null 2>&1 &
+make buggo > ../results/bug.out 2> ../results/bug.err &
 popd
 
 pushd firsthunters
-make hunter1go > /dev/null 2>&1 &
-make hunter2go > /dev/null 2>&1 &
+make hunter1go > ../results/firsthunters1.out 2> ../results/firsthunters1.err &
+make hunter2go > ../results/firsthunters2.out 2> ../results/firsthunters2.err &
 popd
 
 pushd secondhunters
-make hunter1go > /dev/null 2>&1 &
-make hunter2go > /dev/null 2>&1 &
+make hunter1go > ../results/secondhunters1.out 2> ../results/secondhunters1.err &
+make hunter2go > ../results/secondhunters2.out 2> ../results/secondhunters1.err &
 popd
 
 while [ 2 -eq `ps -p $pid | wc -l | xargs expr` ]
 do
+echo > /dev/null
 done
-
