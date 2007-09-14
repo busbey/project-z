@@ -6,3 +6,9 @@ O 4  C O
 O    B O
 O    P O
 OOOOOOOO
+; Basic map with examples of most characters
+;bug kill score:4000
+;hunter kill score:100
+;powerup:50
+;stunned:-25
+;killed:-50
