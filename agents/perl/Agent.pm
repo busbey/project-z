@@ -87,6 +87,11 @@ sub getState
 
 sub main
 {
+        use Getopt::Std;
+        my %opt;
+        my $opt_string = "h:p:";
+        getopts( $opt_string, \%opt );
+        usage() unless $opt{h} and $opt{p};
 	# make a new Agent
 	my $package = shift;
 	printf "Starting up $package\n";
@@ -107,6 +112,12 @@ sub main
 }
 
 # Things to override for your implementation.
+
+# usage statment
+sub usage
+{
+   die "Usage: $0 [-h host] [-p port] [args *]\n";
+}
 
 # handle command line args.
 sub init
