@@ -20,15 +20,23 @@ use base qw(Agent);
 
 __PACKAGE__->main() unless caller;
 
+# usage statment
+sub usage
+{
+   die "Usage: $0 -h host -p port [regex for goal]\n\tex: $0 -h localhost -p 1337 [B-N]\n";
+}
+
+#handle args
 sub init
 {
 	$self = shift;
 	#first arg, if present is a regular expression of what to chase.
 	$goalreg = shift || "[B-N]";
 	$self->{'goal'} = $goalreg;
-	printf STDERR "Moving towards goal '%s'\n", $self->{'goal'};
+	#printf STDERR "Moving towards goal '%s'\n", $self->{'goal'};
 }
 
+# move towards the closest goal
 sub respondToChange
 {
 	my $self = shift;
@@ -57,15 +65,12 @@ sub respondToChange
 		}
 	}
 
-	printf "I'm at $myRow : $myCol\n";
-
 	if((!defined($myRow)) || (!defined($myCol)))
 	{
 		print STDERR "Warning: Couldn't find myself on the board.\n";
 		return;
 	}
 
-	printf "Finding Goal according to regex '%s'\n", $goal;
 	# find the closest goal.
 	for($row = 0; $row < $state->rows; $row++)
 	{
@@ -94,7 +99,7 @@ sub respondToChange
 		}
 	}
 
-	printf "Closest goal is in $goalRow : $goalCol\n";
+	printf ("Goal '%s' is at (%d, %d); I am at (%d, %d)\n", $goal, $goalRow, $goalCol, $myRow, $myCol);
 
 	# move to the closest goal.
 	if(defined($goalRow) && defined($goalCol))

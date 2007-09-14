@@ -27,6 +27,11 @@ use constant LEFT => ord 'l';
 use constant RIGHT => ord 'r';
 use constant UP => ord 'u';
 use constant DOWN => ord 'd';
+my %MOVES = (	ord 'n' => "NONE", 
+				ord 'l' => "LEFT",
+				ord 'r' => "RIGHT",
+				ord 'u' => "UP",
+				ord 'd' => "DOWN");
 
 # construct a new Agent
 sub new 
@@ -36,7 +41,7 @@ sub new
 	my $argRef = shift;
 	my $host = shift @$argRef || "localhost";
 	my $port = shift @$argRef || 1337;
-	printf STDERR ("Connecting to %s:%d\n", $host, $port);
+	#printf STDERR ("Connecting to %s:%d\n", $host, $port);
 	my $socket = new IO::Socket::INET(	PeerAddr => $host,
 										PeerPort => $port,
 										Proto	 => 'tcp');
@@ -60,7 +65,7 @@ sub writeMoveToServer
 	my $move = shift;
 	my $socket = $self->{sock};
 	my $bytesWritten = -1;
-	printf STDERR ("Telling server to perform move '%c'\n", $move);
+	printf STDERR ("moving %s\n", $MOVES{$move});
 	$move = pack "C", $move;
 	print $socket $move;
 }
@@ -72,7 +77,7 @@ sub writeMessageToServer
 	my $message = shift;
 	my $bytesWritten = -1;
 	my $socket = $self->{sock};
-	printf STDERR ("Writing chat message: %c says %c should move '%c'\n", $message->sender, $message->subject, $message->move);
+	printf STDERR ("sending '%c' says '%c' should move %s\n", $message->sender, $message->subject, $MOVES{$message->move});
 	my $data = undef;
 	$data = pack "C[3]", [$message->sender, $message->subject, $message->move];
 	print $socket $data;
@@ -94,7 +99,6 @@ sub main
         usage() unless $opt{h} and $opt{p};
 	# make a new Agent
 	my $package = shift;
-	printf "Starting up $package\n";
 	my $argref = \@ARGV;
 	my $agent = ($package)->new($argref);
 	$agent->init(@$argref);
@@ -104,11 +108,11 @@ sub main
 	# loop for updates until we get a game over.
 	do
 	{
-		printf "New Round.\n";
 		$state = $agent->getState($state);
 		$agent->respondToChange($state);
+		printf STDERR "\n";
 	} while(State::FALSE == $state->gameOver );
-	printf "Game Ended\n";
+	printf "Game has ended...\n";
 }
 
 # Things to override for your implementation.
@@ -116,7 +120,7 @@ sub main
 # usage statment
 sub usage
 {
-   die "Usage: $0 [-h host] [-p port] [args *]\n";
+   die "Usage: $0 -h host -p port [args *]\n";
 }
 
 # handle command line args.

@@ -26,6 +26,7 @@ use constant FLAGS_GAME_END => 0xFF;
 use constant FLAGS_BUG_KILLS => 0x01;
 use constant FLAGS_AGENT_DIED => 0x02;
 use constant FLAGS_AGENT_STUN => 0x04;
+use constant FLAGS_NONE => 0x00;
 
 sub new
 {
@@ -66,19 +67,28 @@ sub readState
 	}
 	else
 	{
+		printf STDERR "flags:";
 		$self->{gameOver} = FALSE;
 		if(FLAGS_BUG_KILLS == (FLAGS_BUG_KILLS & $buffer))
 		{
 			$self->{bugKills} = TRUE;
+			printf STDERR " [Bugs kill hunters]";
 		}
 		if(FLAGS_AGENT_DIED == (FLAGS_AGENT_DIED & $buffer))
 		{
 			$self->{killed} = TRUE;
+			printf STDERR " [Player died last round]";
 		}
 		if(FLAGS_AGENT_STUN == (FLAGS_AGENT_STUN & $buffer))
 		{
 			$self->{stunned} = TRUE;
+			printf STDERR " [Player stunned last round]";
 		}
+		if(FLAGS_NONE == $buffer)
+		{
+			printf STDERR " None", $buffer;
+		}
+		printf STDERR "\n";
 	}
 	$bytesRead = read($file, $buffer, 1);
 	if(1 != $bytesRead)
@@ -87,7 +97,7 @@ sub readState
 		exit(-1);
 	}
 	$self->{player} = unpack "C", $buffer;
-	printf STDERR ("Running as Agent %c\n", $self->{player});
+	printf STDERR ("player: '%c'\n", $self->{player});
 	$buffer = undef;
 	$bytesRead = 0;
 	do
@@ -116,7 +126,7 @@ sub readState
 		$bytesRead += $temp;
 	} while(4 > $bytesRead);
 	$self->{rows} = unpack("N", $buffer);	
-	printf STDERR ("Board is %d x %d\n",$self->{rows}, $self->{cols});
+	printf STDERR ("rows: %d columns: %d\n",$self->{rows}, $self->{cols});
 	my $row = 0;
 	my $col = 0;
 	my @board = ();
@@ -151,13 +161,14 @@ sub readState
 		$bytesRead += $temp;
 	} while(4 > $bytesRead);
 	$self->{numMessages} = unpack("N", $buffer);
-	printf STDERR ("%d chat messages this turn.\n", $self->{numMessages});
+	printf STDERR ("messages: %d\n", $self->{numMessages});
 	my @messages = ();
 	my $message = 0;
 	for($message = 0; $message < $self->{numMessages}; $message++)
 	{
 		my $curMessage = Message->fromFile($file);
 		push @messages, \$curMessage;
+		printf STDERR ("message: '%c' says '%c' should move %s\n", $curMessage->sender, $curMessage->subject, $Agent::MOVES{$curMessage->move});
 	}
 	$self->{messages} = \@messages;
 	
