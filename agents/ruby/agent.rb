@@ -19,7 +19,7 @@ require 'socket'
 require 'optparse'
 
 class State
-	attr_accessor :messages, :killer_bug, :was_stunned, :was_killed, :player, :rows, :columns, :board
+	attr_accessor :messages, :game_over, :killer_bug, :was_stunned, :was_killed, :player, :rows, :columns, :board
 	def initialize(player, rows, columns)
 		@killer_bug = false
 		@was_stunned = false
@@ -78,9 +78,11 @@ class Agent
 	def run(hostname, port)
 		@socket = TCPSocket::new(hostname, port)
 		loop do
-			flag = read_char
+			puts 
+      flag = read_char
 			if !flag || flag[0] == 0xff
 				@socket.close
+        puts "Game has ended..."
 				return
 			end
 			flag = flag[0]
@@ -93,7 +95,7 @@ class Agent
 			@state.killer_bug = ((flag & 0x01) == 0x01)
 			@state.was_killed = ((flag & 0x02) == 0x02)
 			@state.was_stunned = ((flag & 0x04) == 0x04)
-			(0...rows).each { |r|
+      (0...rows).each { |r|
 				(0...columns).each { |c|
 					@state.board[r][c] = read_char
 				}
@@ -101,7 +103,7 @@ class Agent
 			
 			@state.messages.clear
 			message_count = read_int
-			(0...message_count).each { |i|
+      (0...message_count).each { |i|
 				speaker = read_char
 				subject = read_char
 				action = read_char
@@ -110,15 +112,14 @@ class Agent
 			
       #output
       flag_text = []
-      flag_text << "Bugs kill Hunters" if @state.killer_bug
-      flag_text << "Player died last round" if @state.was_killed
-      flag_text << "Player stunned last round" if @state.was_stunned
-      puts "flags: " + flag_text.join(', ')
+      flag_text << "[Bugs kill hunters]" if @state.killer_bug
+      flag_text << "[Player died last round]" if @state.was_killed
+      flag_text << "[Player stunned last round]" if @state.was_stunned
+      puts "flags: " + (flag_text.length > 0 ? flag_text.join(' ') : 'None')
       puts "player: '#{@state.player}'"
       puts "rows: #{@state.rows} columns: #{@state.columns}"
       puts "messages: #{@state.messages.length}"
       @state.messages.each { |msg| puts "message: '#{msg[0]}' says '#{msg[1]}' should move #{@@reverse_moves[msg[2]].to_s.upcase}" }
-      
       respond_to_change @state
 		end
 	end

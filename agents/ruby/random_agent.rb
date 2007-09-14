@@ -21,9 +21,8 @@ class RandomAgent < Agent
     @moves = [:up, :down, :left, :right, :none]
   end
   def respond_to_change state
-    mv = random_move()
-		write_move mv
-		write_message state.player, state.player, mv
+		write_move random_move()
+		write_message state.player, state.player, random_move()
 	end
 
   def random_move
