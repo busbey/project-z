@@ -40,14 +40,14 @@ sub new
 	my $self = { };
 	my $argRef = shift;
 
-        use Getopt::Std;
-        my %opt;
-        my $opt_string = "h:p:";
-        getopts( $opt_string, \%opt );
-        usage() unless $opt{h} and $opt{p};
+    use Getopt::Std;
+    my %opt;
+    my $opt_string = "h:p:";
+    getopts( $opt_string, \%opt );
+    $class->usage() unless $opt{h} and $opt{p};
 
-        my $host = $opt{h};
-        my $port = $opt{p};
+    my $host = $opt{h};
+    my $port = $opt{p};
 
 	#printf STDERR ("Connecting to %s:%d\n", $host, $port);
 	my $socket = new IO::Socket::INET(	PeerAddr => $host,
