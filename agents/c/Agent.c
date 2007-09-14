@@ -32,12 +32,7 @@
 #define FLAGS_BUG_KILLS 0x01
 #define FLAGS_AGENT_DIED 0x02
 #define FLAGS_AGENT_STUN 0x04
-
-#ifdef DEBUG
-	#define DBG_PRINT(x) fprintf x
-#else
-	#define DBG_PRINT(x) 
-#endif
+#define FLAGS_NONE 0x00
 
 /** @brief set up our socket. */
 int
@@ -79,11 +74,37 @@ createSocket(char* hostname, unsigned short int port)
 	return socketfd;
 }
 
+/** @brief give a descriptive string for a move 
+ *	returned strings are literals and need not be freed.	
+ */
+char* moveToStr(char move)
+{
+	char* moveDesc = "NONE";
+	switch(move)
+	{
+		case UP:
+			moveDesc = "UP";
+			break;
+		case DOWN:
+			moveDesc = "DOWN";
+			break;
+		case LEFT:
+			moveDesc = "LEFT";
+			break;
+		case RIGHT:
+			moveDesc = "RIGHT";
+			break;
+		default:
+			break;
+	}
+	return moveDesc;
+}
+
 /** @brief write given move to the server */
 void writeMoveToServer(int socket, char move)
 {
 	ssize_t bytesWritten = -1;
-	DBG_PRINT((stdout, "Telling server to perform move '%c'\n", move));
+	DBG_PRINT((stdout, "moving %s\n", moveToStr(move)));
 	bytesWritten = write(socket, &(move), 1);
 	if(1 != bytesWritten)
 	{
@@ -96,7 +117,7 @@ void writeMoveToServer(int socket, char move)
 void writeChatToServer(int socket, ChatMessage* chat)
 {
 	ssize_t bytesWritten = -1;
-	DBG_PRINT((stdout, "Writing chat message: %c says %c should move '%c'\n",chat->speaker, chat->subject, chat->action));
+	DBG_PRINT((stdout, "sending '%c' says '%c' should move %s\n",chat->speaker, chat->subject, moveToStr(chat->action)));
 	bytesWritten = write(socket, &(chat->speaker), 1);
 	if(1 != bytesWritten)
 	{
@@ -163,25 +184,33 @@ readState(int socket)
 		fprintf(stderr, "Error reading game state flags.\n");
 		exit(-1);
 	}
-	DBG_PRINT((stderr, "Game flags %#8X\n", buf.byte));
 	if((FLAGS_GAME_END & (buf.byte)) == FLAGS_GAME_END)
 	{
 		state->gameOver = TRUE;
 	}
 	else
 	{
+		DBG_PRINT((stderr, "flags:"));
 		if((FLAGS_BUG_KILLS & buf.byte) == FLAGS_BUG_KILLS)
 		{
 			state->bugKills = TRUE;
+			DBG_PRINT((stderr, " [Bugs kill hunters]"));
 		}
 		if((FLAGS_AGENT_DIED & buf.byte) == FLAGS_AGENT_DIED)
 		{
 			state->killed = TRUE;
+			DBG_PRINT((stderr, " [Player died last round]"));
 		}
 		if((FLAGS_AGENT_STUN & buf.byte) == FLAGS_AGENT_STUN)
 		{
 			state->stunned = TRUE;
+			DBG_PRINT((stderr, " [Player stunned last round]"));
 		}
+		if(buf.byte == FLAGS_NONE)
+		{
+			DBG_PRINT((stderr, " None"));
+		}
+		DBG_PRINT((stderr, "\n"));
 	}
 	bytesRead = read(socket, &(buf.byte), 1);
 	if(1 != bytesRead)
@@ -189,7 +218,7 @@ readState(int socket)
 		fprintf(stderr, "Error reading agent's character.\n");
 		exit(-1);
 	}
-	DBG_PRINT((stderr, "Running as Agent %c\n", buf.byte));
+	DBG_PRINT((stderr, "player: '%c'\n", buf.byte));
 	state->player = buf.byte;
 	bytesRead = read(socket, &(buf.intbytes[0]), 4);
 	if(0 >= bytesRead)
@@ -227,7 +256,7 @@ readState(int socket)
 	}
 	buf.integer = ntohl(buf.integer);
 	state->rows = buf.integer;
-	DBG_PRINT((stderr, "Board is %dx%d\n", state->rows, state->cols));
+	DBG_PRINT((stderr, "rows: %d columns: %d\n", state->rows, state->cols));
 	state->board = malloc(state->rows * sizeof(*(state->board)));
 	if(NULL == state->board)
 	{
@@ -283,7 +312,7 @@ readState(int socket)
 	}
 	buf.integer = ntohl(buf.integer);
 	state->numMessages = buf.integer;
-	DBG_PRINT((stderr, "%d chat messages this turn.\n", state->numMessages));
+	DBG_PRINT((stderr, "messages: %d\n", state->numMessages));
 	if(0 < state->numMessages)
 	{
 		state->messages = malloc(state->numMessages * sizeof(ChatMessage));
@@ -316,6 +345,10 @@ readState(int socket)
 				exit(-1);
 			}
 			(state->messages[index]).action = buf.byte;
+			DBG_PRINT((stderr, "message: '%c' says '%c' should move %s\n", 
+						(state->messages[index]).speaker,
+						(state->messages[index]).subject,
+						moveToStr((state->messages[index]).action)));
 		}
 	}
 	return state;
@@ -388,9 +421,11 @@ main(int argc, char **argv)
 			running = FALSE;
 		}
 		respondToChange(socket, state);
+		DBG_PRINT((stderr, "\n"));
 		releaseState(state);
 	}
+	fini();
 	close(socket);
-	fprintf(stdout, "Game has ended.\n");
+	fprintf(stdout, "Game has ended...\n");
 	return (0);
 }

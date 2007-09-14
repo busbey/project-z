@@ -20,6 +20,7 @@
 #include <stdlib.h>		/* exit, abs */
 #include <regex.h>		/* regcomp, regexec */
 
+char*	goalDesc = "";
 regex_t	goals = {0};
 
 /** @brief handle command line args */
@@ -30,18 +31,27 @@ init(int argc, char** argv)
 	if(0 < argc)
 	{
 		/* first arg is a string regular expression of what to go after */
-		res = regcomp(&goals, argv[0], REG_EXTENDED | REG_NOSUB);
+		goalDesc = argv[0];
+		res = regcomp(&goals, goalDesc, REG_EXTENDED | REG_NOSUB);
 	}
 	else
 	{
 		/* default to bugs */
-		res = regcomp(&goals, "[B-N]", REG_EXTENDED | REG_NOSUB );
+		goalDesc = "[B-N]";
+		res = regcomp(&goals, goalDesc, REG_EXTENDED | REG_NOSUB );
 	}
 	if(0 != res)
 	{
 		fprintf(stderr, "Error compiling the regular expression representing Agent goals.\n");
 		exit(-1);
 	}
+}
+
+/** @brief clean up */
+void
+fini()
+{
+	regfree(&goals);
 }
 
 /** @brief given a world state, pick a new action */
@@ -136,6 +146,7 @@ void respondToChange(int socket, State* newState)
 			}
 		}
 	}
+	DBG_PRINT((stderr, "Goal '%s' is at (%d, %d); I am at (%d, %d)\n", goalDesc, goalRow, goalCol, myRow, myCol));
 	/* Note that if we can't find ourself on the map we're going to still move towards the goal closest to the upper left hand corner. */
 	writeMoveToServer(socket, move);
 }

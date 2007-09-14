@@ -29,6 +29,12 @@
 #define UP 'u'
 #define DOWN 'd'
 
+#ifdef DEBUG
+	#define DBG_PRINT(x) fprintf x
+#else
+	#define DBG_PRINT(x) 
+#endif
+
 typedef struct ChatMessage
 {
 	unsigned char speaker;
@@ -54,6 +60,9 @@ typedef struct State
 
 /** @brief handle command line args */
 extern void init(int argc, char** argv);
+
+/** @brief clean up */
+extern void fini();
 
 /** @brief given a world state, pick a new action */
 extern void respondToChange(int socket, State* newState); 

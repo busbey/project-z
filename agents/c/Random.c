@@ -26,6 +26,13 @@ init(int argc, char** argv)
 	(void)argv;
 }
 
+/** @brief clean up */
+void
+fini()
+{
+	/* no clean up. */
+}
+
 /** @brief given a world state, pick a new action */
 void respondToChange(int socket, State* newState)
 {
