@@ -58,6 +58,11 @@ import java.net.*;
 				clients.add(clientThread);
 				Thread actionReader = new Thread(clientThread, "Thread for " + agent);
 
+				/* XXX hack to work around bug 33 */
+				synchronized(in)
+				{
+					in.put(agent, (byte)'n');
+				}
 				actionReader.setDaemon(true);
 				actionReader.start();
 

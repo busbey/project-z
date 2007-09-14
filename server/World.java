@@ -113,12 +113,12 @@ public class World implements Serializable
 
 	public void change(char agent, byte move)
 	{
-		if('n' == move)
-		{
-			return;
-		}
 		if(location.containsKey(agent))
 		{
+			if('n' == move)
+			{
+				return;
+			}
 			long loc = location.get(agent);
 			int row = (int)(loc & (0xFFFFFFFF));
 			int col = (int)(loc >>> 32);
