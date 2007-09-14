@@ -30,7 +30,7 @@ public class State {
 	private final static byte WAS_KILLED = 0x02;
 	private final static byte WAS_STUNNED = 0x04;
 
-	public final static byte GAME_ENDED = 0xff;
+	public final static byte GAME_ENDED = (byte) 0xff;
 	
 	public State (byte player, int rows, int columns) {
 		this.player = player;
@@ -68,12 +68,12 @@ public class State {
 	}
 
 	public String flagString () {
-		if (!(killerBug || wasKiled || wasStunned)) 
+		if (!(killerBug || wasKilled || wasStunned)) 
 			return "None.";
 		StringBuffer value = new StringBuffer();
 		value.append(killerBug ? " [Bugs kill hunters]" : "");		
 		value.append(wasKilled ? " [Player died last round]" : "");		
-		value.append(wasStunned ? " [Player stunnded last round]" : "");
+		value.append(wasStunned ? " [Player stunned last round]" : "");
 		return value.toString();
 	}
 	

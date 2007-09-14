@@ -172,9 +172,9 @@ public abstract class Agent {
 	}
 
 	public void sendMessage (byte speaker, byte subject, Direction direction) {
-		System.out.println("sending: " + 
-											 (char) speaker + " says " + 
-											 (char) subject + " should move " + 
+		System.out.println("sending: '" + 
+											 (char) speaker + "' says '" + 
+											 (char) subject + "' should move " + 
 											 direction);
 		try {
 			outStream.writeByte(speaker);
