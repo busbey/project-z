@@ -87,11 +87,11 @@ public class SmarterAgent extends Agent {
 				move = Direction.LEFT;
 		}
 		
-		System.out.println("The " + goalRegex + " is at (" +
+		System.out.println("Goal '" + goalRegex + "' is at (" +
 											 goalPosition.row() + ", " + 
-											 goalPosition.column() + "), I am at (" +
+											 goalPosition.column() + "); I am at (" +
 											 myPosition.row() + ", " +
-											 myPosition.column() + ").");
+											 myPosition.column() + ")");
 		writeMove(move);
 	}
 	

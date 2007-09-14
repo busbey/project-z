@@ -69,7 +69,7 @@ public class State {
 
 	public String flagString () {
 		if (!(killerBug || wasKilled || wasStunned)) 
-			return "None.";
+			return " None.";
 		StringBuffer value = new StringBuffer();
 		value.append(killerBug ? " [Bugs kill hunters]" : "");		
 		value.append(wasKilled ? " [Player died last round]" : "");		
