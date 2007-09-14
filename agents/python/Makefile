@@ -17,7 +17,7 @@ BUG_PATTERN = '[B-N]'
 DEFAULT_HOST = 'localhost'
 DEFAULT_PORT = 1337
 
-all: 
+all: random smart
 random:
 smart: 
 clean:

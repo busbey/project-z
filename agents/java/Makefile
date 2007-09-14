@@ -17,10 +17,6 @@ BUG_PATTERN = '[B-N]'
 DEFAULT_HOST = 'localhost'
 DEFAULT_PORT = 1337
 
-.SUFFIXES: .java .class
-.java.class:
-	javac $*.java
-
 RANDOMCLASSES = \
 	RandomAgent.java \
 	Agent.java 
@@ -37,3 +33,8 @@ hunter1go: smart
 	java Agent $(DEFAULT_HOST) $(DEFAULT_PORT) SmarterAgent $(BUG_PATTERN)
 hunter2go: random
 	java Agent $(DEFAULT_HOST) $(DEFAULT_PORT) RandomAgent
+	
+.SUFFIXES: .java .class
+.java.class:
+	javac $*.java
+
