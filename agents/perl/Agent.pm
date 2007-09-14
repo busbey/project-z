@@ -39,8 +39,16 @@ sub new
 	my $class = shift;
 	my $self = { };
 	my $argRef = shift;
-	my $host = shift @$argRef || "localhost";
-	my $port = shift @$argRef || 1337;
+
+        use Getopt::Std;
+        my %opt;
+        my $opt_string = "h:p:";
+        getopts( $opt_string, \%opt );
+        usage() unless $opt{h} and $opt{p};
+
+        my $host = $opt{h};
+        my $port = $opt{p};
+
 	#printf STDERR ("Connecting to %s:%d\n", $host, $port);
 	my $socket = new IO::Socket::INET(	PeerAddr => $host,
 										PeerPort => $port,
@@ -92,11 +100,6 @@ sub getState
 
 sub main
 {
-        use Getopt::Std;
-        my %opt;
-        my $opt_string = "h:p:";
-        getopts( $opt_string, \%opt );
-        usage() unless $opt{h} and $opt{p};
 	# make a new Agent
 	my $package = shift;
 	my $argref = \@ARGV;
