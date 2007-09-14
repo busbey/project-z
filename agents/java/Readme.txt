@@ -24,7 +24,7 @@ In this kit:
 	* Direction.java	- an enum representing the directions agents can move
 	* Message.java	- a container class for agent-agent messages
 	* Position.java - a container class for board positions
-	* RandomAgent.java	- a studid agent
+	* RandomAgent.java	- a stupid agent
 	* SmarterAgent.java	- a smarter agent
 	* State.java	- a container class for the world state
 	* Server.jar	- a server implementation you can use to test.
@@ -40,8 +40,8 @@ To run examples:
 
 To make your own implementation:
 	create a source file
-	include Agent.h
-	implement init, fini, and respondToChange
+	extend Agent.java
+	implement init and respondToChange
 	update Makefile by copying one of the examples and replace the example source/object files with your own.
 
 License:
