@@ -23,6 +23,6 @@ smart:
 clean:
 	rm -rf *.pyc
 hunter1go: smart
-	./smateragent.py -h $(DEFAULT_HOST) -p $(DEFAULT_PORT) $(BUG_PATTERN)
+	./smarteragent.py -h $(DEFAULT_HOST) -p $(DEFAULT_PORT) $(BUG_PATTERN)
 hunter2go: random
 	./randomagent.py -h $(DEFAULT_HOST) -p $(DEFAULT_PORT)
