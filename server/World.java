@@ -2,7 +2,7 @@
  * @file world representation
  *
  */
-/* Copyright (C) 2007  Sean Busbey, Roman Garnett, Brad Skaggs
+/* Copyright (C) 2007  Sean Busbey, Roman Garnett, Brad Skaggs, Paul Ostazeski
  *
  * This program is free software: you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
