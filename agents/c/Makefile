@@ -28,5 +28,3 @@ hunter1go: smart
 	./smart -h $(DEFAULT_HOST) -p $(DEFAULT_PORT) $(BUG_PATTERN)
 hunter2go: random
 	./random -h $(DEFAULT_HOST) -p $(DEFAULT_PORT)
-server: Server.java StateWorker.java ChatMessage.java World.java Worker.java
-	javac Server.java
