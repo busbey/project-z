@@ -113,28 +113,27 @@ public abstract class Agent {
 
 			while (!socket.isInputShutdown()) {
 				byte flag = inStream.readByte();
-				if (flag == 0xff)
+				if (flag == State.GAME_ENDED) {
+					System.out.println("Game has ended...");
 					return;
-				System.out.println("flag: " + flag);
+				}
 				
 				byte player = inStream.readByte();
-				System.out.println("player: " + (char)(player));
-				
 				columns = inStream.readInt();
 				rows = inStream.readInt();
-				System.out.println("rows: " + rows + " columns: " + columns);
 
 				if (state == null)
 					state = new State(player, rows, columns);
 				
-				state.setKillerBug((flag & 0x01) == 0x01);
-				state.setWasKilled((flag & 0x02) == 0x02);
-				state.setWasStunned((flag & 0x04) == 0x04);
+				state.setFlag(flag);
 
 				for (int i = 0; i < rows; i++) 
 					for (int j = 0; j < columns; j++) 
 						state.changeBoard(i, j, inStream.readByte());
-				System.out.println(state.boardString());
+				
+				System.out.println("flags:" + state.flagString());
+				System.out.println("player: '" + (char)(player) + "'");
+				System.out.println("rows: " + rows + " columns: " + columns);
 				
 				int messages = inStream.readInt();
 				System.out.println("messages: " + messages);
@@ -143,11 +142,10 @@ public abstract class Agent {
 					byte speaker = inStream.readByte();
 					byte subject = inStream.readByte();
 					byte direction = inStream.readByte();
-					System.out.println("message: " +
-														 (char) speaker + " says " + 
-														 (char) subject + " should move " +
+					System.out.println("message: '" +
+														 (char) speaker + "' says '" + 
+														 (char) subject + "' should move " +
 														 Direction.lookup(direction));
-					
 					state.addMessage(new Message(speaker, subject, Direction.lookup(direction)));
 				}
 				
@@ -155,7 +153,7 @@ public abstract class Agent {
 			}
 		}
 		catch(EOFException eof) {
-	    System.out.println("Game has ended.");
+	    System.out.println("Game has ended...");
 		}
 		catch (Exception e) {
 	    e.printStackTrace();
@@ -163,7 +161,7 @@ public abstract class Agent {
 	}
 	
 	public void writeMove (Direction move) {
-		System.out.println("moving: " + move);
+		System.out.println("moving " + move);
 		try {
 			outStream.writeByte(move.getByte());
 			outStream.flush();

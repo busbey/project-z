@@ -25,6 +25,12 @@ public class State {
 	private int rows, columns;
 	private byte[][] board;
 	private List<Message> messages;
+
+	private final static byte KILLER_BUG = 0x01;
+	private final static byte WAS_KILLED = 0x02;
+	private final static byte WAS_STUNNED = 0x04;
+
+	public final static byte GAME_ENDED = 0xff;
 	
 	public State (byte player, int rows, int columns) {
 		this.player = player;
@@ -51,32 +57,24 @@ public class State {
 		messages.add(message);
 	}
 
-	public void setKillerBug (boolean killerBug) {
-		this.killerBug = killerBug;
-	}
-
-	public void setWasKilled (boolean wasKilled) {
-		this.wasKilled = wasKilled;
-	}
-
-	public void setWasStunned (boolean wasStunned) {
-		this.wasStunned = wasStunned;
+	public void setFlag (int flag) {
+		 killerBug = (flag & 0x01) == KILLER_BUG;
+		 wasKilled = (flag & 0x02) == WAS_KILLED;
+		 wasStunned = (flag & 0x04) == WAS_STUNNED;
 	}
 	
 	public void changeBoard (int row, int column, byte type) {
 		board[row][column] = type;
 	}
 
-	public String boardString () {
-		StringBuffer buffer = new StringBuffer();
-		for (int i = 0; i < rows; i++) {
-			for (int j = 0; j < columns; j++) {
-				buffer.append((char) board[i][j]);
-			}
-			if (i < (rows - 1)) 
-				buffer.append("\n");
-		}
-		return buffer.toString();
+	public String flagString () {
+		if (!(killerBug || wasKiled || wasStunned)) 
+			return "None.";
+		StringBuffer value = new StringBuffer();
+		value.append(killerBug ? " [Bugs kill hunters]" : "");		
+		value.append(wasKilled ? " [Player died last round]" : "");		
+		value.append(wasStunned ? " [Player stunnded last round]" : "");
+		return value.toString();
 	}
 	
 	public HashMap<Byte, ArrayList<Position>> sortByType () {
