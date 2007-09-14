@@ -35,8 +35,11 @@ public class World implements Serializable
 	
 	public static final int DEFAULT_ROUNDS_TO_EAT = 100;
 	
-	public static final long SCORE_BUG_KILL = 400;
-	public static final long SCORE_HUNTER_KILL = 100;
+	public long SCORE_BUG_KILL = 400;
+	public long SCORE_HUNTER_KILL = 100;
+	public long SCORE_STUNNED = -25;
+	public long SCORE_KILLED = -50;
+	public long SCORE_POWERUP = 50;
 	
 	protected int roundsToEat =0;
 
@@ -168,6 +171,16 @@ public class World implements Serializable
 				{
 					bugEats();
 				}
+				else
+				{
+					long oldScore = 0l;
+					if(score.containsKey(agent))
+					{
+						oldScore = score.get(agent);
+					}
+					oldScore += SCORE_POWERUP;
+					score.put(agent, oldScore);
+				}
 				move(row, col, newRow, newCol);
 			}
 			else if(OBSTACLE != target)
@@ -249,6 +262,13 @@ public class World implements Serializable
 		}
 		oldScore += isBug(target) ? SCORE_BUG_KILL : SCORE_HUNTER_KILL;
 		score.put(by, oldScore);
+		oldScore = 0l;
+		if(score.containsKey(target))
+		{
+			oldScore = score.get(target);
+		}
+		oldScore += SCORE_KILLED;
+		score.put(target, oldScore);
 		if(location.containsKey(target))
 		{
 			long loc = location.get(target);
@@ -273,6 +293,20 @@ public class World implements Serializable
 	{
 		/* stun */
 		System.err.println("Agent " + agent + " stunned by " + by);
+		long oldScore = 0l;
+		if(score.containsKey(agent))
+		{
+			oldScore = score.get(agent);
+		}
+		oldScore += SCORE_STUNNED;
+		score.put(agent, oldScore);
+		oldScore = 0l;
+		if(score.containsKey(by))
+		{
+			oldScore = score.get(by);
+		}
+		oldScore += SCORE_STUNNED;
+		score.put(by, oldScore);
 		byte curFlag = FLAGS_EMPTY;
 		if(agentFlags.containsKey(agent))
 		{
@@ -426,21 +460,62 @@ public class World implements Serializable
 				}
 				retVal.state = state;
 			}
-			for(int i = 0; i < retVal.state[rows].length; i++)
+			/* check for comments */
+			if(';' == curLine.charAt(0))
 			{
-				char entry = curLine.charAt(i);
-				if(0 > Arrays.binarySearch(valid, entry))
+				try
 				{
-					throw new IOException("invalid world state map.");
+					/* check for scores */
+					if(curLine.startsWith(";bug kill score:"))
+					{
+						retVal.SCORE_BUG_KILL = Integer.parseInt(curLine.substring(16));
+						System.err.println("Setting point value for killing a bug to " + retVal.SCORE_BUG_KILL);
+					}
+					else if(curLine.startsWith(";hunter kill score:"))
+					{
+						retVal.SCORE_HUNTER_KILL = Integer.parseInt(curLine.substring(19));
+						System.err.println("Setting point value for killing a hunter to " + retVal.SCORE_HUNTER_KILL);
+					}
+					else if(curLine.startsWith(";powerup:"))
+					{
+						retVal.SCORE_POWERUP = Integer.parseInt(curLine.substring(9));
+						System.err.println("Setting point value for a hunter grabbing a powerup to " + retVal.SCORE_POWERUP);
+					}
+					else if(curLine.startsWith(";stunned:"))
+					{
+						retVal.SCORE_STUNNED = Integer.parseInt(curLine.substring(9));
+						System.err.println("Setting point value for getting stunned to " + retVal.SCORE_STUNNED);
+					}
+					else if(curLine.startsWith(";killed:"))
+					{
+						retVal.SCORE_KILLED = Integer.parseInt(curLine.substring(8));
+						System.err.println("Setting point value for getting killed to " + retVal.SCORE_KILLED);
+					}
 				}
-				if( (BUG_MIN <= entry && BUG_MAX >= entry) ||
-					((HUNTER_MIN) <= entry && HUNTER_MAX >= entry))
+				catch(NumberFormatException ex)
 				{
-					retVal.location.put(entry, ((long)rows) | (((long)i) << 32));
+					System.err.println("Error configuring score.");
+					ex.printStackTrace();
 				}
-				retVal.state[rows][i] = entry;
 			}
-			rows++;
+			else
+			{
+				for(int i = 0; i < retVal.state[rows].length; i++)
+				{
+					char entry = curLine.charAt(i);
+					if(0 > Arrays.binarySearch(valid, entry))
+					{
+						throw new IOException("invalid world state map.");
+					}
+					if( (BUG_MIN <= entry && BUG_MAX >= entry) ||
+						((HUNTER_MIN) <= entry && HUNTER_MAX >= entry))
+					{
+						retVal.location.put(entry, ((long)rows) | (((long)i) << 32));
+					}
+					retVal.state[rows][i] = entry;
+				}
+				rows++;
+			}
 			curLine = in.readLine();
 		}
 
