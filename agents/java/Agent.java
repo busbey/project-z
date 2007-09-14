@@ -148,6 +148,7 @@ public abstract class Agent {
 														 Direction.lookup(direction));
 					state.addMessage(new Message(speaker, subject, Direction.lookup(direction)));
 				}
+				System.out.println();
 				
 				respondToChange();
 			}
