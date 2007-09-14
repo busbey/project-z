@@ -58,9 +58,9 @@ public class State {
 	}
 
 	public void setFlag (int flag) {
-		 killerBug = (flag & 0x01) == KILLER_BUG;
-		 wasKilled = (flag & 0x02) == WAS_KILLED;
-		 wasStunned = (flag & 0x04) == WAS_STUNNED;
+		 killerBug = (flag & KILLER_BUG) == KILLER_BUG;
+		 wasKilled = (flag & WAS_KILLED) == WAS_KILLED;
+		 wasStunned = (flag & WAS_STUNNED) == WAS_STUNNED;
 	}
 	
 	public void changeBoard (int row, int column, byte type) {
