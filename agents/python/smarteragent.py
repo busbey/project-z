@@ -74,6 +74,8 @@ class SmarterAgent(agent.Agent):
                 minDistance = distance
                 closest = pair
 
+        print "Goal '" + self.regex + "' is at (%d, %d); I am at (%d, %d)" % (closest[0], closest[1], position[0], position[1])
+
         if (random.random() < (math.fabs(closest[0] - position[0]) / minDistance)):
             if ((closest[0] - position[0]) < 0):
                 self.writeMove('u')

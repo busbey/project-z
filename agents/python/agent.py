@@ -55,43 +55,42 @@ class Agent(object):
     def runAgent (self):
         while True:
             flag = struct.unpack("B", self.sock.recv(1))[0]
-            if (flag == 0xff):
+            if (flag == State.GAME_ENDED):
                 self.socket.shutdown()
                 self.socket.close()
+                print 'Game has ended...'
                 return 
-            print 'flag: %d' % flag
             
             player = self.sock.recv(1)
-            print 'player: ' + player
-
             columns = self.readInteger()
             rows = self.readInteger()
-            print 'rows: %d columns: %d' % (rows, columns)
-            
+
             if (self.state == None):
                 self.state = State(player, rows, columns)
 
-            self.state.killerBug = ((flag & 0x01) == 0x01)
-            self.state.wasKilled = ((flag & 0x02) == 0x02)
-            self.state.wasStunned = ((flag & 0x04) == 0x04)
+            self.state.setFlag(flag)
 
             for i in range(0, rows):
                 for j in range(0, columns):
                     self.state.changeBoard(i, j, self.sock.recv(1))
-            print 'board: \n' + self.state.boardString()
                         
             messages = self.readInteger()
-            print 'messages: %d' % messages 
             
+            print 'flag:' + self.state.flagString()
+            print "player: '" + player + "'"
+            print 'rows: %d columns: %d' % (rows, columns)
+            print 'messages: %d' % messages 
+
             self.state.emptyMessages()
             for i in range(0, messages):
                 speaker = self.sock.recv(1)
                 subject = self.sock.recv(1)
                 action = self.sock.recv(1)
-                print 'message: ' + speaker + ' says ' + subject + ' should move ' + action
+                print "message: '" + speaker + "' says '" + subject + "' should move " + self.moveString(action)
                 self.state.addMessage(speaker, subject, action)
 
             self.respondToChange()
+            print
 
     def readInteger (self):
         read = []
@@ -100,11 +99,11 @@ class Agent(object):
         return socket.ntohl(struct.unpack("L", ''.join(read))[0])
 
     def writeMove (self, move):
-        print 'moving: ' + move
+        print 'moving ' + self.moveString(move)
         self.sock.send(move)
 
     def sendMessage (self, speaker, subject, action):
-        print 'sending: ' + speaker + ' says ' + subject + ' should move ' + action
+        print "sending: '" + speaker + "' says '" + subject + "' should move " + self.moveString(action)
         self.sock.send(speaker)
         self.sock.send(subject)
         self.sock.send(action)
@@ -112,7 +111,19 @@ class Agent(object):
     def respondToChange (self):
         self.writeMove('n')
 
+    def moveString (self, move):
+        return {'u': 'UP',
+                'd': 'DOWN',
+                'l': 'LEFT',
+                'r': 'RIGHT',
+                'n': 'NONE'}[move]
+
 class State:
+    KILLER_BUG = 0x01
+    WAS_KILLED = 0x02
+    WAS_STUNNED = 0x04
+    GAME_ENDED = 0xff
+
     def __init__ (self, player, rows, columns):
         self.killerBug = False
         self.wasStunned = False
@@ -137,14 +148,22 @@ class State:
     def addMessage (self, speaker, subject, action):
         self.messages.append( (speaker, subject, action) )
 
-    def boardString (self):
-        result = ''
-        for i in range(0, self.rows):
-            result = result + ''.join(self.board[(i * self.columns):((i + 1) * self.columns)])
-            if (i < self.rows - 1):
-                result = result + '\n'
+    def setFlag (self, flag):
+        self.killerBug = ((flag & State.KILLER_BUG) == State.KILLER_BUG)
+        self.wasKilled = ((flag & State.WAS_KILLED) == State.WAS_KILLED)
+        self.wasStunned = ((flag & State.WAS_STUNNED) == State.WAS_STUNNED)
 
-        return result
+    def flagString (self):
+        if (not (self.killerBug or self.wasKilled or self.wasStunned)):
+            return ' None.'
+        value = ''
+        if (self.killerBug):
+            value = value + ' [Bugs kill hunters]'
+        if (self.wasKilled):
+            value = value + ' [Player died last round]'
+        if (self.wasStunned):
+            value = value + ' [Player stunned last round]'
+        return value
 
 if __name__ == '__main__':
     main(sys.argv[1:])
