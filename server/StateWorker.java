@@ -41,20 +41,20 @@ import java.util.*;
 			while(state.gameRunning())
 			{
 				end = System.currentTimeMillis();
-				if(end%5 == 0)
-				{
-					int rounds = state.getRounds();
-					if(0 < rounds)
-					{
-						System.err.println("Rounds remaining: " + rounds);
-					}
-					HashMap<Character, Long> score = state.getScores();
-					if(0 < score.size())
-					{
-						System.err.println("Current Scores: " + state.getScores().toString());
-					}
+				//if(end%5 == 0)
+				//{
+				//	int rounds = state.getRounds();
+				//if(0 < rounds)
+				//{
+					//System.err.println("Rounds remaining: " + rounds);
+				//}
+				//	HashMap<Character, Long> score = state.getScores();
+				//	if(0 < score.size())
+				//	{
+				//		System.err.println("Current Scores: " + state.getScores().toString());
+				//	}
 				//	System.err.println("World \n{" + state.toString() + "\n}");
-				}
+				//}
 				long toSleep = roundTime - (end - last);
 				if(0 < toSleep)
 				{
@@ -78,6 +78,7 @@ import java.util.*;
 			{
 				synchronized(actions)
 				{
+					System.out.println("Rounds remaining: " + state.getRounds());
 					state.roundsPassed(1);
 					for(Map.Entry<Character, Byte> entry : actions.entrySet())
 					{
@@ -85,6 +86,8 @@ import java.util.*;
 						state.change(agent, entry.getValue());
 					}
 					actions.clear();
+					System.out.println("Flags:" + state.flagString());
+					System.out.println("Current World \n{" + state.toString() + "\n}");
 				}
 			}
 		}

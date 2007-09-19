@@ -249,12 +249,12 @@ public class World implements Serializable
 		//System.err.println("Previous World \n{" + this.toString() + "\n}");
 		state[toRow][toCol] = state[fromRow][fromCol];
 		state[fromRow][fromCol] = EMPTY;
-		//System.err.println("Current World \n{" + this.toString() + "\n}");
+		//System.out.println("Current World \n{" + this.toString() + "\n}");
 	}
 
 	public void kill(char target, char by)
 	{
-		System.err.println("Agent " + target + " killed by " + by);
+		System.out.println("Agent " + target + " killed by " + by);
 		long oldScore = 0l;
 		if(score.containsKey(by))
 		{
@@ -292,7 +292,7 @@ public class World implements Serializable
 	public void stun(char agent, char by)
 	{
 		/* stun */
-		System.err.println("Agent " + agent + " stunned by " + by);
+		System.out.println("Agent " + agent + " stunned by " + by);
 		long oldScore = 0l;
 		if(score.containsKey(agent))
 		{
@@ -359,7 +359,7 @@ public class World implements Serializable
 			curFlag &= CLEAR_AGENT_DIED & CLEAR_AGENT_STUN;
 			agentFlags.put(agent, curFlag);
 		}
-
+		
 	}
 
 	public void setRandomEmpty(char target)
@@ -411,7 +411,7 @@ public class World implements Serializable
 	public void end()
 	{
 		System.err.println("Ending game...");
-		System.err.println("\tScores: " + score.toString());
+		System.out.println("\tScores: " + score.toString());
 		flags = FLAGS_GAME_END;
 	}
 
@@ -540,7 +540,7 @@ public class World implements Serializable
 
 	public static World random()
 	{
-	    int numRows = (int)(Math.random()*100) + 6;
+		int numRows = (int)(Math.random()*100) + 6;
 		int rowSize = (int)(Math.random()*100) + 6;
 		World returnVal = new World(rowSize, numRows);
 		
@@ -602,5 +602,16 @@ public class World implements Serializable
 		HashMap<Character, Long> returnVal = new HashMap<Character, Long>();
 		returnVal.putAll(score);
 		return returnVal;
+	}
+
+	public String flagString () {
+		if (flags == FLAGS_EMPTY) 
+			return " None.";
+		String value = new String();
+		if ((flags & SET_BUG_EATS) == SET_BUG_EATS)
+			value += " [bug kills]";
+		if ((flags & FLAGS_GAME_END) == FLAGS_GAME_END)
+			value += " [game over]";
+		return value;
 	}
 }
