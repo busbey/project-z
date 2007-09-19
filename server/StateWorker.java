@@ -74,6 +74,7 @@ import java.util.*;
 					actions.clear();
 					System.out.println("Flags:" + state.flagString());
 					System.out.println("Current World \n{" + state.toString() + "\n}");
+					System.out.println("Scores: " + state.getScores().toString());
 				}
 			}
 		}
