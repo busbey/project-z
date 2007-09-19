@@ -338,6 +338,7 @@ public class World implements Serializable
 			if(0 >= rounds)
 			{
 				end();
+				return;
 			}
 		}
 		if(0 != (flags & SET_BUG_EATS))
