@@ -37,5 +37,5 @@ clean:
 	cp ../server/Server.jar $@/
 ../server/Server.jar:
 	cd ../server
-	$(MAKE) -f Makefile jar
+	$(MAKE) -f $(CURDIR)/../server/Makefile jar
 	cd ../agents
