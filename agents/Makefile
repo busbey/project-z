@@ -14,25 +14,28 @@
 #  this program.  If not, see <http://www.gnu.org/licenses/>.
 #  
 all: C_Development_Kit.kit Java_Development_Kit.kit Ruby_Development_Kit.kit Perl_Development_Kit.kit Python_Development_Kit.kit
+	echo "Done..."
+.PHONY:all clean
 clean:
-	rm -rf *.zip *.bz2 *.gz *_Development_Kit
+	rm -rf *.zip *.bz2 *.gz *_Development_Kit *.kit
 %.kit: %.tar.gz %.tar.bz2 %.zip
-	md5 $< > $@
-%.tar.gz: $*
+	md5 $^ > $@
+%.tar.gz: %
 	tar czf $@ $*
-%.tar.bz2: $*
+%.tar.bz2: %
 	tar cjf $@ $*
-%.zip: $*
+%.zip: %
 	rm -f $@
 	zip -r $@ $*
-%_Development_Kit: $* ../gpl.txt ../server/Server.jar
-	pushd $*
-	make clean
-	popd
-	cp -r $* $@
+%_Development_Kit :: % ../gpl.txt ../server/Server.jar
+	cd $<
+	$(MAKE) -f $(CURDIR)/$</Makefile clean
+	cd ..
+	cp -r $< $@
+	rm -rf $@/.svn
 	cp ../gpl.txt $@/
 	cp ../server/Server.jar $@/
 ../server/Server.jar:
-	pushd ../server
-	make jar
-	popd
+	cd ../server
+	$(MAKE) -f Makefile jar
+	cd ../agents
