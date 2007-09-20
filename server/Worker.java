@@ -52,7 +52,7 @@ import java.net.*;
 				Socket client = incoming.accept();
 				final char agent = agentStart;
 				agentStart++;
-				System.err.println("New connection for Agent " + agent);
+				System.err.println("New connection for Agent " + agent + " from " + client.getRemoteSocketAddress().toString());
 				
 				AgentThread clientThread = new AgentThread(agent, client);
 				clients.add(clientThread);
