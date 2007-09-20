@@ -14,8 +14,8 @@
 #  this program.  If not, see <http://www.gnu.org/licenses/>.
 #  
 all: C_Development_Kit.kit Java_Development_Kit.kit Ruby_Development_Kit.kit Perl_Development_Kit.kit Python_Development_Kit.kit
-	echo "Done..."
-.PHONY:all clean
+.PHONY: all clean
+.PRECIOUS: %.tar.gz %.tar.bz2 %.zip %_Development_Kit
 clean:
 	rm -rf *.zip *.bz2 *.gz *_Development_Kit *.kit
 %.kit: %.tar.gz %.tar.bz2 %.zip
