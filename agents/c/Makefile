@@ -15,8 +15,10 @@
 #  
 CFLAGS = -Wall -pedantic -DDEBUG
 BUG_PATTERN = '[B-N]'
+POWERUP_PATTERN = '[P]'
 DEFAULT_HOST = 'localhost'
 DEFAULT_PORT = 1337
+BUG_PORT = 7331
 all: random smart
 random: Agent.o Random.o
 	gcc -Wall -pedantic -o random Agent.o Random.o
@@ -28,3 +30,5 @@ hunter1go: smart
 	./smart -h $(DEFAULT_HOST) -p $(DEFAULT_PORT) $(BUG_PATTERN)
 hunter2go: random
 	./random -h $(DEFAULT_HOST) -p $(DEFAULT_PORT)
+buggo: smart
+	./smart -h $(DEFAULT_HOST) -p $(BUG_PORT) $(POWERUP_PATTERN)
