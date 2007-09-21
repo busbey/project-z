@@ -33,6 +33,8 @@ public class Server
 	Worker hunter = null;
 	Worker display = null;
 
+	World world = null;
+
 	StateWorker state = null;
 
 	public void close()
@@ -85,6 +87,7 @@ public class Server
 		HashMap<Character, ChatMessage> chats = new HashMap<Character, ChatMessage>();
 		
 		StateWorker update = new StateWorker(state, actions, chats, clients, roundTime);
+		this.world = state;
 		bug = new Worker('B', new ServerSocket(bugPort), clients, actions, chats);
 		hunter = new Worker('1', new ServerSocket(hunterPort), clients, actions, chats);
 		display = new Worker('d', new ServerSocket(displayPort), clients, actions, chats);
@@ -106,6 +109,11 @@ public class Server
 		Thread displayThread = new Thread(display);
 		displayThread.setDaemon(true);
 		displayThread.start();
+	}
+
+	public boolean gameRunning()
+	{
+		return world.gameRunning();
 	}
 
 	public static void main(String[] args)
@@ -148,7 +156,18 @@ public class Server
 			}
 			else
 			{
-				while(true);
+				while(server.gameRunning())
+				{
+					Thread.yield();
+					try
+					{
+						Thread.sleep(300);
+					}
+					catch(InterruptedException iex)
+					{
+					}
+				}
+				server.close();
 			}
 		} catch (IOException ex)
 		{

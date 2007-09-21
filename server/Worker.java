@@ -128,6 +128,7 @@ import java.net.*;
 										/* 'i move' case */
 										synchronized(in)
 										{
+											System.out.println("\tAdding action for " + agent);
 											in.put(agent, firstByte);
 										}
 										break;
@@ -135,7 +136,7 @@ import java.net.*;
 										/* 
 											validate 'i say' case 
 										   	in case of invalid message, 
-										   	throw away what we have an move on. 
+										   	throw away what we have and move on. 
 										 */
 										if(	('1' <= firstByte && '9' >= firstByte) ||
 											('B' <= firstByte && 'N' >= firstByte))
@@ -157,6 +158,7 @@ import java.net.*;
 														/* valid action */
 														synchronized(chats)
 														{
+															System.out.println("\tAdding chat for " + agent);
 															chats.put(agent, new ChatMessage(speaker, subject, action));
 														}
 													default:

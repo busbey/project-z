@@ -33,13 +33,13 @@ public class World implements Serializable
 	public static final byte CLEAR_AGENT_DIED = (byte)(0xFD);
 	public static final byte CLEAR_BUG_EATS = (byte)(0xFE);
 	
-	public static final int DEFAULT_ROUNDS_TO_EAT = 100;
+	public static final int DEFAULT_ROUNDS_TO_EAT = 40;
 	
-	public long SCORE_BUG_KILL = 400;
-	public long SCORE_HUNTER_KILL = 100;
-	public long SCORE_STUNNED = -25;
-	public long SCORE_KILLED = -50;
-	public long SCORE_POWERUP = 50;
+	public long SCORE_BUG_KILL = 400l;
+	public long SCORE_HUNTER_KILL = 100l;
+	public long SCORE_STUNNED = 0l;
+	public long SCORE_KILLED = -50l;
+	public long SCORE_POWERUP = 0l;
 	
 	protected int roundsToEat =0;
 
@@ -53,7 +53,7 @@ public class World implements Serializable
 
 	public static final double powerup = 0.007;	
 	public static final double obstacle = 0.1;
-	public static final char[] valid = {' ', 'B', 'C', '1', '2', '3', '4', 'O', 'P'};
+	public static final char[] valid = {' ', 'B', 'C', 'D', 'E', 'F', '1', '2', '3', '4', '5', '6', '7', 'O', 'P'};
 	protected char[][] state = null; 
 	protected byte flags = FLAGS_EMPTY;
 	HashMap<Character, Byte> agentFlags = new HashMap<Character, Byte>();
@@ -109,6 +109,12 @@ public class World implements Serializable
 		location.put('3', ((long) numRows -4) | (((long)rowSize-4) << 32) );
 		location.put('4', ((long) numRows -5) | (((long)rowSize-5) << 32) );
 		this.rounds = rounds;
+
+		score.put('B', 0l);
+		score.put('1', 0l);
+		score.put('2', 0l);
+		score.put('3', 0l);
+		score.put('4', 0l);
 	}
 
 	public void change(char agent, byte move)
@@ -512,6 +518,7 @@ public class World implements Serializable
 						((HUNTER_MIN) <= entry && HUNTER_MAX >= entry))
 					{
 						retVal.location.put(entry, ((long)rows) | (((long)i) << 32));
+						retVal.score.put(entry, 0l);
 					}
 					retVal.state[rows][i] = entry;
 				}

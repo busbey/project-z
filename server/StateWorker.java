@@ -41,94 +41,120 @@ import java.util.*;
 			while(state.gameRunning())
 			{
 				end = System.currentTimeMillis();
-				long toSleep = roundTime - (end - last);
+				long timeForLastRound = end - last;
+				long toSleep = roundTime - timeForLastRound;
+				System.err.println("\tRound took " + timeForLastRound + "ms");
 				if(0 < toSleep)
 				{
 					try
 					{
 						Thread.sleep(toSleep);
-					} catch (InterruptedException ex)
+					} 
+					catch (InterruptedException ex)
 					{
+						System.err.println("Who dares wake me from my slumber?");
 					}
 				}
-				last = end;
-				updateState();
-				updateClients();
+				last = System.currentTimeMillis();
+				
+				/* Java's way of expressing synchronized blocks is clunky. */
+				synchronized(state)
+				{
+					synchronized(actions)
+					{
+						synchronized(clients)
+						{
+							synchronized(chats)
+							{
+								System.err.println("");
+								System.err.println("Round processing begins:");
+								updateState();
+								updateClients();
+							}
+						}
+					}
+				}
 			}
-			updateClients();
 		}
 
 		protected void updateState()
 		{
-			synchronized(state)
+			if(-1 != state.getRounds())
 			{
-				synchronized(actions)
-				{
-					System.out.println("Rounds remaining: " + state.getRounds());
-					state.roundsPassed(1);
-					for(Map.Entry<Character, Byte> entry : actions.entrySet())
-					{
-						char agent = entry.getKey();
-						state.change(agent, entry.getValue());
-					}
-					actions.clear();
-					System.out.println("Flags:" + state.flagString());
-					System.out.println("Current World \n{" + state.toString() + "\n}");
-					System.out.println("Scores: " + state.getScores().toString());
-				}
+				System.out.println("\tRounds remaining: " + state.getRounds());
 			}
+			System.err.println("\tUpdating internal state.");
+			state.roundsPassed(1);
+			for(Map.Entry<Character, Byte> entry : actions.entrySet())
+			{
+				char agent = entry.getKey();
+				state.change(agent, entry.getValue());
+			}
+			System.err.println("\tClearing out " + actions.size() + " actions.");
+			actions.clear();
+			System.out.println("\tFlags:" + state.flagString());
+			System.out.println("\tCurrent World \n{" + state.toString() + "\n}");
+			System.out.println("\tScores: " + state.getScores().toString());
 		}
 
 		protected void updateClients()
 		{
-			synchronized(clients)
+			ArrayList<Character> toRemove = new ArrayList<Character>();
+			System.err.println("\tSending state to clients");
+			for(Map.Entry<Character, DataOutputStream> entry : clients.entrySet())
 			{
-			synchronized(state)
-			{
-			synchronized(chats)
-			{
-				for(Map.Entry<Character, DataOutputStream> entry : clients.entrySet())
+				char agent = entry.getKey();
+				DataOutputStream out = entry.getValue();
+				byte agentFlags = state.flags(agent);
+				try
 				{
-					char agent = entry.getKey();
-					DataOutputStream out = entry.getValue();
-					byte agentFlags = state.flags(agent);
-					try
+					byte agentVal = (byte)agent;
+					out.writeByte(agentFlags);
+					out.writeByte((byte)agent);
+					state.serialize(out);
+					out.writeInt(chats.size());
+					for(Map.Entry<Character, ChatMessage> message : chats.entrySet())
 					{
-						byte agentVal = (byte)agent;
-			//			System.err.println("---Starting Agent '"+ (char)(agentVal)+"' (0x"+Integer.toHexString(agentVal)+")");
-			//			System.err.println("Writing flags: 0x" + Integer.toHexString(agentFlags));
-						out.writeByte(agentFlags);
-						out.writeByte((byte)agent);
-				//		System.err.println("Starting World");
-						state.serialize(out);
-						out.writeInt(chats.size());
-						for(Map.Entry<Character, ChatMessage> message : chats.entrySet())
-						{
-							message.getValue().serialize(out);
-						}
-						out.flush();
+						message.getValue().serialize(out);
 					}
-					catch(IOException ex)
-					{
-						if(state.isBug(agent) || state.isHunter(agent))
-						{
-							System.err.println("Error: problem writing to agent '"+ agent+"'\n");
-							System.err.println("World at Death {" + state.toString() + "\n}");
-					/*
-							System.exit(-1);
-					*/
-						}
-					}
+					out.flush();
 				}
-				chats.clear();
+				catch(IOException ex)
+				{
+					if(state.isBug(agent) || state.isHunter(agent))
+					{
+						System.err.println("Warning: problem writing to agent '"+ agent+"'\n");
+					}
+					toRemove.add(agent);
+				}
 			}
+			for(char agent : toRemove)
+			{
+				System.err.println("Removing '" + agent + "'" );
+				DataOutputStream connection = clients.remove(agent);
+				try
+				{
+					connection.close();
+				}
+				catch(IOException ex)
+				{
+					/* why does close throw an exception anyways? */
+				}
 			}
-			}
+			System.err.println("\tClearing out " + chats.size() + " chats.");
+			chats.clear();
 		}
 
 		public void close()
 		{
-			state.end();
-			updateClients();
+			synchronized(state)
+			{
+				synchronized(clients)
+				{
+					state.end();
+					updateClients();
+					clients.clear();
+				}
+			}
 		}
 	}
