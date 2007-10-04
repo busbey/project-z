@@ -128,7 +128,7 @@ import java.net.*;
 										/* 'i move' case */
 										synchronized(in)
 										{
-											System.out.println("\tAdding action for " + agent);
+											System.err.println("\tAdding action for " + agent);
 											in.put(agent, firstByte);
 										}
 										break;
@@ -158,7 +158,7 @@ import java.net.*;
 														/* valid action */
 														synchronized(chats)
 														{
-															System.out.println("\tAdding chat for " + agent);
+															System.err.println("\tAdding chat for " + agent);
 															chats.put(agent, new ChatMessage(speaker, subject, action));
 														}
 													default:
