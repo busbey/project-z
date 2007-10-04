@@ -29,6 +29,8 @@ clean:
 	rm -rf *.class
 jar: server ServerManifest
 	jar cmf ServerManifest Server.jar *.class
+1.4: jar
+	java -cp ../dependencies/bsd/retroweaver-2.0/release/retroweaver-all-2.0.jar net.sourceforge.retroweaver.Weaver -jar Server.jar Server.1.4.jar
 servergo: jar
 	java -jar Server.jar -b $(ROUNDS) $(MAP)
 	
