@@ -125,6 +125,10 @@ public class World implements Serializable
 
 	public void change(char agent, byte move)
 	{
+		if(FLAGS_GAME_END == (flags & FLAGS_GAME_END))
+		{
+			return;
+		}
 		if(location.containsKey(agent))
 		{
 			if('n' == move)
@@ -627,13 +631,15 @@ public class World implements Serializable
 	}
 
 	public String flagString () {
-		if (flags == FLAGS_EMPTY) 
-			return " None.";
-		String value = new String();
-		if ((flags & SET_BUG_EATS) == SET_BUG_EATS)
-			value += " [bug kills]";
-		if ((flags & FLAGS_GAME_END) == FLAGS_GAME_END)
-			value += " [game over]";
+		String value = "None.";
+		if(FLAGS_GAME_END == (flags & FLAGS_GAME_END))
+		{
+			value = " [game over]";
+		}
+		else if (SET_BUG_EATS == (flags & SET_BUG_EATS))
+		{
+			value = " [bug kills]";
+		}
 		return value;
 	}
 }
