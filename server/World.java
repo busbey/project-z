@@ -26,9 +26,11 @@ public class World implements Serializable
 {
 	public static final byte FLAGS_EMPTY = 0x00;
 	public static final byte FLAGS_GAME_END = (byte)(0xff);
+	public static final byte SET_AGENT_KILLED = 0x8;
 	public static final byte SET_AGENT_STUN = 0x04;
 	public static final byte SET_AGENT_DIED = 0x02;
 	public static final byte SET_BUG_EATS = 0x1;
+	public static final byte CLEAR_AGENT_KILLED = (byte)(0xF9);
 	public static final byte CLEAR_AGENT_STUN = (byte)(0xFB);
 	public static final byte CLEAR_AGENT_DIED = (byte)(0xFD);
 	public static final byte CLEAR_BUG_EATS = (byte)(0xFE);
@@ -38,7 +40,7 @@ public class World implements Serializable
 	public long SCORE_BUG_KILL = 400l;
 	public long SCORE_HUNTER_KILL = 100l;
 	public long SCORE_STUNNED = 0l;
-	public long SCORE_KILLED = -50l;
+	public long SCORE_KILLED = -100l;
 	public long SCORE_POWERUP = 0l;
 	
 	protected int roundsToEat =0;
@@ -53,7 +55,11 @@ public class World implements Serializable
 
 	public static final double powerup = 0.007;	
 	public static final double obstacle = 0.1;
-	public static final char[] valid = {' ', 'B', 'C', 'D', 'E', 'F', '1', '2', '3', '4', '5', '6', '7', 'O', 'P'};
+	public static final char[] valid = {' ', 
+										'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I',
+										'J', 'K', 'L', 'M', 'N', '1', '2', '3',
+										'4', '5', '6', '7', '8', '9', 'O', 'P'
+										};
 	protected char[][] state = null; 
 	protected byte flags = FLAGS_EMPTY;
 	HashMap<Character, Byte> agentFlags = new HashMap<Character, Byte>();
@@ -237,6 +243,7 @@ public class World implements Serializable
 		else
 		{
 			System.err.println("New Agent " + agent + " first appears.");
+			score.put(agent, 0l);
 			setRandomEmpty(agent);
 		}
 	}
