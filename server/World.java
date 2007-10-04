@@ -282,13 +282,20 @@ public class World implements Serializable
 		}
 		oldScore += SCORE_KILLED;
 		score.put(target, oldScore);
+		byte curFlags = FLAGS_EMPTY;
+		if(agentFlags.containsKey(by))
+		{
+			curFlags = agentFlags.get(by);
+		}
+		curFlags |= SET_AGENT_KILLED;
+		agentFlags.put(by, curFlags);
 		if(location.containsKey(target))
 		{
 			long loc = location.get(target);
 			int row = (int)(loc & 0xFFFFFFFF);
 			int col = (int)(loc >>> 32);
 			state[row][col] = EMPTY;
-			byte curFlags = FLAGS_EMPTY;
+			curFlags = FLAGS_EMPTY;
 			if(agentFlags.containsKey(target))
 			{
 				curFlags = agentFlags.get(target);
@@ -370,7 +377,7 @@ public class World implements Serializable
 		for(Character agent : agentFlags.keySet())
 		{
 			byte curFlag = agentFlags.get(agent);
-			curFlag &= CLEAR_AGENT_DIED & CLEAR_AGENT_STUN;
+			curFlag &= CLEAR_AGENT_DIED & CLEAR_AGENT_STUN & CLEAR_AGENT_KILLED;
 			agentFlags.put(agent, curFlag);
 		}
 		

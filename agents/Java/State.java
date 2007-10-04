@@ -20,7 +20,7 @@ import java.util.List;
 
 public class State {
     
-	private boolean killerBug, wasKilled, wasStunned;
+	private boolean killerBug, wasKilled, wasStunned, killedSomeone;
 	private byte player;
 	private int rows, columns;
 	private byte[][] board;
@@ -29,6 +29,7 @@ public class State {
 	private final static byte KILLER_BUG = 0x01;
 	private final static byte WAS_KILLED = 0x02;
 	private final static byte WAS_STUNNED = 0x04;
+	private final static byte KILLED_SOMEONE = 0x08;
 
 	public final static byte GAME_ENDED = (byte) 0xff;
 	
@@ -43,6 +44,7 @@ public class State {
 	public boolean killerBug () { return killerBug; }
 	public boolean wasKilled () { return wasKilled; }
 	public boolean wasStunned () { return wasStunned; }
+	public boolean killedSomeone () { return killedSomeone; }
 	public byte getPlayer () { return player; }
 	public int numRows () { return rows; }
 	public int numColumns () { return columns; }
@@ -61,6 +63,7 @@ public class State {
 		 killerBug = (flag & KILLER_BUG) == KILLER_BUG;
 		 wasKilled = (flag & WAS_KILLED) == WAS_KILLED;
 		 wasStunned = (flag & WAS_STUNNED) == WAS_STUNNED;
+		 killedSomeone = (flag & KILLED_SOMEONE) == KILLED_SOMEONE;
 	}
 	
 	public void changeBoard (int row, int column, byte type) {
@@ -74,6 +77,7 @@ public class State {
 		value.append(killerBug ? " [Bugs kill hunters]" : "");		
 		value.append(wasKilled ? " [Player died last round]" : "");		
 		value.append(wasStunned ? " [Player stunned last round]" : "");
+		value.append(killedSomeone ? " [Player killed someone last round]" : "");
 		return value.toString();
 	}
 	

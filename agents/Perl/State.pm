@@ -26,6 +26,7 @@ use constant FLAGS_GAME_END => 0xFF;
 use constant FLAGS_BUG_KILLS => 0x01;
 use constant FLAGS_AGENT_DIED => 0x02;
 use constant FLAGS_AGENT_STUN => 0x04;
+use constant FLAGS_AGENT_KILLED => 0x08;
 use constant FLAGS_NONE => 0x00;
 
 sub new
@@ -34,6 +35,7 @@ sub new
 	my $self = {};
 	$self->{bugKills} = FALSE;
 	$self->{stunned} = FALSE;
+	$self->{died} = FALSE;
 	$self->{killed} = FALSE;
 	$self->{gameOver} = FALSE;
 	$self->{player} = undef;
@@ -76,13 +78,18 @@ sub readState
 		}
 		if(FLAGS_AGENT_DIED == (FLAGS_AGENT_DIED & $buffer))
 		{
-			$self->{killed} = TRUE;
+			$self->{died} = TRUE;
 			printf STDERR " [Player died last round]";
 		}
 		if(FLAGS_AGENT_STUN == (FLAGS_AGENT_STUN & $buffer))
 		{
 			$self->{stunned} = TRUE;
 			printf STDERR " [Player stunned last round]";
+		}
+		if(FLAGS_AGENT_KILLED == (FLAGS_AGENT_KILLED & $buffer))
+		{
+			$self->{killed} = TRUE;
+			printf STDERR " [Player killed someone last round]";
 		}
 		if(FLAGS_NONE == $buffer)
 		{
@@ -187,6 +194,12 @@ sub stunned
 {
 	my $self = shift;
 	return $self->{stunned};
+}
+
+sub died
+{
+	my $self = shift;
+	return $self->{died};
 }
 
 sub killed

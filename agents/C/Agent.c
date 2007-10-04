@@ -32,6 +32,7 @@
 #define FLAGS_BUG_KILLS 0x01
 #define FLAGS_AGENT_DIED 0x02
 #define FLAGS_AGENT_STUN 0x04
+#define FLAGS_AGENT_KILLED 0x08
 #define FLAGS_NONE 0x00
 
 /** @brief set up our socket. */
@@ -198,13 +199,18 @@ readState(int socket)
 		}
 		if((FLAGS_AGENT_DIED & buf.byte) == FLAGS_AGENT_DIED)
 		{
-			state->killed = TRUE;
+			state->died = TRUE;
 			DBG_PRINT((stderr, " [Player died last round]"));
 		}
 		if((FLAGS_AGENT_STUN & buf.byte) == FLAGS_AGENT_STUN)
 		{
 			state->stunned = TRUE;
 			DBG_PRINT((stderr, " [Player stunned last round]"));
+		}
+		if((FLAGS_AGENT_KILLED & buf.byte) == FLAGS_AGENT_KILLED)
+		{
+			state->killed = TRUE;
+			DBG_PRINT((stderr, " [Player killed someone last round]"));
 		}
 		if(buf.byte == FLAGS_NONE)
 		{

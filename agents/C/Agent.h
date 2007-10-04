@@ -46,6 +46,7 @@ typedef struct State
 {
 	unsigned int	bugKills:1,
 					stunned:1,
+					died:1,
 					killed:1,
 					gameOver:1;
 	unsigned char 	player;

@@ -20,11 +20,12 @@ require 'socket'
 require 'optparse'
 
 class State
-  attr_accessor :messages, :game_over, :killer_bug, :was_stunned, :was_killed, :player, :rows, :columns, :board
+  attr_accessor :messages, :game_over, :killer_bug, :was_stunned, :was_killed, :killed_someone, :player, :rows, :columns, :board
   def initialize(player, rows, columns)
     @killer_bug = false
     @was_stunned = false
     @was_killed = false
+	@killed_someone = false
     @player = player
     @rows = rows
     @columns = columns
@@ -96,6 +97,7 @@ class Agent
       @state.killer_bug = ((flag & 0x01) == 0x01)
       @state.was_killed = ((flag & 0x02) == 0x02)
       @state.was_stunned = ((flag & 0x04) == 0x04)
+	  @state.killed_someone = ((flag & 0x08) == 0x08)
       (0...rows).each { |r|
         (0...columns).each { |c|
           @state.board[r][c] = read_char
@@ -116,6 +118,7 @@ class Agent
       flag_text << "[Bugs kill hunters]" if @state.killer_bug
       flag_text << "[Player died last round]" if @state.was_killed
       flag_text << "[Player stunned last round]" if @state.was_stunned
+	  flag_text << "[Player killed someone last round]" if @state.killed_someone
       puts "flags: " + (flag_text.length > 0 ? flag_text.join(' ') : 'None')
       puts "player: '#{@state.player}'"
       puts "rows: #{@state.rows} columns: #{@state.columns}"
