@@ -56,7 +56,6 @@ class Agent(object):
         while True:
             flag = struct.unpack("B", self.sock.recv(1))[0]
             if (flag == State.GAME_ENDED):
-                self.socket.shutdown()
                 self.socket.close()
                 print 'Game has ended...'
                 return 
@@ -96,7 +95,7 @@ class Agent(object):
         read = []
         while (len(read) < 4):
             read.append(self.sock.recv(1))
-        return socket.ntohl(struct.unpack("L", ''.join(read))[0])
+        return socket.ntohl(struct.unpack("I", ''.join(read))[0])
 
     def writeMove (self, move):
         print 'moving ' + self.moveString(move)
