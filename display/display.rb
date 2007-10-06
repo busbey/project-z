@@ -20,8 +20,8 @@ require 'yaml'
 require 'enumerator'
 require 'socket'
 
-$CLASSPATH << "/Applications/Processing 0125/lib/core.jar"
-#$CLASSPATH << File.expand_path("../dependencies/processing-0125/lib/core.jar")
+#$CLASSPATH << "/Applications/Processing 0125/lib/core.jar"
+$CLASSPATH << File.expand_path("../dependencies/lgpl/processing-0125/core.jar")
 include_class "processing.core.PApplet"
 include_class "processing.core.PImage"
 include_class "processing.core.PConstants"
