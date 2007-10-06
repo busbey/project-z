@@ -20,8 +20,8 @@ require 'yaml'
 require 'enumerator'
 require 'socket'
 
-#$CLASSPATH << "/Applications/Processing 0125/lib/core.jar"
-$CLASSPATH << File.expand_path("../dependencies/processing-0125/lib/core.jar")
+$CLASSPATH << "/Applications/Processing 0125/lib/core.jar"
+#$CLASSPATH << File.expand_path("../dependencies/processing-0125/lib/core.jar")
 include_class "processing.core.PApplet"
 include_class "processing.core.PImage"
 include_class "processing.core.PConstants"
@@ -48,7 +48,8 @@ class ZViewer < PApplet
 			puts "Shrinking #{shrinkage}"
 			@small_tile_height = (@tile_height * shrinkage).floor
 			@small_tile_width = (@tile_width * shrinkage).floor
-	    
+	   
+      #resize images
       @new_images = {}
       @images.each { |k,v| 
         img = PImage.new(@small_tile_width, @small_tile_height)
@@ -87,11 +88,11 @@ class ZViewer < PApplet
 		(0..@rows - 1).each { |r|
 			(0..@columns - 1).each { |c|
         vertical_shift = r * vertical_offset
-        image(@images[" "], c * @small_tile_width, vertical_shift)#, @small_tile_width, @small_tile_height) 
+        image(@images[" "], c * @small_tile_width, vertical_shift) 
 				pos =  r * @columns + c
 				tile_type = @text[pos..pos]
 				if tile_type != " "
-          image(@images[tile_type], c * @small_tile_width, vertical_shift - vertical_offset/2) if @images[tile_type] #, @small_tile_width, @small_tile_height) if @images[tile_type]
+          image(@images[tile_type], c * @small_tile_width, vertical_shift - vertical_offset/2) if @images[tile_type]
 				end
 			}
 		}
