@@ -20,9 +20,10 @@ require 'yaml'
 require 'enumerator'
 require 'socket'
 
-$CLASSPATH << "/Applications/Processing 0125/lib/core.jar"
-#$CLASSPATH << File.expand_path("../dependencies/processing-0125/lib/core.jar")
+#$CLASSPATH << "/Applications/Processing 0125/lib/core.jar"
+$CLASSPATH << File.expand_path("../dependencies/processing-0125/lib/core.jar")
 include_class "processing.core.PApplet"
+include_class "processing.core.PImage"
 include_class "processing.core.PConstants"
 class ZViewer < PApplet
 	def initialize(rows, columns, max_width = 1200, max_height = 750)
@@ -47,7 +48,15 @@ class ZViewer < PApplet
 			puts "Shrinking #{shrinkage}"
 			@small_tile_height = (@tile_height * shrinkage).floor
 			@small_tile_width = (@tile_width * shrinkage).floor
-			
+	    
+      @new_images = {}
+      @images.each { |k,v| 
+        img = PImage.new(@small_tile_width, @small_tile_height)
+        img.copy(v, 0, 0, @tile_width, @tile_height, 0, 0, @small_tile_width, @small_tile_height) 
+        @new_images[k] = img
+      }
+      @images = @new_images
+
 			@display_width = @small_tile_width * columns
 			@display_height = @small_tile_height * rows
 		else
@@ -78,11 +87,11 @@ class ZViewer < PApplet
 		(0..@rows - 1).each { |r|
 			(0..@columns - 1).each { |c|
         vertical_shift = r * vertical_offset
-        image(@images[" "], c * @small_tile_width, vertical_shift, @small_tile_width, @small_tile_height) 
+        image(@images[" "], c * @small_tile_width, vertical_shift)#, @small_tile_width, @small_tile_height) 
 				pos =  r * @columns + c
 				tile_type = @text[pos..pos]
 				if tile_type != " "
-          image(@images[tile_type], c * @small_tile_width, vertical_shift - vertical_offset/2, @small_tile_width, @small_tile_height) if @images[tile_type]
+          image(@images[tile_type], c * @small_tile_width, vertical_shift - vertical_offset/2) if @images[tile_type] #, @small_tile_width, @small_tile_height) if @images[tile_type]
 				end
 			}
 		}
@@ -99,9 +108,6 @@ def random_string(rows, columns)
 end
 
 def read_state(f)
-	def pc(x) 
-		puts sprintf("%x", x)
-	end
   flag, representation, columns, rows = f.read(10).unpack('CCNN')
 	puts "flags: #{flag.to_s(16)}"
 	puts "I'm display '#{representation.chr}'"
@@ -126,7 +132,7 @@ class ZDisplayClient
 		rescue
 			puts "error: #{$!}"
 		else
-			while true
+      while true
 				rows, columns, text, chats = read_state(t)
 				viewer ||= create_window(rows, columns)
 				viewer.text = text
