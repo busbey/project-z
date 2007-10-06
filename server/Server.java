@@ -90,7 +90,7 @@ public class Server
 		this.world = state;
 		bug = new Worker('B', new ServerSocket(bugPort), clients, actions, chats);
 		hunter = new Worker('1', new ServerSocket(hunterPort), clients, actions, chats);
-		display = new Worker('d', new ServerSocket(displayPort), clients, actions, chats);
+		display = new Worker('d', false,  new ServerSocket(displayPort), clients, actions, chats);
 		
 		System.err.println("Starting state monitor thread.");
 		this.state = update;

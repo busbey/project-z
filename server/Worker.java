@@ -26,16 +26,23 @@ import java.net.*;
 		HashMap<Character, ChatMessage> chats;
 		boolean gameRunning = true;
 		char agentStart = '\0';
+		boolean onMap = true;
 
 		ArrayList<AgentThread> clients = new ArrayList<AgentThread>();
 		
 		Worker(char agentStart, ServerSocket incoming, HashMap<Character, DataOutputStream> out, HashMap<Character, Byte> in, HashMap<Character, ChatMessage> chats)
+		{
+			this(agentStart, true, incoming, out, in, chats);
+		}
+
+		Worker(char agentStart, boolean onMap, ServerSocket incoming, HashMap<Character, DataOutputStream> out, HashMap<Character, Byte> in, HashMap<Character, ChatMessage> chats)
 		{
 			this.incoming = incoming;
 			this.out = out;
 			this.in = in;
 			this.chats = chats;
 			this.agentStart = agentStart;
+			this.onMap = onMap;
 		}
 
 		public void gameEnd()
@@ -59,9 +66,12 @@ import java.net.*;
 				Thread actionReader = new Thread(clientThread, "Thread for " + agent);
 
 				/* XXX hack to work around bug 33 */
-				synchronized(in)
+				if(onMap)
 				{
-					in.put(agent, (byte)'n');
+					synchronized(in)
+					{
+						in.put(agent, (byte)'n');
+					}
 				}
 				actionReader.setDaemon(true);
 				actionReader.start();
