@@ -21,6 +21,7 @@ require 'enumerator'
 require 'socket'
 
 $CLASSPATH << "/Applications/Processing 0125/lib/core.jar"
+#$CLASSPATH << File.expand_path("../dependencies/processing-0125/lib/core.jar")
 include_class "processing.core.PApplet"
 include_class "processing.core.PConstants"
 class ZViewer < PApplet
@@ -35,7 +36,7 @@ class ZViewer < PApplet
 		File.open('images.yaml') { |f|
 			YAML::load(f).each { |k,v|
 				i = loadImage(v)
-				@images[k.to_s] = i
+        @images[k.to_s] = i
 				@tile_width = i.width
 				@tile_height = i.height
 			}
@@ -71,17 +72,17 @@ class ZViewer < PApplet
 	end
 
 	def draw
-		background 0
+    background 0
 		vertical_offset = @small_tile_height / 2
 	
 		(0..@rows - 1).each { |r|
 			(0..@columns - 1).each { |c|
-				vertical_shift = r * vertical_offset
-				image(@images[" "], c * @small_tile_width, vertical_shift, @small_tile_width, @small_tile_height) 
+        vertical_shift = r * vertical_offset
+        image(@images[" "], c * @small_tile_width, vertical_shift, @small_tile_width, @small_tile_height) 
 				pos =  r * @columns + c
 				tile_type = @text[pos..pos]
 				if tile_type != " "
-					image(@images[tile_type], c * @small_tile_width, vertical_shift - vertical_offset/2, @small_tile_width, @small_tile_height)
+          image(@images[tile_type], c * @small_tile_width, vertical_shift - vertical_offset/2, @small_tile_width, @small_tile_height) if @images[tile_type]
 				end
 			}
 		}
@@ -101,21 +102,20 @@ def read_state(f)
 	def pc(x) 
 		puts sprintf("%x", x)
 	end
-	flag = f.getc
-	puts "flags: " + flag.to_s(16)
-	representation = f.getc
-	puts "I'm display '" + representation.chr + "'"
-	columns = f.read(4).unpack("N*")[0]
-	rows = f.read(4).unpack("N*")[0]
-	puts "board is col x row: " + columns.to_s + " x " + rows.to_s
-	text = ""
-	(rows * columns).times { text << f.getc }
+  flag, representation, columns, rows = f.read(10).unpack('CCNN')
+	puts "flags: #{flag.to_s(16)}"
+	puts "I'm display '#{representation.chr}'"
+	puts "board is col x row: #{columns} x #{rows}"
+	
+  text = f.read(rows * columns)
 	text.gsub!(/[B-N]/) {|agent| agent.downcase } if (0x01 == flag & 0x01)
-	puts "board : " + text
-	numChats = f.read(4).unpack("N*")[0]
+	puts "board : #{text}"
+	
+  numChats = f.read(4).unpack('N')[0]
+  chats = []
 	puts "chat messages this round: " + numChats.to_s
-	chats = Array.new
-	numChats.times { chats << [f.getc, f.getc, f.getc] }
+	f.read(numChats * 3).unpack('C').each_cons(3) { |c| chats << c }
+  
 	return rows, columns, text, chats 
 end
 
@@ -139,8 +139,6 @@ class ZDisplayClient
 		end
 	end
 end
-
-#rows, columns, text = read_state(File.open("test.dat", "rb"))
 
 def create_window(rows, columns)
 	frame = javax.swing.JFrame.new "Bug Hunter"
