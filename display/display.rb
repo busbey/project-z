@@ -30,7 +30,7 @@ class ZViewer < PApplet
 		@rows = rows
 		@columns = columns
 		@images = Hash.new
-		@tile_width = 0
+    @tile_width = 0
 		@tile_height = 0
 		@text = " " * (rows * columns) 
 		File.open('images.yaml') { |f|
@@ -63,16 +63,21 @@ class ZViewer < PApplet
 			@display_width = potential_width
 			@display_height = potential_height
 		end
+
+    @dirty = Array.new(@rows * @columns,true) #initially all tiles are dirty
 	end
 
 	def setup
 		size @display_width, @display_height	
+    background 0
 		noLoop()
-	end
+  end
 
 	def text=(text)
-		@text = text
-		redraw()
+		@old_text = @text
+    @text = text
+    @draw_delta = true
+    redraw()
 	end
 
 	def dimensions(columns, rows, tile_width, tile_height) 
@@ -81,20 +86,49 @@ class ZViewer < PApplet
 	end
 
 	def draw
-    background 0
 		vertical_offset = @small_tile_height / 2
-	
-		(0..@rows - 1).each { |r|
-			(0..@columns - 1).each { |c|
+    unless @draw_delta
+      #mark all tiles for redrawing
+      (0...@text.length).each { |i| @dirty[i] = true }
+      background 0
+    else
+      (0...@text.length).each { |i| @dirty[i] = false }
+      
+      #find tiles that need to be redrawn
+      (0...@text.length).each { |i| 
+        if @text[i] != @old_text[i]
+          @dirty[i] = true
+          @dirty[i - @columns] = true if i > @columns
+          k = i + @columns
+          #mark all cells below as dirty if they have objects in them
+          while k < @text.length
+            t = @text[k]
+            if t == @old_text[k] && t != ' '
+              @dirty[k] = true
+            else
+              break
+            end
+            k += @columns
+          end
+        end
+      }
+    end
+    #redraw necessary tiles
+    (0...@text.length).each { |i|
+      if @dirty[i]
+        r = i / @columns
+        c = i % @columns
+        
         vertical_shift = r * vertical_offset
         image(@images[" "], c * @small_tile_width, vertical_shift) 
-				pos =  r * @columns + c
-				tile_type = @text[pos..pos]
+				tile_type = @text[i..i]
 				if tile_type != " "
           image(@images[tile_type], c * @small_tile_width, vertical_shift - vertical_offset/2) if @images[tile_type]
 				end
-			}
+			end
 		}
+    
+    @draw_delta = false
 	end
 end
 
@@ -127,11 +161,12 @@ end
 
 class ZDisplayClient
 	def connect(hostname, port=8668)
-		begin
+		#begin
 			t = TCPSocket.new(hostname, port)
-		rescue
-			puts "error: #{$!}"
-		else
+		#rescue
+    #  raise $!
+		  #STDERR.puts "#{$!.message}\n#{$!.backtrace}"
+		#else
       while true
 				rows, columns, text, chats = read_state(t)
 				viewer ||= create_window(rows, columns)
@@ -142,7 +177,7 @@ class ZDisplayClient
 					end
 				end
 			end
-		end
+		#end
 	end
 end
 
@@ -156,7 +191,8 @@ def create_window(rows, columns)
 	sleep 0.1
 	frame.pack
 	frame.visible = true
-	applet
+	sleep 0.1
+  applet
 end
 
 host = ARGV[0]
