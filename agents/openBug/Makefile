@@ -15,11 +15,12 @@
 #  
 CFLAGS = -Wall -pedantic -DDEBUG
 BUG_PATTERN = '[B-N]'
-POWERUP_PATTERN = '[P]'
+HUNTER_PATTERN = '[1-9]'
+PASSABLE_PATTERN = '[ P]'
 DEFAULT_HOST = 'localhost'
 DEFAULT_PORT = 1337
 BUG_PORT = 7331
-all: random smart
+all: random smart open
 random: Agent.o Random.o
 	gcc -Wall -pedantic -o random Agent.o Random.o
 smart: Agent.o Smart.o
@@ -33,4 +34,4 @@ hunter1go: smart
 hunter2go: random
 	./random -h $(DEFAULT_HOST) -p $(DEFAULT_PORT)
 buggo: open 
-	./open -h $(DEFAULT_HOST) -p $(BUG_PORT) $(POWERUP_PATTERN)
+	./open -h $(DEFAULT_HOST) -p $(BUG_PORT) $(PASSABLE_PATTERN) $(HUNTER_PATTERN)
