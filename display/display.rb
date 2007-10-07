@@ -25,29 +25,29 @@ include_class "processing.core.PApplet"
 include_class "processing.core.PImage"
 include_class "processing.core.PConstants"
 class ZViewer < PApplet
-	def initialize(rows, columns, max_width = 1200, max_height = 750)
-		super()
-		@rows = rows
-		@columns = columns
-		@images = Hash.new
+  def initialize(rows, columns, max_width = 1200, max_height = 750)
+    super()
+    @rows = rows
+    @columns = columns
+    @images = Hash.new
     @tile_width = 0
-		@tile_height = 0
-		@text = " " * (rows * columns) 
-		File.open('images.yaml') { |f|
-			YAML::load(f).each { |k,v|
-				i = loadImage(v)
+    @tile_height = 0
+    @text = " " * (rows * columns) 
+    File.open('images.yaml') { |f|
+      YAML::load(f).each { |k,v|
+        i = loadImage(v)
         @images[k.to_s] = i
-				@tile_width = i.width
-				@tile_height = i.height
-			}
-		}
-		potential_width, potential_height = dimensions(@columns, @rows, @tile_width, @tile_height)
-		if potential_height > max_height || potential_width > max_width
-			shrinkage = [max_height * 1.0 / potential_height, max_width * 1.0 / potential_width].min
-			puts "Shrinking #{shrinkage}"
-			@small_tile_height = (@tile_height * shrinkage).floor
-			@small_tile_width = (@tile_width * shrinkage).floor
-	   
+        @tile_width = i.width
+        @tile_height = i.height
+      }
+    }
+    potential_width, potential_height = dimensions(@columns, @rows, @tile_width, @tile_height)
+    if potential_height > max_height || potential_width > max_width
+      shrinkage = [max_height * 1.0 / potential_height, max_width * 1.0 / potential_width].min
+      puts "Shrinking #{shrinkage}"
+      @small_tile_height = (@tile_height * shrinkage).floor
+      @small_tile_width = (@tile_width * shrinkage).floor
+     
       #resize images
       @new_images = {}
       @images.each { |k,v| 
@@ -57,36 +57,41 @@ class ZViewer < PApplet
       }
       @images = @new_images
 
-			@display_width = @small_tile_width * columns
-			@display_height = @small_tile_height * rows
-		else
-			@display_width = potential_width
-			@display_height = potential_height
-		end
-
+      @display_width = @small_tile_width * columns
+      @display_height = @small_tile_height * rows
+    else
+      @small_tile_height = @tile_height
+      @small_tile_width = @tile_width
+      @display_width = potential_width
+      @display_height = potential_height
+    end
+    @black_top_block = PImage.new(@small_tile_width, @small_tile_height)
+    black = color(0, 0, 0);
+    (0...@small_tile_width).each {|x| (0...@small_tile_height).each {|y| @black_top_block.set(x, y, black) } }
+    
     @dirty = Array.new(@rows * @columns,true) #initially all tiles are dirty
-	end
-
-	def setup
-		size @display_width, @display_height	
-    background 0
-		noLoop()
   end
 
-	def text=(text)
-		@old_text = @text
+  def setup
+    size @display_width, @display_height  
+    background 0
+    noLoop()
+  end
+
+  def text=(text)
+    @old_text = @text
     @text = text
     @draw_delta = true
     redraw()
-	end
+  end
 
-	def dimensions(columns, rows, tile_width, tile_height) 
-		vertical_offset = tile_height / 2
-		[columns * tile_width, tile_height + (rows - 1) * vertical_offset]
-	end
+  def dimensions(columns, rows, tile_width, tile_height) 
+    vertical_offset = tile_height / 2
+    [columns * tile_width, tile_height + (rows - 1) * vertical_offset]
+  end
 
-	def draw
-		vertical_offset = @small_tile_height / 2
+  def draw
+    vertical_offset = @small_tile_height / 2
     unless @draw_delta
       #mark all tiles for redrawing
       (0...@text.length).each { |i| @dirty[i] = true }
@@ -97,19 +102,17 @@ class ZViewer < PApplet
       #find tiles that need to be redrawn
       (0...@text.length).each { |i| 
         if @text[i] != @old_text[i]
-          @dirty[i] = true
-          @dirty[i - @columns] = true if i > @columns
-          k = i + @columns
-          #mark all cells below as dirty if they have objects in them
-          while k < @text.length
-            t = @text[k]
-            if t == @old_text[k] && t != ' '
-              @dirty[k] = true
-            else
-              break
-            end
-            k += @columns
-          end
+          k = i
+	  #mark cell and cell above as dirty
+	  final = [0, i - @columns].max
+	  while k >= final
+	    @dirty[k] = true
+	    final = [0, k - 2 * @columns].max if @text[k..k] == 'P' || @old_text[k..k] == 'P'   #powerups need to have the upper two rows cleared as well
+	    k -= @columns
+	  end
+	      
+	  #mark all cells below as dirty
+          (i + @columns...@text.length).step(@columns) { |k| @dirty[k] = true }
         end
       }
     end
@@ -120,78 +123,79 @@ class ZViewer < PApplet
         c = i % @columns
         
         vertical_shift = r * vertical_offset
-        image(@images[" "], c * @small_tile_width, vertical_shift) 
-				tile_type = @text[i..i]
-				if tile_type != " "
+        image(@black_top_block, c * @small_tile_width, vertical_shift) if r == 0 #redraw black background on top row
+	image(@images[" "], c * @small_tile_width, vertical_shift)  #redraw base tile 
+        tile_type = @text[i..i]
+        if tile_type != " "
           image(@images[tile_type], c * @small_tile_width, vertical_shift - vertical_offset/2) if @images[tile_type]
-				end
-			end
-		}
+        end
+      end
+    }
     
     @draw_delta = false
-	end
+  end
 end
 
 def random_string(rows, columns) 
-	possible = " OB1234"
-	text = ""
-	(rows * columns).times { 
-		text << possible[rand(possible.length)]
-	}
-	text
+  possible = " OB1234"
+  text = ""
+  (rows * columns).times { 
+    text << possible[rand(possible.length)]
+  }
+  text
 end
 
 def read_state(f)
   flag, representation, columns, rows = f.read(10).unpack('CCNN')
-	puts "flags: #{flag.to_s(16)}"
-	puts "I'm display '#{representation.chr}'"
-	puts "board is col x row: #{columns} x #{rows}"
-	
+  puts "flags: #{flag.to_s(16)}"
+  puts "I'm display '#{representation.chr}'"
+  puts "board is col x row: #{columns} x #{rows}"
+  
   text = f.read(rows * columns)
-	text.gsub!(/[B-N]/) {|agent| agent.downcase } if (0x01 == flag & 0x01)
-	puts "board : #{text}"
-	
+  text.gsub!(/[B-N]/) {|agent| agent.downcase } if (0x01 == flag & 0x01)
+  puts "board : #{text}"
+  
   numChats = f.read(4).unpack('N')[0]
   chats = []
-	puts "chat messages this round: " + numChats.to_s
-	f.read(numChats * 3).unpack('C').each_cons(3) { |c| chats << c }
+  puts "chat messages this round: " + numChats.to_s
+  f.read(numChats * 3).unpack('C').each_cons(3) { |c| chats << c }
   
-	return rows, columns, text, chats 
+  return rows, columns, text, chats 
 end
 
 class ZDisplayClient
-	def connect(hostname, port=8668)
-		#begin
-			t = TCPSocket.new(hostname, port)
-		#rescue
+  def connect(hostname, port=8668)
+    #begin
+      t = TCPSocket.new(hostname, port)
+    #rescue
     #  raise $!
-		  #STDERR.puts "#{$!.message}\n#{$!.backtrace}"
-		#else
+      #STDERR.puts "#{$!.message}\n#{$!.backtrace}"
+    #else
       while true
-				rows, columns, text, chats = read_state(t)
-				viewer ||= create_window(rows, columns)
-				viewer.text = text
-				unless chats.empty?
-					chats.each do |speaker, subject, action| 
-						puts "'" + speaker + "' says " + subject + " should move " + action + "\n"
-					end
-				end
-			end
-		#end
-	end
+        rows, columns, text, chats = read_state(t)
+        viewer ||= create_window(rows, columns)
+        viewer.text = text
+        unless chats.empty?
+          chats.each do |speaker, subject, action| 
+            puts "'" + speaker + "' says " + subject + " should move " + action + "\n"
+          end
+        end
+      end
+    #end
+  end
 end
 
 def create_window(rows, columns)
-	frame = javax.swing.JFrame.new "Bug Hunter"
-	applet = ZViewer.new(rows, columns)
-	applet.text = " " * rows * columns
-	frame.content_pane.add applet
-	frame.default_close_operation = javax.swing.JFrame::EXIT_ON_CLOSE
-	applet.init
-	sleep 0.1
-	frame.pack
-	frame.visible = true
-	sleep 0.1
+  frame = javax.swing.JFrame.new "Bug Hunter"
+  applet = ZViewer.new(rows, columns)
+  applet.text = " " * rows * columns
+  frame.content_pane.add applet
+  frame.default_close_operation = javax.swing.JFrame::EXIT_ON_CLOSE
+  applet.init
+  sleep 0.1
+  frame.pack
+  frame.visible = true
+  sleep 0.1
   applet
 end
 
