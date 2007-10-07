@@ -42,8 +42,8 @@ init(int argc, char** argv)
 	else
 	{
 		/* default to powerups  and hunters */
-		openDesc = "[ P]";
-		deathDesc = "[1-9]";
+		openDesc = "^[ P]";
+		deathDesc = "^[1-9]";
 	}
 	res = regcomp(&openArea, openDesc, REG_EXTENDED | REG_NOSUB);
 	res = regcomp(&death, deathDesc, REG_EXTENDED | REG_NOSUB);
@@ -75,6 +75,7 @@ inline int positionOpen(State* state, const int row, const int col)
 {
 	if(0 > row || row >= state->rows || 0 > col || col >= state->cols)
 	{
+		DBG_PRINT((stderr, "\t\tPosition %d,%d is out of bounds\n", row, col));
 		return FALSE;
 	}
 	if(	(0 == regexec(&openArea, &(state->board[row][col]), 0, NULL, 0)) &&
@@ -84,10 +85,12 @@ inline int positionOpen(State* state, const int row, const int col)
 		(state->cols >= col + 1 || 0 != regexec(&death, &(state->board[row][col+1]), 0, NULL, 0) )
 	)
 	{
+		DBG_PRINT((stderr, "\t\tPosition %d,%d ('%c') is open.\n", row, col, state->board[row][col]));
 		return TRUE;
 	}
 	else
 	{
+		DBG_PRINT((stderr, "\t\tPosition %d,%d ('%c') is not open.\n", row, col, state->board[row][col]));
 		return FALSE;
 	}
 }
