@@ -13,10 +13,11 @@
 #  You should have received a copy of the GNU General Public License along with
 #  this program.  If not, see <http://www.gnu.org/licenses/>.
 #  
-CFLAGS = -Wall -pedantic -DDEBUG
+CFLAGS = -Wall -pedantic -DDEBUG -O3
 BUG_PATTERN = '[B-N]'
 HUNTER_PATTERN = '^[1-9]'
 PASSABLE_PATTERN = '^[ P]'
+POWERUP_PATTERN = '^[P]'
 DEFAULT_HOST = 'localhost'
 DEFAULT_PORT = 1337
 BUG_PORT = 7331
@@ -34,4 +35,4 @@ hunter1go: smart
 hunter2go: random
 	./random -h $(DEFAULT_HOST) -p $(DEFAULT_PORT)
 buggo: open 
-	./open -h $(DEFAULT_HOST) -p $(BUG_PORT) $(PASSABLE_PATTERN) $(HUNTER_PATTERN)
+	./open -h $(DEFAULT_HOST) -p $(BUG_PORT) $(PASSABLE_PATTERN) $(POWERUP_PATTERN) $(HUNTER_PATTERN)

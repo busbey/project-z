@@ -18,50 +18,42 @@
 #include "Agent.h"
 #include <stdio.h> 		/* fprintf */
 #include <stdlib.h>		/* exit, abs */
-#include <regex.h>		/* regcomp, regexec */
+#include <sys/time.h>	/* gettimeofday */
 
-#define LOOK_AHEAD 3
-
-char*	openDesc = "";
-regex_t	openArea = {0};
-char*	deathDesc = "";
-regex_t death = {0};
+#define LOOK_AHEAD 25
+#define ATTRACT_AMOUNT 15
 
 /** @brief handle command line args */
 void 
 init(int argc, char** argv)
 {
-	int res;
-	if(1 < argc)
-	{
-		/* first arg is a string regular expression of what to go after */
-		openDesc = argv[0];
-		/* second arg is a string regular expression of what to avoid */
-		deathDesc = argv[1];
-	}
-	else
-	{
-		/* default to powerups  and hunters */
-		openDesc = "^[ P]";
-		deathDesc = "^[1-9]";
-	}
-	res = regcomp(&openArea, openDesc, REG_EXTENDED | REG_NOSUB);
-	res = regcomp(&death, deathDesc, REG_EXTENDED | REG_NOSUB);
-
-	if(0 != res)
-	{
-		fprintf(stderr, "Error compiling the regular expression representing Agent goals.\n");
-		exit(-1);
-	}
-	DBG_PRINT((stdout, "Starting up looking for large areas of '%s' with lethal '%s'\n", openDesc, deathDesc));
 }
 
 /** @brief clean up */
 void
 fini()
 {
-	regfree(&openArea);
-	regfree(&death);
+}
+
+/** @brief if this position contains a threat */
+inline int positionThreat(State* state, const int row, const int col)
+{
+	char area = state->board[row][col];
+	switch(area)
+	{
+		case '1':
+		case '2':
+		case '3':
+		case '4':
+		case '5':
+		case '6':
+		case '7':
+		case '8':
+		case '9':
+			return TRUE;
+		default:
+			return FALSE;
+	}
 }
 
 /** @brief is this position obstructed 
@@ -73,25 +65,59 @@ fini()
 */
 inline int positionOpen(State* state, const int row, const int col)
 {
+	char area = '\0';
 	if(0 > row || row >= state->rows || 0 > col || col >= state->cols)
 	{
-		DBG_PRINT((stderr, "\t\tPosition %d,%d is out of bounds\n", row, col));
 		return FALSE;
 	}
-	if(	(0 == regexec(&openArea, &(state->board[row][col]), 0, NULL, 0)) &&
-		(0 >= row - 1 || 0 != regexec(&death, &(state->board[row-1][col]), 0, NULL, 0) ) &&
-		(state->rows >= row + 1 || 0 != regexec(&death, &(state->board[row+1][col]), 0, NULL, 0) ) &&
-		(0 >= col - 1 || 0 != regexec(&death, &(state->board[row][col-1]), 0, NULL, 0) ) &&
-		(state->cols >= col + 1 || 0 != regexec(&death, &(state->board[row][col+1]), 0, NULL, 0) )
-	)
+	area = state->board[row][col];
+	switch(area)
 	{
-		DBG_PRINT((stderr, "\t\tPosition %d,%d ('%c') is open.\n", row, col, state->board[row][col]));
-		return TRUE;
+		case ' ':
+		case 'P':
+			if(0 <= row -1)
+			{
+				if(TRUE == positionThreat(state, row - 1, col))
+				{
+					return FALSE;
+				}
+			}
+			if(state->rows > row + 1)
+			{
+				if(TRUE == positionThreat(state, row + 1, col))
+				{
+					return FALSE;
+				}
+			}
+			if(0 <= col -1)
+			{
+				if(TRUE == positionThreat(state, row, col - 1))
+				{
+					return FALSE;
+				}
+			}
+			if(state->cols > col + 1)
+			{
+				if(TRUE == positionThreat(state, row, col + 1))
+				{
+					return FALSE;
+				}
+			}
+			return TRUE;
+		default:
+			return FALSE;
 	}
-	else
+}
+
+/** @brief return a value for a given open square.  */
+int positionValue(State* state, int row, int col)
+{
+	switch(state->board[row][col])
 	{
-		DBG_PRINT((stderr, "\t\tPosition %d,%d ('%c') is not open.\n", row, col, state->board[row][col]));
-		return FALSE;
+		case 'P':
+			return ATTRACT_AMOUNT;
+		default:
+			return 1;
 	}
 }
 
@@ -107,7 +133,7 @@ int openRuns(State* state, int row, int col)
 		{
 			break;
 		}
-		openCount++;
+		openCount += positionValue(state, row, index);
 	}
 	/* count right */
 	for(index = col + 1; state->cols > index; index++)
@@ -116,7 +142,7 @@ int openRuns(State* state, int row, int col)
 		{
 			break;
 		}
-		openCount++;
+		openCount += positionValue(state, row, index);
 	}
 	/* count up */
 	for(index = row - 1; 0 <= index; index--)
@@ -125,7 +151,7 @@ int openRuns(State* state, int row, int col)
 		{
 			break;
 		}
-		openCount++;
+		openCount += positionValue(state, index, col);
 	}
 	/* count down */
 	for(index = row + 1; state->rows > index; index++)
@@ -134,7 +160,7 @@ int openRuns(State* state, int row, int col)
 		{
 			break;
 		}
-		openCount++;
+		openCount += positionValue(state, index, col);
 	}
 	return openCount;
 }
@@ -176,6 +202,15 @@ char moveTowardsOpen(State* state)
 	{
 		fprintf(stderr, "Warning: Couldn't find myself on the board.\n");
 	}
+	DBG_PRINT((stdout, "Current Board:\n"));
+	for(row = 0; row < state->rows; row++)
+	{
+		for(col = 0; col < state->cols; col++)
+		{
+			DBG_PRINT((stdout, "%c", state->board[row][col]));
+		}
+		DBG_PRINT((stdout, "\n"));
+	}
 	curOpenness = openRuns(state, myRow, myCol);
 	DBG_PRINT((stdout, "Calculating gains from %d:", curOpenness));
 	/* calculate gains - left */
@@ -185,7 +220,7 @@ char moveTowardsOpen(State* state)
 		const int curCol = myCol - index - 1;
 		if(TRUE == positionOpen(state, myRow, curCol))
 		{
-			left[index] = openRuns(state, myRow, curCol) - curOpenness;
+			left[index] = openRuns(state, myRow, curCol);
 		}
 		else
 		{
@@ -205,7 +240,7 @@ char moveTowardsOpen(State* state)
 		const int curCol = myCol + index + 1;
 		if(TRUE == positionOpen(state, myRow, curCol))
 		{
-			right[index] = openRuns(state, myRow, curCol) - curOpenness;
+			right[index] = openRuns(state, myRow, curCol);
 		}
 		else
 		{
@@ -225,7 +260,7 @@ char moveTowardsOpen(State* state)
 		const int curRow = myRow - index - 1;
 		if(TRUE == positionOpen(state, curRow, myCol))
 		{
-			up[index] = openRuns(state, curRow, myCol) - curOpenness;
+			up[index] = openRuns(state, curRow, myCol);
 		}
 		else
 		{
@@ -245,7 +280,7 @@ char moveTowardsOpen(State* state)
 		const int curRow = myRow + index + 1;
 		if(TRUE == positionOpen(state, curRow, myCol))
 		{
-			down[index] = openRuns(state, curRow, myCol) - curOpenness;
+			down[index] = openRuns(state, curRow, myCol);
 		}
 		else
 		{
@@ -266,9 +301,19 @@ char moveTowardsOpen(State* state)
  */
 void respondToChange(int socket, State* newState)
 {
-	char	move = 'n';
+	struct timeval	start	= {0};
+	struct timeval	end		= {0};
+	struct timeval	diff	= {0};
+	long			round	= 0l;
+	char			move	= 'n';
 	
+	(void)gettimeofday(&start, NULL);
 	move = moveTowardsOpen(newState);
 	/* Note that if we can't find ourself on the map we're going to still move towards the goal closest to the upper left hand corner. */
 	writeMoveToServer(socket, move);
+	(void)gettimeofday(&end, NULL);
+	diff.tv_sec = end.tv_sec - start.tv_sec;
+	diff.tv_usec = end.tv_usec - start.tv_usec;
+	round = diff.tv_sec * 1000 + (diff.tv_usec) / 1000;
+	DBG_PRINT((stderr, "round took %ld milliseconds\n", round));
 }
