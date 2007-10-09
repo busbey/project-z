@@ -20,10 +20,13 @@
 #include <stdlib.h> /* rand */
 #include <string.h> /* memset */
 
+#define	MAX_BYTE 127
+#define MIN_BYTE -128
 #define STORE_MOVES 5
-#define DIE_PENALTY -128
+#define DIE_PENALTY MIN_BYTE
 #define STUN_PENALTY -16
-#define POWER_GAIN 127
+#define POWER_GAIN MAX_BYTE
+#define NOTHING_HAPPENED 0
 
 #define INNER_HUNTER_SET_LEFT	0x00000001
 #define INNER_HUNTER_SET_RIGHT	0x00000002
@@ -346,9 +349,12 @@ signed char lookupScore(State* state, int row, int col)
 void _updateScore(int value)
 {
 	int index;
+	int	newVal = 0;
 	for(index = 0; index < STORE_MOVES; index++)
 	{
-		hashTable[last[index]] += value;
+		newVal = (int) (value * 1000 + (hashTable[last[index]] * 950));
+		newVal = (signed char)(newVal / 1950 );
+		hashTable[last[index]] = newVal;
 		value /= 2;
 	}
 }
@@ -367,9 +373,13 @@ void updateScores(State* state)
 	{
 		_updateScore(STUN_PENALTY);
 	}
-	if(TRUE == state->bugKills && powerMove)
+	if(TRUE == (state->bugKills && powerMove))
 	{
 		_updateScore(POWER_GAIN);
+	}
+	if(FALSE == (state->died & state->killed & state->stunned & (state->bugKills && powerMove)))
+	{
+		_updateScore(NOTHING_HAPPENED);
 	}
 }
 
