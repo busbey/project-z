@@ -30,7 +30,7 @@ public class World implements Serializable
 	public static final byte SET_AGENT_STUN = 0x04;
 	public static final byte SET_AGENT_DIED = 0x02;
 	public static final byte SET_BUG_EATS = 0x1;
-	public static final byte CLEAR_AGENT_KILLED = (byte)(0xF9);
+	public static final byte CLEAR_AGENT_KILLED = (byte)(0xF7);
 	public static final byte CLEAR_AGENT_STUN = (byte)(0xFB);
 	public static final byte CLEAR_AGENT_DIED = (byte)(0xFD);
 	public static final byte CLEAR_BUG_EATS = (byte)(0xFE);
