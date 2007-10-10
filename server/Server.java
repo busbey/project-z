@@ -88,9 +88,9 @@ public class Server
 		
 		StateWorker update = new StateWorker(state, actions, chats, clients, roundTime);
 		this.world = state;
-		bug = new Worker('B', new ServerSocket(bugPort), clients, actions, chats);
-		hunter = new Worker('1', new ServerSocket(hunterPort), clients, actions, chats);
-		display = new Worker('d', false,  new ServerSocket(displayPort), clients, actions, chats);
+		bug = new Worker('B', true, new ServerSocket(bugPort), clients, actions, chats, null);
+		hunter = new Worker('1', true, new ServerSocket(hunterPort), clients, actions, chats, null);
+		display = new Worker('d', false,  new ServerSocket(displayPort), clients, actions, chats, null);
 		
 		System.err.println("Starting state monitor thread.");
 		this.state = update;

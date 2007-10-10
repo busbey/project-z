@@ -27,15 +27,17 @@ import java.net.*;
 		boolean gameRunning = true;
 		char agentStart = '\0';
 		boolean onMap = true;
+		HashMap<InetAddress, ArrayList<Character>> allowedAgents = null;
+		ArrayList<Character> usedAgents = new ArrayList<Character>();
 
 		ArrayList<AgentThread> clients = new ArrayList<AgentThread>();
 		
 		Worker(char agentStart, ServerSocket incoming, HashMap<Character, DataOutputStream> out, HashMap<Character, Byte> in, HashMap<Character, ChatMessage> chats)
 		{
-			this(agentStart, true, incoming, out, in, chats);
+			this(agentStart, true, incoming, out, in, chats, null);
 		}
 
-		Worker(char agentStart, boolean onMap, ServerSocket incoming, HashMap<Character, DataOutputStream> out, HashMap<Character, Byte> in, HashMap<Character, ChatMessage> chats)
+		Worker(char agentStart, boolean onMap, ServerSocket incoming, HashMap<Character, DataOutputStream> out, HashMap<Character, Byte> in, HashMap<Character, ChatMessage> chats, HashMap<InetAddress, ArrayList<Character>> allowedAgents)
 		{
 			this.incoming = incoming;
 			this.out = out;
@@ -43,6 +45,7 @@ import java.net.*;
 			this.chats = chats;
 			this.agentStart = agentStart;
 			this.onMap = onMap;
+			this.allowedAgents = allowedAgents;
 		}
 
 		public void gameEnd()
@@ -57,8 +60,32 @@ import java.net.*;
 			while(gameRunning)
 			{
 				Socket client = incoming.accept();
-				final char agent = agentStart;
+				char agent = agentStart;
 				agentStart++;
+				InetAddress clientAddress =((InetSocketAddress) client.getRemoteSocketAddress()).getAddress();
+				if(null != allowedAgents)
+				{
+					ArrayList<Character> allowed = allowedAgents.get(clientAddress);
+					agent = '\0';
+					for(Character entry : allowed)
+					{
+						if(!usedAgents.contains(entry))
+						{
+							agent = entry;
+							break;
+						}
+					}
+					if('\0' != agent)
+					{
+						usedAgents.add(agent);
+					}
+					else
+					{
+						/* deny this connection */
+						client.close();
+						continue;
+					}
+				}
 				System.err.println("New connection for Agent " + agent + " from " + client.getRemoteSocketAddress().toString());
 				
 				AgentThread clientThread = new AgentThread(agent, client);
