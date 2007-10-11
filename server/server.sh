@@ -26,7 +26,7 @@ if [ ! -f "Server.class" ]; then
     javac Server.java
 fi
 echo -n "Starting the server.."
-java Server -b "${map}" > "${serverLog}" 2>&1 &
+java Server --batch --map "${map}" > "${serverLog}" 2>&1 &
 svrPid=$!
 echo ${svrPid} > "${serverPid}"
 

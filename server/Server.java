@@ -29,6 +29,10 @@ public class Server
 	public static final int DEFAULT_HUNTER_PORT = 1337;
 	public static final long DEFAULT_ROUND_TIME = 250;
 
+	protected static final String ACL_BUG = "Bugs=";
+	protected static final String ACL_HUNTER = "Hunters=";
+	protected static final String ACL_DISPLAY = "Displays=";
+
 	Worker bug = null;
 	Worker hunter = null;
 	Worker display = null;
@@ -82,15 +86,20 @@ public class Server
 
 	public Server(int bugPort, int hunterPort, int displayPort, World state, long roundTime) throws IOException
 	{
+		this(bugPort, hunterPort, displayPort, state, roundTime, null, null, null);
+	}
+	
+	public Server(int bugPort, int hunterPort, int displayPort, World state, long roundTime, HashMap<InetAddress, ArrayList<Character>> bugAcl, HashMap<InetAddress, ArrayList<Character>> hunterAcl, HashMap<InetAddress, ArrayList<Character>> displayAcl) throws IOException
+	{
 		HashMap<Character, Byte> actions = new HashMap<Character, Byte>();
 		HashMap<Character, DataOutputStream> clients = new HashMap<Character, DataOutputStream>();
 		HashMap<Character, ChatMessage> chats = new HashMap<Character, ChatMessage>();
 		
 		StateWorker update = new StateWorker(state, actions, chats, clients, roundTime);
 		this.world = state;
-		bug = new Worker('B', true, new ServerSocket(bugPort), clients, actions, chats, null);
-		hunter = new Worker('1', true, new ServerSocket(hunterPort), clients, actions, chats, null);
-		display = new Worker('d', false,  new ServerSocket(displayPort), clients, actions, chats, null);
+		bug = new Worker('B', true, new ServerSocket(bugPort), clients, actions, chats, bugAcl);
+		hunter = new Worker('1', true, new ServerSocket(hunterPort), clients, actions, chats, hunterAcl);
+		display = new Worker('d', false,  new ServerSocket(displayPort), clients, actions, chats, displayAcl);
 		
 		System.err.println("Starting state monitor thread.");
 		this.state = update;
@@ -116,39 +125,90 @@ public class Server
 		return world.gameRunning();
 	}
 
+	public static void usage()
+	{
+		/* no usage statement.  let's reward the curious.*/
+	}
+
 	public static void main(String[] args)
 	{
 		boolean block = true;
 		int rounds = -1;
-		Server server;
+		Server server = null;
+		String worldFile = null;
+		HashMap<InetAddress,ArrayList<Character>> bugACL = null;
+		HashMap<InetAddress,ArrayList<Character>> hunterACL = null;
+		HashMap<InetAddress,ArrayList<Character>> displayACL = null;
 		try
 		{
 			if(args.length > 0)
 			{
-				if("-b".equals(args[0]))
+				for(int i = 0; i < (args.length -1); i++)
 				{
-					block = false;
-					try
+					if("--batch".equals(args[i]))
 					{
-						rounds = Integer.parseInt(args[1]);
+						block = false;
+						try
+						{
+							rounds = Integer.parseInt(args[i+1]);
+							i++;
+						}
+						catch(NumberFormatException ec)
+						{
+						}
 					}
-					catch(NumberFormatException ec)
+					else if("--acl".equals(args[i]))
 					{
+						int j = i + 1;
+						for(; j < args.length;j++)
+						{
+							if(args[j].startsWith("-"))
+							{
+								break;
+							}
+							HashMap<InetAddress, ArrayList<Character>> acl = null;
+							String accessList = null;
+							if(args[j].startsWith(ACL_BUG))
+							{
+								acl = bugACL = new HashMap<InetAddress, ArrayList<Character>>();	
+								accessList = args[j].substring(ACL_BUG.length());
+							}
+							else if(args[j].startsWith(ACL_HUNTER))
+							{
+								acl = hunterACL = new HashMap<InetAddress, ArrayList<Character>>();	
+								accessList = args[j].substring(ACL_HUNTER.length());
+							}
+							else if(args[j].startsWith(ACL_DISPLAY))
+							{
+								acl = displayACL = new HashMap<InetAddress, ArrayList<Character>>();	
+								accessList = args[j].substring(ACL_DISPLAY.length());
+							}
+							if(null != acl && null != accessList)
+							{
+								String[] hostAccesses = accessList.split(",");
+								for(String host : hostAccesses)
+								{
+									int colon = host.lastIndexOf(":");
+									String hostId = host.substring(0, colon);
+									String agents = host.substring(colon+1);
+									ArrayList<Character> allowed = new ArrayList<Character>();
+									for(char agent : agents.toCharArray())
+									{
+										allowed.add(agent);
+									}
+									acl.put(InetAddress.getByName(hostId), allowed);
+								}
+							}
+						}
+						i = j - 1;
 					}
-				}
-				if(!("-b".equals(args[args.length - 1])))
-				{
-					server = Server.fromFile(args[args.length - 1], rounds);
-				}
-				else
-				{
-					server = new Server(rounds);
+					else if("--map".equals(args[i]))
+					{
+						worldFile = args[i+1];	
+					}
 				}
 			}
-			else
-			{
-				server = new Server();
-			}
+			server = new Server();
 			if(block)
 			{
 				System.in.read();
