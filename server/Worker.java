@@ -28,7 +28,6 @@ import java.net.*;
 		char agentStart = '\0';
 		boolean onMap = true;
 		HashMap<InetAddress, ArrayList<Character>> allowedAgents = null;
-		ArrayList<Character> usedAgents = new ArrayList<Character>();
 
 		ArrayList<AgentThread> clients = new ArrayList<AgentThread>();
 		
@@ -63,32 +62,38 @@ import java.net.*;
 				char agent = agentStart;
 				agentStart++;
 				InetAddress clientAddress =((InetSocketAddress) client.getRemoteSocketAddress()).getAddress();
-				if(null != allowedAgents)
+				AgentThread clientThread = null;
+				synchronized(out)
 				{
-					ArrayList<Character> allowed = allowedAgents.get(clientAddress);
-					agent = '\0';
-					for(Character entry : allowed)
+					if(null != allowedAgents)
 					{
-						if(!usedAgents.contains(entry))
+						ArrayList<Character> allowed = allowedAgents.get(clientAddress);
+						agent = '\0';
+						if(null != allowed)
 						{
-							agent = entry;
-							break;
+							for(Character entry : allowed)
+							{
+								if(!out.containsKey(entry))
+								{
+									agent = entry;
+									break;
+								}
+							}
+						}
+						if('\0' == agent)
+						{
+							System.err.println("\tDenying client connection.");
+							/* deny this connection */
+							client.close();
+							continue;
 						}
 					}
-					if('\0' != agent)
-					{
-						usedAgents.add(agent);
-					}
-					else
-					{
-						/* deny this connection */
-						client.close();
-						continue;
-					}
+					
+					System.err.println("New connection for Agent " + agent + " from " + client.getRemoteSocketAddress().toString());
+					DataOutputStream clientStream = new DataOutputStream(client.getOutputStream());
+					out.put(agent, clientStream);
+					clientThread = new AgentThread(agent, client, clientStream);
 				}
-				System.err.println("New connection for Agent " + agent + " from " + client.getRemoteSocketAddress().toString());
-				
-				AgentThread clientThread = new AgentThread(agent, client);
 				clients.add(clientThread);
 				Thread actionReader = new Thread(clientThread, "Thread for " + agent);
 
@@ -113,14 +118,18 @@ import java.net.*;
 
 		public void close()
 		{
-			for(AgentThread client : clients)
+			synchronized(out)
 			{
-				try
+				for(AgentThread client : clients)
 				{
-					client.close();
-				}
-				catch(Throwable ex)
-				{
+					try
+					{
+						client.close();
+						out.remove(client.agent);
+					}
+					catch(Throwable ex)
+					{
+					}
 				}
 			}
 		}
@@ -132,17 +141,13 @@ import java.net.*;
 			DataOutputStream outStream;
 			Socket client;
 
-			public AgentThread(char agent, Socket client) throws IOException
+			public AgentThread(char agent, Socket client, DataOutputStream outStream) throws IOException
 			{
 				this.agent = agent;
-				outStream = new DataOutputStream(client.getOutputStream());
+				this.outStream = outStream;
 				inStream = new DataInputStream(client.getInputStream());
 				this.client = client;
-				synchronized(out)
-				{
-					out.put(agent, outStream);
-					System.err.println("state monitoring registered for " + agent);
-				}
+				System.err.println("state monitoring registered for " + agent);
 			}
 			
 					public void run()

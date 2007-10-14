@@ -43,10 +43,10 @@ public class Server
 
 	public void close()
 	{
-		state.close();
 		bug.close();
 		hunter.close();
 		display.close();
+		state.close();
 	}
 	
 	public static Server fromFile(String path) throws IOException
@@ -208,7 +208,16 @@ public class Server
 					}
 				}
 			}
-			server = new Server();
+			World world = null;
+			if(null != worldFile)
+			{
+				world = World.fromFile(worldFile, rounds);
+			}
+			else
+			{
+				world = World.random();
+			}
+			server = new Server(DEFAULT_BUG_PORT, DEFAULT_HUNTER_PORT, DEFAULT_DISPLAY_PORT, world, DEFAULT_ROUND_TIME, bugACL, hunterACL, displayACL);
 			if(block)
 			{
 				System.in.read();
@@ -229,7 +238,8 @@ public class Server
 				}
 				server.close();
 			}
-		} catch (IOException ex)
+		} 
+		catch (IOException ex)
 		{
 			System.err.println("Error: Couldn't create server.");
 			ex.printStackTrace();
