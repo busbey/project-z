@@ -63,6 +63,7 @@ sub readState
 		printf STDERR "Problem reading world state.\n";
 		exit(-1);
 	}
+	$buffer = unpack "C",$buffer;
 	if(FLAGS_GAME_END == (FLAGS_GAME_END & $buffer))
 	{
 		$self->{gameOver} = TRUE;
