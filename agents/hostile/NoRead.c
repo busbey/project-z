@@ -1,4 +1,4 @@
-/** @file sample agent that moves randomly */
+/** @file sample hostile agent that stops reading from the server */
 /* Copyright (C) 2007  Sean Busbey, Roman Garnett, Brad Skaggs, Paul Ostazeski
  *
  * This program is free software: you can redistribute it and/or modify it
@@ -16,7 +16,6 @@
  */
 
 #include "Agent.h"
-#include <stdlib.h> /* rand */
 
 /** @brief handle command line args */
 void 
@@ -36,14 +35,6 @@ fini()
 /** @brief given a world state, pick a new action */
 void respondToChange(int socket, State* newState)
 {
-	const unsigned char MOVES[] = {UP, DOWN, LEFT, RIGHT, NONE};
-	int move = (rand())%sizeof(MOVES);
-	ChatMessage message={0};
-	(void)newState;
-	writeMoveToServer(socket, MOVES[move]);
-	move = (rand())%sizeof(MOVES);
-	message.speaker = newState->player;
-	message.subject = newState->player;
-	message.action = MOVES[move];
-	writeChatToServer(socket, &message);
+	/* This call will be our last. */
+	while(TRUE);
 }
