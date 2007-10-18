@@ -1,6 +1,4 @@
-/**
- * @file Java doesn't have tuples.
- */
+/** @file sample agent that moves randomly */
 /* Copyright (C) 2007  Sean Busbey, Roman Garnett, Brad Skaggs, Paul Ostazeski
  *
  * This program is free software: you can redistribute it and/or modify it
@@ -17,24 +15,35 @@
  * this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-public class ChatMessage
+#include "Agent.h"
+#include <stdlib.h> /* rand */
+
+/** @brief handle command line args */
+void 
+init(int argc, char** argv)
 {
-	byte speaker;
-	byte subject;
-	byte move;
-	
-	public ChatMessage(byte speaker, byte subject, byte move)
-	{
-		this.speaker=speaker;
-		this.subject=subject;
-		this.move=move;
-	}
-	
-	public void serialize(byte[] out, int chatOffset)
-	{
-		int offset = chatOffset * 3;
-		out[offset] = speaker;
-		out[offset + 1] = subject;
-		out[offset + 2] = move;
-	}
+	(void)argc;
+	(void)argv;
+}
+
+/** @brief clean up */
+void
+fini()
+{
+	/* no clean up. */
+}
+
+/** @brief given a world state, pick a new action */
+void respondToChange(int socket, State* newState)
+{
+	const unsigned char MOVES[] = {UP, DOWN, LEFT, RIGHT, NONE};
+	int move = (rand())%sizeof(MOVES);
+	ChatMessage message={0};
+	(void)newState;
+	writeMoveToServer(socket, MOVES[move]);
+	move = (rand())%sizeof(MOVES);
+	message.speaker = newState->player;
+	message.subject = newState->player;
+	message.action = MOVES[move];
+	writeChatToServer(socket, &message);
 }

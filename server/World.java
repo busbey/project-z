@@ -573,8 +573,9 @@ public class World implements Serializable
 		return returnVal;
 	}
 
-	public void serialize(java.io.DataOutputStream out) throws IOException
+	public byte[] serialize()
 	{
+		/*XXX we assume uniform row lengths */
 		//System.err.println("Serializing World:");
 		int rowSize = 0;
 		int numRows = state.length;
@@ -582,19 +583,28 @@ public class World implements Serializable
 		{
 			rowSize = state[0].length;
 		}
+		byte[] serialized = new byte[4 + 4 + numRows * rowSize];
 		//System.err.println("\tsize of row: " + rowSize);
 		//System.err.println("\tnumber of rows: " + numRows);
-		out.writeInt(rowSize);
-		out.writeInt(numRows);
-		for(int i = 0; i < state.length; i++)
+		serialized[0] = (byte)((0xFF000000 & rowSize) >>> 24);
+		serialized[1] = (byte)((0x00FF0000 & rowSize) >>> 16);
+		serialized[2] = (byte)((0x0000FF00 & rowSize) >>> 8);
+		serialized[3] = (byte)(0x000000FF & rowSize);
+		serialized[4] = (byte)((0xFF000000 & numRows) >>> 24);
+		serialized[5] = (byte)((0x00FF0000 & numRows) >>> 16);
+		serialized[6] = (byte)((0x0000FF00 & numRows) >>> 8);
+		serialized[7] = (byte)(0x000000FF & numRows);
+		int index = 8;
+		for(int i = 0; i < numRows; i++)
 		{
 			//System.err.println("\t writing out row " + i);
-			for(int j=0; j < state[i].length; j++)
+			for(int j=0; j < rowSize; j++, index++)
 			{
 				//System.err.println("\t\twriting out entry " + j);
-				out.writeByte(state[i][j]);
+				serialized[index] = (byte)(state[i][j]);
 			}
 		}
+		return serialized;
 	}
 	
 	public String toString()

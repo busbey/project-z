@@ -19,13 +19,13 @@ import java.util.*;
 
 	class StateWorker implements Runnable
 	{
-		HashMap<Character, DataOutputStream> clients;
+		HashMap<Character, ArrayList<byte[]>> clients;
 		long roundTime;
 		World state;
 		HashMap<Character, Byte> actions;
 		HashMap<Character, ChatMessage> chats;
 		
-		StateWorker(World state, HashMap<Character, Byte> actions, HashMap<Character, ChatMessage> chats, HashMap<Character, DataOutputStream> clients, long roundTime)
+		StateWorker(World state, HashMap<Character, Byte> actions, HashMap<Character, ChatMessage> chats, HashMap<Character, ArrayList<byte[]>> clients, long roundTime)
 		{
 			this.clients = clients;
 			this.roundTime = roundTime;
@@ -97,48 +97,42 @@ import java.util.*;
 			System.out.println("\tScores: " + state.getScores().toString());
 		}
 
+		/* XXX Note that this no longer writes directly to client sockets in order to avoid
+			blocking in the face of an unresponsive client.  !But! this means that we will
+			purposefully start consuming memory instead.  So a hostile agent could attempt to
+			exhaust our memory.  This should only be a problem if we're in forever mode.
+		*/
 		protected void updateClients()
 		{
 			ArrayList<Character> toRemove = new ArrayList<Character>();
-			System.err.println("\tSending state to clients");
-			for(Map.Entry<Character, DataOutputStream> entry : clients.entrySet())
+			System.err.println("\tSerializing state for clients");
+			byte[] serializedState = state.serialize();
+			byte[] serializedChats = new byte[chats.size() * 3];
+			/* manually mask and write in network order to avoid endian issues */
+			byte[] numChats = new byte[4];
+			numChats[0] = (byte)((0xFF000000 & chats.size()) >>> 24);
+			numChats[1] = (byte)((0x00FF0000 & chats.size()) >>> 16);
+			numChats[2] = (byte)((0x0000FF00 & chats.size()) >>> 8);
+			numChats[3] = (byte)(0x000000FF & chats.size());
+			int chatIndex = 0;
+			for(Map.Entry<Character, ChatMessage> message : chats.entrySet())
+			{
+				message.getValue().serialize(serializedChats, chatIndex);
+				chatIndex++;
+			}
+			for(Map.Entry<Character, ArrayList<byte[]>> entry : clients.entrySet())
 			{
 				char agent = entry.getKey();
-				DataOutputStream out = entry.getValue();
-				byte agentFlags = state.flags(agent);
-				try
+				ArrayList<byte[]> out = entry.getValue();
+				byte[] newState = new byte[1 + 1 + serializedState.length + 4 + serializedChats.length];
+				newState[0] = state.flags(agent);
+				newState[1] = (byte)agent;
+				System.arraycopy(serializedState, 0, newState, 2, serializedState.length);
+				System.arraycopy(numChats, 0, newState, 2 + serializedState.length, 4);
+				System.arraycopy(serializedChats, 0, newState, 2 + serializedState.length + 4, serializedChats.length);
+				synchronized(out)
 				{
-					byte agentVal = (byte)agent;
-					out.writeByte(agentFlags);
-					out.writeByte((byte)agent);
-					state.serialize(out);
-					out.writeInt(chats.size());
-					for(Map.Entry<Character, ChatMessage> message : chats.entrySet())
-					{
-						message.getValue().serialize(out);
-					}
-					out.flush();
-				}
-				catch(IOException ex)
-				{
-					if(state.isBug(agent) || state.isHunter(agent))
-					{
-						System.err.println("Warning: problem writing to agent '"+ agent+"'\n");
-					}
-					toRemove.add(agent);
-				}
-			}
-			for(char agent : toRemove)
-			{
-				System.err.println("Removing '" + agent + "'" );
-				DataOutputStream connection = clients.remove(agent);
-				try
-				{
-					connection.close();
-				}
-				catch(IOException ex)
-				{
-					/* why does close throw an exception anyways? */
+					out.add(newState);
 				}
 			}
 			System.err.println("\tClearing out " + chats.size() + " chats.");

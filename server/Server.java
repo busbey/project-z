@@ -92,7 +92,7 @@ public class Server
 	public Server(int bugPort, int hunterPort, int displayPort, World state, long roundTime, HashMap<InetAddress, ArrayList<Character>> bugAcl, HashMap<InetAddress, ArrayList<Character>> hunterAcl, HashMap<InetAddress, ArrayList<Character>> displayAcl) throws IOException
 	{
 		HashMap<Character, Byte> actions = new HashMap<Character, Byte>();
-		HashMap<Character, DataOutputStream> clients = new HashMap<Character, DataOutputStream>();
+		HashMap<Character, ArrayList<byte[]>> clients = new HashMap<Character, ArrayList<byte[]>>();
 		HashMap<Character, ChatMessage> chats = new HashMap<Character, ChatMessage>();
 		
 		StateWorker update = new StateWorker(state, actions, chats, clients, roundTime);

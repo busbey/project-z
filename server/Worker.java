@@ -21,7 +21,7 @@ import java.net.*;
 	class Worker implements Runnable
 	{
 		ServerSocket incoming;
-		HashMap<Character, DataOutputStream> out;
+		HashMap<Character, ArrayList<byte[]>> out;
 		HashMap<Character, Byte> in;
 		HashMap<Character, ChatMessage> chats;
 		boolean gameRunning = true;
@@ -29,14 +29,17 @@ import java.net.*;
 		boolean onMap = true;
 		HashMap<InetAddress, ArrayList<Character>> allowedAgents = null;
 
-		ArrayList<AgentThread> clients = new ArrayList<AgentThread>();
+		/*XXX why doesn't java have tuples already? */
+		ArrayList<AgentAction> clientActions = new ArrayList<AgentAction>();
+		ArrayList<AgentState> clientStates = new ArrayList<AgentState>();
+		ArrayList<Socket> clientSockets = new ArrayList<Socket>();
 		
-		Worker(char agentStart, ServerSocket incoming, HashMap<Character, DataOutputStream> out, HashMap<Character, Byte> in, HashMap<Character, ChatMessage> chats)
+		Worker(char agentStart, ServerSocket incoming, HashMap<Character, ArrayList<byte[]>> out, HashMap<Character, Byte> in, HashMap<Character, ChatMessage> chats)
 		{
 			this(agentStart, true, incoming, out, in, chats, null);
 		}
 
-		Worker(char agentStart, boolean onMap, ServerSocket incoming, HashMap<Character, DataOutputStream> out, HashMap<Character, Byte> in, HashMap<Character, ChatMessage> chats, HashMap<InetAddress, ArrayList<Character>> allowedAgents)
+		Worker(char agentStart, boolean onMap, ServerSocket incoming, HashMap<Character, ArrayList<byte[]>> out, HashMap<Character, Byte> in, HashMap<Character, ChatMessage> chats, HashMap<InetAddress, ArrayList<Character>> allowedAgents)
 		{
 			this.incoming = incoming;
 			this.out = out;
@@ -62,7 +65,7 @@ import java.net.*;
 				char agent = agentStart;
 				agentStart++;
 				InetAddress clientAddress =((InetSocketAddress) client.getRemoteSocketAddress()).getAddress();
-				AgentThread clientThread = null;
+				ArrayList<byte[]> states = new ArrayList<byte[]>();
 				synchronized(out)
 				{
 					if(null != allowedAgents)
@@ -88,14 +91,19 @@ import java.net.*;
 							continue;
 						}
 					}
-					
-					System.err.println("New connection for Agent " + agent + " from " + client.getRemoteSocketAddress().toString());
-					DataOutputStream clientStream = new DataOutputStream(client.getOutputStream());
-					out.put(agent, clientStream);
-					clientThread = new AgentThread(agent, client, clientStream);
+					out.put(agent, states);
 				}
-				clients.add(clientThread);
-				Thread actionReader = new Thread(clientThread, "Thread for " + agent);
+				System.err.println("New connection for Agent " + agent + " from " + client.getRemoteSocketAddress().toString());
+				DataOutputStream outputStream = new DataOutputStream(client.getOutputStream());
+				DataInputStream inputStream = new DataInputStream(client.getInputStream());
+				AgentAction clientActionThread = new AgentAction(agent, inputStream);
+				AgentState clientStateThread = new AgentState(agent, outputStream, states);
+				clientActions.add(clientActionThread);
+				clientStates.add(clientStateThread);
+				clientSockets.add(client);
+				
+				Thread actionReader = new Thread(clientActionThread, "Action Thread for " + agent);
+				Thread stateWriter = new Thread(clientStateThread, "State Thread for " + agent);
 
 				/* XXX hack to work around bug 33 */
 				if(onMap)
@@ -107,6 +115,8 @@ import java.net.*;
 				}
 				actionReader.setDaemon(true);
 				actionReader.start();
+				stateWriter.setDaemon(true);
+				stateWriter.start();
 
 			}
 			}catch(Exception ex)
@@ -118,119 +128,206 @@ import java.net.*;
 
 		public void close()
 		{
-			synchronized(out)
+			gameRunning = false;
+			for(AgentState client : clientStates)
 			{
-				for(AgentThread client : clients)
+				try
 				{
-					try
-					{
-						client.close();
-						out.remove(client.agent);
-					}
-					catch(Throwable ex)
-					{
-					}
+					client.close();
+				}
+				catch(Throwable ex)
+				{
+				}
+			}
+			clientStates.clear();
+			for(AgentAction client : clientActions)
+			{
+				try
+				{
+					client.close();
+				}
+				catch(Throwable ex)
+				{
+				}
+			}
+			clientActions.clear();
+			for(Socket client : clientSockets)
+			{
+				try
+				{
+					client.close();
+				}
+				catch(Throwable ex)
+				{
 				}
 			}
 		}
 
-		class AgentThread implements Runnable
+		class AgentState implements Runnable
 		{
 			char agent;
-			DataInputStream inStream;
 			DataOutputStream outStream;
-			Socket client;
+			ArrayList<byte[]> states;
+			boolean running = true;
 
-			public AgentThread(char agent, Socket client, DataOutputStream outStream) throws IOException
+			public AgentState(char agent, DataOutputStream outStream, ArrayList<byte[]> states)
 			{
 				this.agent = agent;
 				this.outStream = outStream;
-				inStream = new DataInputStream(client.getInputStream());
-				this.client = client;
-				System.err.println("state monitoring registered for " + agent);
+				this.states = states;
 			}
-			
-					public void run()
+
+			public void run()
+			{
+				System.err.println("state thread started for " + agent);
+				while(running)
+				{
+					try
 					{
-						boolean running = true;
-						System.err.println("action thread started for " + agent);
-						while(running)
+						/* XXX This could block should the client not read for an excessively long time.
+								But in general is won't.  So if there's nothing to do, we  need to yield to avoid hogging the cpu.
+						*/
+						if(0 < states.size())
 						{
+							byte[] state;
+							/* we're doing this manually rather than iterating over the list because we need the critical section
+								to be small and non-blocking so the rest of the server can't get hung up by a non-responsive client
+							*/
+							synchronized(states)
+							{
+								state = states.remove(0);
+							}
+							outStream.write(state);
+							outStream.flush();
+						}
+						else
+						{
+							Thread.yield();
 							try
 							{
-								byte firstByte = inStream.readByte();
-								/* XXX I apologize.  Java is not my friend for parsing and validating single characters. */
-								switch(firstByte)
-								{
-									case 'l':
-									case 'r':
-									case 'u':
-									case 'd':
-									case 'n':
-										/* 'i move' case */
-										synchronized(in)
-										{
-											System.err.println("\tAdding action for " + agent);
-											in.put(agent, firstByte);
-										}
-										break;
-									default:
-										/* 
-											validate 'i say' case 
-										   	in case of invalid message, 
-										   	throw away what we have and move on. 
-										 */
-										if(	('1' <= firstByte && '9' >= firstByte) ||
-											('B' <= firstByte && 'N' >= firstByte))
-										{
-											byte speaker = firstByte;
-											byte subject = inStream.readByte();
-											byte action = inStream.readByte();
-											if( ('1' <= subject && '9' >= subject) ||
-												('B' <= subject && 'N' >= subject))
-											{
-												/* valid subject */
-												switch(action)
-												{
-													case 'l':
-													case 'r':
-													case 'u':
-													case 'd':
-													case 'n':
-														/* valid action */
-														synchronized(chats)
-														{
-															System.err.println("\tAdding chat for " + agent);
-															chats.put(agent, new ChatMessage(speaker, subject, action));
-														}
-													default:
-													break;
-												}
-											}
-										}
-										break;
-								}
-									
+								Thread.sleep(50);
 							}
-							catch(Exception ex)
+							catch(InterruptedException iex)
 							{
-								running = false;
 							}
 						}
 					}
-
-					public void close() throws Throwable
+					catch(Exception ex)
 					{
-						System.err.println("Closing i/o streams for " + agent);
-						client.close();
-						outStream.close();
-						inStream.close();
+						System.err.println("Exiting state thread for " + agent + " because '" + ex.getMessage() + "'");
+						running = false;
 					}
+				}
+				synchronized(out)
+				{
+					out.remove(agent);
+				}
+			}
 
-					protected void finalize() throws Throwable
-					{
-						close();
-						super.finalize();
-					}
+			public void close() throws Throwable
+			{
+				running = false;
+				outStream.close();
+			}
+
+			protected void finalize() throws Throwable
+			{
+				close();
+				super.finalize();
+			}
 		}
+
+		class AgentAction implements Runnable
+		{
+			char agent;
+			DataInputStream inStream;
+			boolean running = true;
+
+			public AgentAction(char agent, DataInputStream inStream)
+			{
+				this.agent = agent;
+				this.inStream = inStream;
+			}
+			
+			public void run()
+			{
+				System.err.println("action thread started for " + agent);
+				while(running)
+				{
+					try
+					{
+						byte firstByte = inStream.readByte();
+						/* XXX I apologize.  Java is not my friend for parsing and validating single characters. */
+						switch(firstByte)
+						{
+							case 'l':
+							case 'r':
+							case 'u':
+							case 'd':
+							case 'n':
+								/* 'i move' case */
+								synchronized(in)
+								{
+									System.err.println("\tAdding action for " + agent);
+									in.put(agent, firstByte);
+								}
+								break;
+							default:
+								/* 
+									validate 'i say' case 
+								   	in case of invalid message, 
+								   	throw away what we have and move on. 
+								 */
+								if(	('1' <= firstByte && '9' >= firstByte) ||
+									('B' <= firstByte && 'N' >= firstByte))
+								{
+									byte speaker = firstByte;
+									byte subject = inStream.readByte();
+									byte action = inStream.readByte();
+									if( ('1' <= subject && '9' >= subject) ||
+										('B' <= subject && 'N' >= subject))
+									{
+										/* valid subject */
+										switch(action)
+										{
+											case 'l':
+											case 'r':
+											case 'u':
+											case 'd':
+											case 'n':
+												/* valid action */
+												synchronized(chats)
+												{
+													System.err.println("\tAdding chat for " + agent);
+													chats.put(agent, new ChatMessage(speaker, subject, action));
+												}
+											default:
+											break;
+										}
+									}
+								}
+								break;
+						}
+							
+					}
+					catch(Exception ex)
+					{
+						System.err.println("Exiting agent thread for " + agent + " because '" + ex.getMessage() + "'");
+						running = false;
+					}
+				}
+			}
+
+			public void close() throws Throwable
+			{
+				running = false;
+				inStream.close();
+			}
+
+			protected void finalize() throws Throwable
+			{
+				close();
+				super.finalize();
+			}
 	}
+}
