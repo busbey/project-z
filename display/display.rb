@@ -146,21 +146,32 @@ def random_string(rows, columns)
 end
 
 def read_state(f)
-  flag, representation, columns, rows = f.read(10).unpack('CCNN')
+  flag, numStuns = f.read(5).unpack('CN')
   puts "flags: #{flag.to_s(16)}"
-  puts "I'm display '#{representation.chr}'"
+  puts "there were '#{numStuns}' stuns"
+  stuns = []
+  f.read(numStuns * 2).unpack('C').each_cons(2) { |stun| stuns << stun }
+  numKills = f.read(4).unpack('N')[0]
+  puts "there were '#{numKills}' kills"
+  kills = []
+  f.read(numKills * 2).unpack('C').each_cons(2) { |kill| kills << kill }
+  columns, rows = f.read(8).unpack('NN')
   puts "board is col x row: #{columns} x #{rows}"
   
   text = f.read(rows * columns)
   text.gsub!(/[B-N]/) {|agent| agent.downcase } if (0x01 == flag & 0x01)
-  puts "board : #{text}"
+  puts "canonical board : #{text}"
+  numViews = f.read(4).unpack('N')[0]
+  puts "there are #{numViews} agent-specific boards"
+  # We're just discarding this for now.
+  f.read(numViews * (1 + (rows * columns)))
   
   numChats = f.read(4).unpack('N')[0]
   chats = []
   puts "chat messages this round: " + numChats.to_s
-  f.read(numChats * 3).unpack('C').each_cons(3) { |c| chats << c }
+  f.read(numChats * 4).unpack('C').each_cons(4) { |c| chats << c }
   
-  return rows, columns, text, chats 
+  return rows, columns, text, stuns, kills, chats 
 end
 
 class ZDisplayClient
@@ -172,12 +183,22 @@ class ZDisplayClient
       #STDERR.puts "#{$!.message}\n#{$!.backtrace}"
     #else
       while true
-        rows, columns, text, chats = read_state(t)
+        rows, columns, text, stuns, kills, chats = read_state(t)
         viewer ||= create_window(rows, columns)
         viewer.text = text
+		unless stuns.empty?
+			stuns.each do |stunner, stunned|
+				puts "'" + stunner + "' stunned '" + stunned + "'\n"
+			end
+		end
+		unless kills.empty?
+			kills.each do |killer, killed|
+				puts "'" + killer + "' killed '" + killed + "'\n"
+			end
+		end
         unless chats.empty?
-          chats.each do |speaker, subject, action| 
-            puts "'" + speaker + "' says " + subject + " should move " + action + "\n"
+          chats.each do |sender, speaker, subject, action| 
+            puts "'" + speaker + "' says " + subject + " should move " + action + (sender.eql? speaker ? "\n" : " [lie]\n")
           end
         end
       end

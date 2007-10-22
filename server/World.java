@@ -68,6 +68,13 @@ public class World implements Serializable
 
 	protected int rounds = -1;
 
+	protected ArrayList<byte[]> stuns = new ArrayList<byte[]>();
+	protected ArrayList<byte[]> kills = new ArrayList<byte[]>();
+
+	protected byte[] cache = null;
+	protected byte[] headerCache = null;
+	protected boolean changed = true;
+
 	/** @brief create an uninitialized world */
 	protected World()
 	{
@@ -250,6 +257,7 @@ public class World implements Serializable
 			score.put(agent, 0l);
 			setRandomEmpty(agent);
 		}
+		changed = true;
 	}
 
 	public void bugEats()
@@ -272,6 +280,7 @@ public class World implements Serializable
 	public void kill(char target, char by)
 	{
 		System.out.println("Agent " + target + " killed by " + by);
+		kills.add(new byte[]{(byte)by, (byte)target});
 		long oldScore = 0l;
 		if(score.containsKey(by))
 		{
@@ -315,6 +324,7 @@ public class World implements Serializable
 
 	public void stun(char agent, char by)
 	{
+		stuns.add(new byte[]{(byte)by, (byte)agent});
 		/* stun */
 		System.out.println("Agent " + agent + " stunned by " + by);
 		long oldScore = 0l;
@@ -384,7 +394,8 @@ public class World implements Serializable
 			curFlag &= CLEAR_AGENT_DIED & CLEAR_AGENT_STUN & CLEAR_AGENT_KILLED;
 			agentFlags.put(agent, curFlag);
 		}
-		
+		stuns.clear();
+		kills.clear();
 	}
 
 	public void setRandomEmpty(char target)
@@ -575,6 +586,14 @@ public class World implements Serializable
 
 	public byte[] serialize()
 	{
+		return serialize('\0');
+	}
+
+	/** @brief serialize the game world according to a particular agent.
+	 *	@param agent	this board is for this agent, '\0' means canon.
+	 */
+	public byte[] serialize(char agent)
+	{
 		/*XXX we assume uniform row lengths */
 		//System.err.println("Serializing World:");
 		int rowSize = 0;
@@ -586,25 +605,116 @@ public class World implements Serializable
 		byte[] serialized = new byte[4 + 4 + numRows * rowSize];
 		//System.err.println("\tsize of row: " + rowSize);
 		//System.err.println("\tnumber of rows: " + numRows);
-		serialized[0] = (byte)((0xFF000000 & rowSize) >>> 24);
-		serialized[1] = (byte)((0x00FF0000 & rowSize) >>> 16);
-		serialized[2] = (byte)((0x0000FF00 & rowSize) >>> 8);
-		serialized[3] = (byte)(0x000000FF & rowSize);
-		serialized[4] = (byte)((0xFF000000 & numRows) >>> 24);
-		serialized[5] = (byte)((0x00FF0000 & numRows) >>> 16);
-		serialized[6] = (byte)((0x0000FF00 & numRows) >>> 8);
-		serialized[7] = (byte)(0x000000FF & numRows);
-		int index = 8;
-		for(int i = 0; i < numRows; i++)
-		{
-			//System.err.println("\t writing out row " + i);
-			for(int j=0; j < rowSize; j++, index++)
-			{
-				//System.err.println("\t\twriting out entry " + j);
-				serialized[index] = (byte)(state[i][j]);
-			}
-		}
+		serializeHeader(serialized, 0);
+		serializeBoard(serialized, 8, agent);
 		return serialized;
+	}
+
+	/** @brief serialize info about the game board
+	 */
+	public byte[] serializeHeader()
+	{
+		byte[] buffer = new byte[8];
+		serializeHeader(buffer, 0);
+		return buffer;
+	}
+	
+	public void serializeHeader(byte[] buffer, int offset)
+	{
+		int rowSize = 0;
+		int numRows = state.length;
+		if(0 < numRows)
+		{
+			rowSize = state[0].length;
+		}
+		if((changed) || (null == headerCache))
+		{
+			if(null == headerCache)
+			{
+				headerCache = new byte[8];
+			}
+			headerCache[offset + 0] = (byte)((0xFF000000 & rowSize) >>> 24);
+			headerCache[offset + 1] = (byte)((0x00FF0000 & rowSize) >>> 16);
+			headerCache[offset + 2] = (byte)((0x0000FF00 & rowSize) >>> 8);
+			headerCache[offset + 3] = (byte)(0x000000FF & rowSize);
+			headerCache[offset + 4] = (byte)((0xFF000000 & numRows) >>> 24);
+			headerCache[offset + 5] = (byte)((0x00FF0000 & numRows) >>> 16);
+			headerCache[offset + 6] = (byte)((0x0000FF00 & numRows) >>> 8);
+			headerCache[offset + 7] = (byte)(0x000000FF & numRows);
+			changed = false;
+		}
+		System.arraycopy(headerCache, 0, buffer, offset, headerCache.length);
+	}
+
+	/** @brief write out agent stun/kill events. */
+	public byte[] serializeAgentInfo()
+	{
+		int numStuns = stuns.size();
+		int numKills = kills.size();
+		byte[] buffer = new byte[4 + 2 * numStuns + 4 + 2 * numKills];
+		int offset = 0;
+		buffer[offset + 0] = (byte)((0xFF000000 & numStuns) >>> 24);
+		buffer[offset + 1] = (byte)((0x00FF0000 & numStuns) >>> 16);
+		buffer[offset + 2] = (byte)((0x0000FF00 & numStuns) >>> 8);
+		buffer[offset + 3] = (byte)(0x000000FF & numStuns);
+		offset += 4;
+		for(byte[] stun : stuns)
+		{
+			buffer[offset + 0] = stun[0];
+			buffer[offset + 1] = stun[1];
+			offset += 2;
+		}
+		buffer[offset + 0] = (byte)((0xFF000000 & numKills) >>> 24);
+		buffer[offset + 1] = (byte)((0x00FF0000 & numKills) >>> 16);
+		buffer[offset + 2] = (byte)((0x0000FF00 & numKills) >>> 8);
+		buffer[offset + 3] = (byte)(0x000000FF & numKills);
+		offset += 4;
+		for(byte[] kill: kills)
+		{
+			buffer[offset + 0] = kill[0];
+			buffer[offset + 1] = kill[1];
+			offset += 2;
+		}
+
+		return buffer;
+	}
+	
+	/** @brief write out the board for a particular agent
+	 *	@param buffer	buffer to serialize to
+	 *	@param start	index in buffer to start writing at
+	 *	@param agent	perspective to use when rendering - '\0' means canon
+	 *
+	 *  writes in place to buffer
+	 *
+	 *	@return number of bytes used.
+	 */
+	public int serializeBoard(byte[] buffer, int start, char agent)
+	{
+		if(changed || null == cache)
+		{
+			if(null == cache)
+			{
+				cache = new byte[state.length * state[0].length];
+			}
+			int index = 0;
+			/*XXX we assume uniform row lengths */
+			for(int i = 0; i < state.length; i++)
+			{
+				for(int j=0; j < state[0].length; j++, index++)
+				{
+					cache[index] = (byte)(state[i][j]);
+				}
+			}
+			changed = false;
+		}
+		System.arraycopy(cache, 0, buffer, start, cache.length);
+		return cache.length;
+	}
+	public byte[] serializeBoard(char agent)
+	{
+		byte[] board = new byte[state.length * state[0].length];
+		serializeBoard(board, 0, agent);
+		return board;
 	}
 	
 	public String toString()

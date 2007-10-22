@@ -106,30 +106,88 @@ import java.util.*;
 		{
 			ArrayList<Character> toRemove = new ArrayList<Character>();
 			System.err.println("\tSerializing state for clients");
-			byte[] serializedState = state.serialize();
+			byte[] canonicalBoard = state.serializeBoard('\0');
+			byte[] agentInfo = state.serializeAgentInfo();
+			HashMap<Character, byte[]> serializedBoards = new HashMap<Character, byte[]>();
+			for(Map.Entry<Character, ArrayList<byte[]>> entry : clients.entrySet())
+			{
+				char agent = entry.getKey();
+				byte[] board = state.serializeBoard(agent);
+				if(null != board)
+				{
+					serializedBoards.put(agent, board);
+				}
+			}
+			byte[] boardHeader = state.serializeHeader();
 			byte[] serializedChats = new byte[chats.size() * 3];
+			byte[] serializedTrueChats = new byte[chats.size() * 4];
 			/* manually mask and write in network order to avoid endian issues */
 			byte[] numChats = new byte[4];
 			numChats[0] = (byte)((0xFF000000 & chats.size()) >>> 24);
 			numChats[1] = (byte)((0x00FF0000 & chats.size()) >>> 16);
 			numChats[2] = (byte)((0x0000FF00 & chats.size()) >>> 8);
 			numChats[3] = (byte)(0x000000FF & chats.size());
+			byte[] numViews = new byte[4];
+			int views = serializedBoards.size();
+			numViews[0] = (byte)((0xFF000000 & views) >>> 24);
+			numViews[1] = (byte)((0x00FF0000 & views) >>> 16);
+			numViews[2] = (byte)((0x0000FF00 & views) >>> 8);
+			numViews[3] = (byte)(0x000000FF & views);
+			
 			int chatIndex = 0;
 			for(Map.Entry<Character, ChatMessage> message : chats.entrySet())
 			{
-				message.getValue().serialize(serializedChats, chatIndex);
+				char agent = message.getKey();
+				message.getValue().serialize(serializedChats, chatIndex*3);
+				serializedTrueChats[chatIndex*4] = (byte)(agent);
+				message.getValue().serialize(serializedTrueChats, chatIndex*4 + 1);
 				chatIndex++;
 			}
 			for(Map.Entry<Character, ArrayList<byte[]>> entry : clients.entrySet())
 			{
 				char agent = entry.getKey();
 				ArrayList<byte[]> out = entry.getValue();
-				byte[] newState = new byte[1 + 1 + serializedState.length + 4 + serializedChats.length];
-				newState[0] = state.flags(agent);
-				newState[1] = (byte)agent;
-				System.arraycopy(serializedState, 0, newState, 2, serializedState.length);
-				System.arraycopy(numChats, 0, newState, 2 + serializedState.length, 4);
-				System.arraycopy(serializedChats, 0, newState, 2 + serializedState.length + 4, serializedChats.length);
+				byte[] newState = null;
+				if(state.isBug(agent) || state.isHunter(agent))
+				{
+					byte[] board = serializedBoards.get(agent);
+					newState = new byte[1 + 1 + boardHeader.length + board.length + 4 + serializedChats.length];
+					newState[0] = state.flags(agent);
+					newState[1] = (byte)agent;
+					System.arraycopy(boardHeader, 0, newState, 2, boardHeader.length);
+					System.arraycopy(board, 0, newState, 2 + boardHeader.length, board.length);
+					System.arraycopy(numChats, 0, newState, 2 + boardHeader.length +  board.length, 4);
+					System.arraycopy(serializedChats, 0, newState, 2 + boardHeader.length + board.length + 4, serializedChats.length);
+				}
+				else
+				{
+					newState = new byte[1 + agentInfo.length  + boardHeader.length + canonicalBoard.length + 4
+											+ (serializedBoards.size() * (1 + canonicalBoard.length)) + 4 
+											+ serializedTrueChats.length];
+					newState[0] = state.flags(agent);
+					int offset = 1;
+					System.arraycopy(agentInfo, 0, newState, offset, agentInfo.length);
+					offset += agentInfo.length;
+					System.arraycopy(boardHeader, 0, newState, offset, boardHeader.length);
+					offset += boardHeader.length;
+					System.arraycopy(canonicalBoard, 0, newState, offset, canonicalBoard.length);
+					offset += canonicalBoard.length;
+					System.arraycopy(numViews, 0, newState, offset, numViews.length);
+					offset += numViews.length;
+					for(Map.Entry<Character, byte[]> boardEntry : serializedBoards.entrySet())
+					{
+						char viewer = boardEntry.getKey();
+						byte[] board = boardEntry.getValue();
+						newState[offset] = (byte)viewer;
+						offset++;
+						System.arraycopy(board, 0, newState, offset, board.length);
+						offset += board.length;
+					}
+					System.arraycopy(numChats, 0, newState, offset, numChats.length);
+					offset += numChats.length;
+					System.arraycopy(serializedTrueChats, 0, newState, offset, serializedTrueChats.length);
+					offset += serializedTrueChats.length;
+				}
 				synchronized(out)
 				{
 					out.add(newState);

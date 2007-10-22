@@ -30,9 +30,8 @@ public class ChatMessage
 		this.move=move;
 	}
 	
-	public void serialize(byte[] out, int chatOffset)
+	public void serialize(byte[] out, int offset)
 	{
-		int offset = chatOffset * 3;
 		out[offset] = speaker;
 		out[offset + 1] = subject;
 		out[offset + 2] = move;
