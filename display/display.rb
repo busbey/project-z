@@ -215,7 +215,7 @@ class ZDisplayClient
         viewer.text = text
         STDERR.puts kills.inspect
         if kills.length > 0
-          viewer.play_sound (kill[0][1] =~ /[0-9]/ ? 'player_death' : 'bug_death') 
+          viewer.play_sound (kills[0][1] =~ /[0-9]/ ? 'player_death' : 'bug_death') 
         end
 		unless stuns.empty?
 			stuns.each do |stunner, stunned|
