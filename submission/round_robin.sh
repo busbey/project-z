@@ -81,7 +81,7 @@ cat bugs | while read bug; do
 				bugagents=${bugList:6:1};
 				echo "Playing on map: ${map}
 Bugs are:
-	team 1 (${bug}): ${bugagent}
+	team 1 (${bug}): ${bugagents}
 Hunters are:
 	team 1 (${hunter1}): ${hunter1agents}
 	team 2 (${hunter2}): ${hunter2agents}
@@ -96,6 +96,7 @@ Hunters are:
 				wait "${serverPid}"
 				serverPid=""
 				# tally scores
+				grep "Scores: {" server.out | tail -n 1
 				# prep results from server
 				# cleanup
 			done;

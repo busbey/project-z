@@ -189,14 +189,22 @@ public class Server
 								for(String host : hostAccesses)
 								{
 									int colon = host.lastIndexOf(":");
-									String hostId = host.substring(0, colon);
-									String agents = host.substring(colon+1);
-									ArrayList<Character> allowed = new ArrayList<Character>();
-									for(char agent : agents.toCharArray())
+									if(-1 < colon)
 									{
-										allowed.add(agent);
+										String hostId = host.substring(0, colon);
+										String agents = host.substring(colon+1);
+										InetAddress address = InetAddress.getByName(hostId);
+										ArrayList<Character> allowed = acl.get(address);
+										if(null == allowed)
+										{
+											allowed = new ArrayList<Character>();
+										}
+										for(char agent : agents.toCharArray())
+										{
+											allowed.add(agent);
+										}
+										acl.put(address, allowed);
 									}
-									acl.put(InetAddress.getByName(hostId), allowed);
 								}
 							}
 						}
