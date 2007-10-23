@@ -16,7 +16,7 @@
 #  
 
        home=`pwd`
-       map="${home}/../worlds/example3"
+       map="${home}/../worlds/demo2"
  serverLog="${home}/Server.log"
  serverPid="${home}/Server.pid"
 

@@ -19,11 +19,20 @@ require 'java'
 require 'yaml'
 require 'enumerator'
 require 'socket'
+require 'find'
 
 $CLASSPATH << File.expand_path("../dependencies/lgpl/processing-0125/core.jar")
+Find.find('../dependencies/lgpl/processing-0125/libraries/minim/library') { |path|
+  if path =~ /\.jar$/
+    puts 'adding path'
+    $CLASSPATH << File.expand_path(path)
+  end
+}
+
 include_class "processing.core.PApplet"
 include_class "processing.core.PImage"
 include_class "processing.core.PConstants"
+include_class "ddf.minim.Minim"
 class ZViewer < PApplet
   def initialize(rows, columns, max_width = 1200, max_height = 750)
     super()
@@ -41,6 +50,14 @@ class ZViewer < PApplet
         @tile_height = i.height
       }
     }
+    Minim.start(self)
+    @sounds = Hash.new
+    File.open('sounds.yaml') { |f|
+      YAML::load(f).each { |k,v|
+        @sounds[k.to_s] = Minim.loadFile(v)
+      }
+    }
+
     potential_width, potential_height = dimensions(@columns, @rows, @tile_width, @tile_height)
     if potential_height > max_height || potential_width > max_width
       shrinkage = [max_height * 1.0 / potential_height, max_width * 1.0 / potential_width].min
@@ -85,6 +102,15 @@ class ZViewer < PApplet
     redraw()
   end
 
+  def play_sound(key)
+    s = @sounds[key]
+    if s
+      s.play
+      s.rewind
+    else
+      STDERR.puts "Error playing '#{key}'"
+    end
+  end
   def dimensions(columns, rows, tile_width, tile_height) 
     vertical_offset = tile_height / 2
     [columns * tile_width, tile_height + (rows - 1) * vertical_offset]
@@ -107,7 +133,7 @@ class ZViewer < PApplet
 	  final = [0, i - @columns].max
 	  while k >= final
 	    @dirty[k] = true
-	    final = [0, k - 2 * @columns].max if @text[k..k] == 'P' || @old_text[k..k] == 'P'   #powerups need to have the upper two rows cleared as well
+	    final = [0, k - 2 * @columns].max if @text[k..k] =~ /[a-zP]/ || @old_text[k..k] =~ /[a-zP]/   #powerups need to have the upper two rows cleared as well
 	    k -= @columns
 	  end
 	      
@@ -150,11 +176,12 @@ def read_state(f)
   puts "flags: #{flag.to_s(16)}"
   puts "there were '#{numStuns}' stuns"
   stuns = []
-  f.read(numStuns * 2).unpack('C').each_cons(2) { |stun| stuns << stun }
+  f.read(numStuns * 2).unpack('a*')[0].split(//).each_cons(2) { |stun| stuns << stun }
   numKills = f.read(4).unpack('N')[0]
+  STDERR.puts "there were '#{numKills}' kills"
   puts "there were '#{numKills}' kills"
   kills = []
-  f.read(numKills * 2).unpack('C').each_cons(2) { |kill| kills << kill }
+  f.read(numKills * 2).unpack('a*')[0].split(//).each_cons(2) { |kill| kills << kill }
   columns, rows = f.read(8).unpack('NN')
   puts "board is col x row: #{columns} x #{rows}"
   
@@ -186,6 +213,10 @@ class ZDisplayClient
         rows, columns, text, stuns, kills, chats = read_state(t)
         viewer ||= create_window(rows, columns)
         viewer.text = text
+        STDERR.puts kills.inspect
+        if kills.length > 0
+          viewer.play_sound 'death' 
+        end
 		unless stuns.empty?
 			stuns.each do |stunner, stunned|
 				puts "'" + stunner + "' stunned '" + stunned + "'\n"
