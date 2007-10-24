@@ -22,7 +22,10 @@ maps="maps"
 hunter1host="localhost"
 hunter2host="localhost"
 bughost="localhost"
+serverhost="localhost"
 rounds=20
+cp="rsync --archive --delete --force --timeout=10"
+scp="${cp} --rsh=ssh"
 usage()
 {
 	echo "Usage ${0##*/}
@@ -33,12 +36,13 @@ usage()
 	-1	host that runs first hunter team [localhost]
 	-2	host that runs second hunter team [localhost]
 	-b	host that runs the bug team [localhost]
+	-s	host that runs the server [localhost]
 	-r	number of rounds per match [20]
 	-h, --help	this help screen
 	" >&2
 	exit 1
 }
-while getopts ":H:B:M:1:2:b:r" optionName; do
+while getopts ":H:B:M:1:2:b:r:" optionName; do
 case "$optionName" in
 H) hunters="$OPTARG";;
 B) bugs="$OPTARG";;
@@ -47,6 +51,7 @@ M) maps="$OPTARG";;
 2) hunter2host="$OPTARG";;
 b) bughost="$OPTARG";;
 r) rounds="$OPTARG";;
+s) serverhost="$OPTARG";;
 \?) usage;;
 *) usage;;
 esac
@@ -60,8 +65,11 @@ cleanup()
 		kill -9 "${serverPid}"
 	fi
 	#if we have a bug, kill everything and copy output files back here
+	ssh "${bughost}" "./cleanup.sh -b"
 	#if we have a hunter1, kill everything and copy output files back here
+	ssh "${hunter1host}" "./cleanup.sh"
 	#if we have a hunter2, kill everything and copy output files back here
+	ssh "${hunter2host}" "./cleanup.sh"
 	echo "clean!"
 	exit
 }
@@ -73,6 +81,11 @@ cat bugs | while read bug; do
 		cat hunters | while read hunter1; do
 			cat hunters | while read hunter2; do
 				#make sure we haven't already done this match up.
+				matchstring="${bug}-${map}-${hunter1}-${hunter2}"
+				matchstring=${matchstring//\//_}
+				mkdir -p "results/${bug}/${matchstring}"
+				mkdir -p "results/${hunter1}/${matchstring}"
+				mkdir -p "results/${hunter2}/${matchstring}"
 				#create a mapping from hunter / bug teams to agents in game.
 				agentList=`echo "123456789" | ./randomizeString.awk`;
 				bugList=`echo "BCDEFGHIJKLMN" | ./randomizeString.awk`;
@@ -90,15 +103,24 @@ Hunters are:
 				java -jar Server.jar --batch "${rounds}" --acl Displays= Bugs=${bughost}:${bugagents} Hunters=${hunter1host}:${hunter1agents},${hunter2host}:${hunter2agents} --map "${map}" >server.out 2>server.err </dev/null &
 				serverPid=$!
 				# remote launch the bug
+				ssh "${bughost}" "./runAgent.sh -b -a ${bug} -s ${serverhost}"
 				# remote launch teamA
+				ssh "${hunter1host}" "./runAgent.sh -a ${hunter1} -s ${serverhost}"
 				# remote launch teamB
+				ssh "${hunter2host}" "./runAgent.sh -a ${hunter2} -s ${serverhost}"
 				# wait for the server to end.
 				wait "${serverPid}"
 				serverPid=""
 				# tally scores
 				grep "Scores: {" server.out | tail -n 1
 				# prep results from server
-				# cleanup
+				${cp} server.err server.out "results/${bug}/${matchstring}/"
+				${cp} server.err server.out "results/${hunter1}/${matchstring}/"
+				${cp} server.err server.out "results/${hunter2}/${matchstring}/"
+				${scp} "${bughost}:chroot/results/bug.out chroot/results/bug.err" "results/${bug}/${matchstring}/"
+				${scp} "${hunter1host}:chroot/results/hunter1.out chroot/results/hunter1.err results/hunter2.out results/hunter2.err" "results/${hunter1}/${matchstring}/"
+				${scp} "${hunter2host}:chroot/results/hunter1.out chroot/results/hunter1.err results/hunter2.out results/hunter2.err" "results/${hunter2}/${matchstring}/"
+				cleanup
 			done;
 		done;
 	done;
