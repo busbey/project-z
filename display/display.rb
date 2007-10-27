@@ -131,7 +131,6 @@ class ZViewer < PApplet
   def draw
     vertical_offset = @small_tile_height / 2
     unless @draw_delta.getAndSet(true)
-      STDERR.puts "REDRAWING EVERYtHING"
       #mark all tiles for redrawing
       (0...@text.length).each { |i| @dirty[i] = true }
       background 0
@@ -247,7 +246,7 @@ class ZDisplayClient
 		end
         unless chats.empty?
           chats.each do |sender, speaker, subject, action| 
-            puts "'" + speaker + "' says " + subject + " should move " + action + (sender.eql? speaker ? "\n" : " [lie]\n")
+            puts "'" + speaker + "' says " + subject + " should move " + action + (sender.eql?(speaker) ? "\n" : " [lie]\n")
           end
         end
 		unless scores.empty?
