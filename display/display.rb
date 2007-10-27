@@ -21,10 +21,10 @@ require 'enumerator'
 require 'socket'
 require 'find'
 def to_signed (n)
-	length = 32
-	mid = 2**(length-1)
-	max_unsigned = 2**length
-	(n>=mid) ? n - max_unsigned : n
+  length = 32
+  mid = 2**(length-1)
+  max_unsigned = 2**length
+  (n>=mid) ? n - max_unsigned : n
 end
 $CLASSPATH << File.expand_path("../dependencies/lgpl/processing-0125/core.jar")
 Find.find('../dependencies/lgpl/processing-0125/libraries/minim/library') { |path|
@@ -97,8 +97,8 @@ class ZViewer < PApplet
     @draw_delta.set(false)
     @refresh_thread = Thread.new do
       while true do 
-	@draw_delta.set(false)
-	sleep 5
+  @draw_delta.set(false)
+  sleep 5
       end
     end
   end
@@ -141,15 +141,15 @@ class ZViewer < PApplet
       (0...@text.length).each { |i| 
         if @text[i] != @old_text[i]
           k = i
-	  #mark cell and cell above as dirty
-	  final = [0, i - @columns].max
-	  while k >= final
-	    @dirty[k] = true
-	    final = [0, k - 2 * @columns].max if @text[k..k] =~ /[a-zP]/ || @old_text[k..k] =~ /[a-zP]/   #powerups need to have the upper two rows cleared as well
-	    k -= @columns
-	  end
-	      
-	  #mark all cells below as dirty
+    #mark cell and cell above as dirty
+    final = [0, i - @columns].max
+    while k >= final
+      @dirty[k] = true
+      final = [0, k - 2 * @columns].max if @text[k..k] =~ /[a-zP]/ || @old_text[k..k] =~ /[a-zP]/   #powerups need to have the upper two rows cleared as well
+      k -= @columns
+    end
+        
+    #mark all cells below as dirty
           (i + @columns...@text.length).step(@columns) { |k| @dirty[k] = true }
         end
       }
@@ -162,7 +162,7 @@ class ZViewer < PApplet
         
         vertical_shift = r * vertical_offset
         image(@black_top_block, c * @small_tile_width, vertical_shift) if r == 0 #redraw black background on top row
-	image(@images[" "], c * @small_tile_width, vertical_shift)  #redraw base tile 
+  image(@images[" "], c * @small_tile_width, vertical_shift)  #redraw base tile 
         tile_type = @text[i..i]
         if tile_type != " "
           image(@images[tile_type], c * @small_tile_width, vertical_shift - vertical_offset/2) if @images[tile_type]
@@ -211,8 +211,8 @@ def read_state(f)
   puts "there were '#{numScores}' scores"
   scores = []
   1.upto(numScores) do 
-  	agent,score = f.read(5).unpack('CN')
-	scores << [agent.chr,to_signed(score)]
+    agent,score = f.read(5).unpack('CN')
+  scores << [agent.chr,to_signed(score)]
   end
   
   return rows, columns, text, stuns, kills, chats, scores 
@@ -220,43 +220,34 @@ end
 
 class ZDisplayClient
   def connect(hostname, port=8668)
-    #begin
       t = TCPSocket.new(hostname, port)
-    #rescue
-    #  raise $!
-      #STDERR.puts "#{$!.message}\n#{$!.backtrace}"
-    #else
       while true
         rows, columns, text, stuns, kills, chats,scores = read_state(t)
         viewer ||= create_window(rows, columns)
         viewer.text = text
-	STDERR.puts kills.inspect
-        if kills.length > 0
+        STDERR.puts kills.inspect
+        unless kills.empty?
           viewer.play_sound(kills[0][1] =~ /[0-9]/ ? 'player_death' : 'bug_death') 
+          kills.each do |killer, killed|
+            puts "'#{killer}' killed '#{killed}"
+          end 
         end
-		unless stuns.empty?
-			stuns.each do |stunner, stunned|
-				puts "'" + stunner + "' stunned '" + stunned + "'\n"
-			end
-		end
-		unless kills.empty?
-			kills.each do |killer, killed|
-				puts "'" + killer + "' killed '" + killed + "'\n"
-			end
-		end
-        unless chats.empty?
-          chats.each do |sender, speaker, subject, action| 
-            puts "'" + speaker + "' says " + subject + " should move " + action + (sender.eql?(speaker) ? "\n" : " [lie]\n")
+        unless stuns.empty?
+          viewer.play_sound('player_stun')
+          stuns.each do |stunner, stunned|
+            puts "'#{stunner}' stunned '#{stunned}'"
           end
         end
-		unless scores.empty?
-		  puts "Scores -"
-		  scores.each do |subject, score|
-		    puts "\t#{subject}: #{score} "
-		  end
-		end
+        chats.each do |sender, speaker, subject, action| 
+          puts "'#{speaker}' says '#{subject}' should move '#{action}' #{sender.eql?(speaker) ? '' : ' [lie]'}"
+        end
+        unless scores.empty?
+          puts "Scores -"
+          scores.each do |subject, score|
+            puts "\t#{subject}: #{score} "
+        end
       end
-    #end
+    end
   end
 end
 
