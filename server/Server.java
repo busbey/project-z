@@ -33,13 +33,13 @@ public class Server
 	protected static final String ACL_HUNTER = "Hunters=";
 	protected static final String ACL_DISPLAY = "Displays=";
 
-	Worker bug = null;
-	Worker hunter = null;
-	Worker display = null;
+	Worker bug=null;
+	Worker hunter=null;
+	Worker display=null;
 
-	World world = null;
+	RotatingWorld world=null;
 
-	StateWorker state = null;
+	StateWorker state=null;
 
 	public void close()
 	{
@@ -48,52 +48,16 @@ public class Server
 		display.close();
 		state.close();
 	}
-	
-	public static Server fromFile(String path) throws IOException
-	{
-		return fromFile(path, -1);
-	}
 
-	public static Server fromFile(String path, int rounds) throws IOException
+	/* crete an uninitialized Server. */
+	public Server()
 	{
-		return new Server(DEFAULT_BUG_PORT, DEFAULT_HUNTER_PORT, DEFAULT_DISPLAY_PORT, World.fromFile(path, rounds));
-	}
-
-	public Server() throws IOException
-	{
-		this(DEFAULT_BUG_PORT, DEFAULT_HUNTER_PORT, DEFAULT_DISPLAY_PORT);
 	}
 	
-	public Server(int rounds) throws IOException
-	{
-		this(DEFAULT_BUG_PORT, DEFAULT_HUNTER_PORT, DEFAULT_DISPLAY_PORT, rounds);
-	}
-
-	public Server(int bugPort, int hunterPort, int displayPort) throws IOException
-	{
-		this(bugPort, hunterPort, displayPort, -1);
-	}
-
-	public Server(int bugPort, int hunterPort, int displayPort, int rounds) throws IOException
-	{
-		this(bugPort, hunterPort, displayPort, new World(80, 20, rounds));
-	}
-	
-	public Server(int bugPort, int hunterPort, int displayPort, World state) throws IOException
-	{
-		this(bugPort, hunterPort, displayPort, state, DEFAULT_ROUND_TIME);
-	}
-
-	public Server(int bugPort, int hunterPort, int displayPort, World state, long roundTime) throws IOException
-	{
-		this(bugPort, hunterPort, displayPort, state, roundTime, null, null, null);
-	}
-	
-	public Server(int bugPort, int hunterPort, int displayPort, World state, long roundTime, HashMap<InetAddress, ArrayList<Character>> bugAcl, HashMap<InetAddress, ArrayList<Character>> hunterAcl, HashMap<InetAddress, ArrayList<Character>> displayAcl) throws IOException
+	public Server(int bugPort, int hunterPort, int displayPort, RotatingWorld state, HashMap<Character, ChatMessage> chats, long roundTime, HashMap<InetAddress, ArrayList<Character>> bugAcl, HashMap<InetAddress, ArrayList<Character>> hunterAcl, HashMap<InetAddress, ArrayList<Character>> displayAcl) throws IOException
 	{
 		HashMap<Character, Byte> actions = new HashMap<Character, Byte>();
 		HashMap<Character, ArrayList<byte[]>> clients = new HashMap<Character, ArrayList<byte[]>>();
-		HashMap<Character, ChatMessage> chats = new HashMap<Character, ChatMessage>();
 		
 		StateWorker update = new StateWorker(state, actions, chats, clients, roundTime);
 		this.world = state;
@@ -135,7 +99,9 @@ public class Server
 		boolean block = true;
 		int rounds = -1;
 		Server server = null;
-		String worldFile = null;
+		int changeEvery = -1;
+		boolean clean = false;
+		ArrayList<File> maps = new ArrayList<File>();
 		HashMap<InetAddress,ArrayList<Character>> bugACL = null;
 		HashMap<InetAddress,ArrayList<Character>> hunterACL = null;
 		HashMap<InetAddress,ArrayList<Character>> displayACL = null;
@@ -212,24 +178,92 @@ public class Server
 					}
 					else if("--map".equals(args[i]))
 					{
-						worldFile = args[i+1];	
+						ArrayList<File> toCheck = new ArrayList<File>();
+						toCheck.add(new File(args[i+1]));
+						do
+						{
+							File file = toCheck.remove(0);
+							if(file.exists() && file.canRead() && ! file.isHidden())
+							{
+								if(file.isFile())
+								{
+									System.err.println("Adding map for " + file);
+									maps.add(file);
+								}
+								else if(file.isDirectory())
+								{
+									File[] files = file.listFiles();
+									if(null != files)
+									{
+										/* good thing arrays aren't collections */
+										for(File temp : files)
+										{
+											toCheck.add(temp);
+										}
+									}
+								}
+							}
+						} while (false == toCheck.isEmpty());
+					}
+					else if("--change".equals(args[i]))
+					{
+						try
+						{
+							changeEvery = Integer.parseInt(args[i+1]);
+						}
+						catch(RuntimeException re)
+						{
+						}
+					}
+					else if("--clean".equals(args[i]))
+					{
+						clean = true;
 					}
 				}
 			}
-			World world = null;
-			if(null != worldFile)
+			final RotatingWorld world;
+			if(maps.isEmpty())
 			{
-				world = World.fromFile(worldFile, rounds);
+				world = new RotatingWorld(rounds);
 			}
 			else
 			{
-				world = World.random();
+				world = new RotatingWorld(maps, rounds);
 			}
-			server = new Server(DEFAULT_BUG_PORT, DEFAULT_HUNTER_PORT, DEFAULT_DISPLAY_PORT, world, DEFAULT_ROUND_TIME, bugACL, hunterACL, displayACL);
+			final HashMap<Character, ChatMessage> chats = new HashMap<Character, ChatMessage>();
+			server = new Server(DEFAULT_BUG_PORT, DEFAULT_HUNTER_PORT, DEFAULT_DISPLAY_PORT, world, chats, DEFAULT_ROUND_TIME, bugACL, hunterACL, displayACL);
+			/* change maps?  */
+			Timer boardChanger = new Timer("Board Changer", true);
+			if(-1 < changeEvery)
+			{
+				final boolean _clean = clean;
+				TimerTask change = new TimerTask()
+				{
+					public void run()
+					{
+						synchronized(chats)
+						{
+						synchronized(world)
+						{
+							try
+							{
+								System.err.println("rotating world... " + (_clean ? "reseting scores":"keeping scores"));
+								world.rotate(_clean);
+							}
+							catch(IOException ioex)
+							{
+								ioex.printStackTrace();
+								System.exit(-1);
+							}
+						}
+						}
+					}
+				};
+				boardChanger.scheduleAtFixedRate(change, changeEvery*1000l, changeEvery*1000l);
+			}
 			if(block)
 			{
 				System.in.read();
-				server.close();
 			}
 			else
 			{
@@ -244,8 +278,9 @@ public class Server
 					{
 					}
 				}
-				server.close();
 			}
+			server.close();
+			boardChanger.cancel();
 		} 
 		catch (IOException ex)
 		{

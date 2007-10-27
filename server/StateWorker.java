@@ -173,10 +173,15 @@ import java.util.*;
 					newState = new byte[1 + 1 + boardHeader.length + board.length + 4 + serializedChats.length];
 					newState[0] = state.flags(agent);
 					newState[1] = (byte)agent;
-					System.arraycopy(boardHeader, 0, newState, 2, boardHeader.length);
-					System.arraycopy(board, 0, newState, 2 + boardHeader.length, board.length);
-					System.arraycopy(numChats, 0, newState, 2 + boardHeader.length +  board.length, 4);
-					System.arraycopy(serializedChats, 0, newState, 2 + boardHeader.length + board.length + 4, serializedChats.length);
+					int offset = 2;
+					System.arraycopy(boardHeader, 0, newState, offset, boardHeader.length);
+					offset+=boardHeader.length;
+					System.arraycopy(board, 0, newState, offset, board.length);
+					offset+=board.length;
+					System.arraycopy(numChats, 0, newState, offset, 4);
+					offset+=4;
+					System.arraycopy(serializedChats, 0, newState, offset, serializedChats.length);
+					offset+=serializedChats.length;
 				}
 				else
 				{

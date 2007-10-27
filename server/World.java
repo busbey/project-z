@@ -62,9 +62,9 @@ public class World implements Serializable
 										};
 	protected char[][] state = null; 
 	protected byte flags = FLAGS_EMPTY;
-	HashMap<Character, Byte> agentFlags = new HashMap<Character, Byte>();
-	HashMap<Character, Long> location = new HashMap<Character, Long>();
-	HashMap<Character, Integer> score = new HashMap<Character, Integer>();
+	protected HashMap<Character, Byte> agentFlags = new HashMap<Character, Byte>();
+	protected HashMap<Character, Long> location = new HashMap<Character, Long>();
+	protected HashMap<Character, Integer> score = new HashMap<Character, Integer>();
 
 	protected int rounds = -1;
 
@@ -74,15 +74,17 @@ public class World implements Serializable
 	protected byte[] cache = null;
 	protected byte[] headerCache = null;
 	protected boolean changed = true;
+	protected boolean changedHeader = true;
 
 	/** @brief create an uninitialized world */
 	protected World()
 	{
 	}
 
+	/** @brief create a randomly sized/populated world. */
 	protected World(int rounds)
 	{
-		this.rounds = rounds;
+		this((int)(Math.random()*100) + 6, (int)(Math.random()*100) + 6, rounds);
 	}
 
 	/** @brief create a blank world of a given size */
@@ -90,13 +92,41 @@ public class World implements Serializable
 	{
 		this(rowSize, numRows, -1);
 	}
-	public World(int rowSize, int numRows, int rounds)
+	public World(int cols, int rows, int rounds)
 	{
-		assert(4 < numRows && 4 < rowSize);
-		state = new char[numRows][rowSize];
-		for(int i = 0; i < numRows; i++)
+		this.rounds = rounds;
+		loadRandom(cols, rows);
+		state[0][0] = 'B';
+		state[rows - 1][cols - 1] = 'P';
+		state[rows - 2][cols - 2] = '1';
+		state[rows - 3][cols - 3] = '2';
+		state[rows - 4][cols - 4] = '3';
+		state[rows - 5][cols - 5] = '4';
+		
+		location.put('B', ((long) 0) | (((long)0) << 32) );
+		location.put('1', ((long) rows -2) | (((long)cols-2) << 32) );
+		location.put('2', ((long) rows -3) | (((long)cols-3) << 32) );
+		location.put('3', ((long) rows -4) | (((long)cols-4) << 32) );
+		location.put('4', ((long) rows -5) | (((long)cols-5) << 32) );
+		score.put('B', 0);
+		score.put('1', 0);
+		score.put('2', 0);
+		score.put('3', 0);
+		score.put('4', 0);
+	}
+
+	protected void loadRandom()
+	{
+		loadRandom((int)(Math.random()*100) + 6, (int)(Math.random()*100) + 6);
+	}
+
+	protected void loadRandom(int cols, int rows)
+	{
+		assert(4 < rows && 4 < cols);
+		state = new char[rows][cols];
+		for(int i = 0; i < rows; i++)
 		{
-			for(int j = 0; j < rowSize; j++)
+			for(int j = 0; j < cols; j++)
 			{
 				double type = Math.random();
 				if(obstacle > type)
@@ -109,37 +139,22 @@ public class World implements Serializable
 				}
 			}
 		}
-		state[0][0] = 'B';
-		state[numRows - 1][rowSize - 1] = 'P';
-		state[numRows - 2][rowSize - 2] = '1';
-		state[numRows - 3][rowSize - 3] = '2';
-		state[numRows - 4][rowSize - 4] = '3';
-		state[numRows - 5][rowSize - 5] = '4';
-		
-		location.put('B', ((long) 0) | (((long)0) << 32) );
-		location.put('1', ((long) numRows -2) | (((long)rowSize-2) << 32) );
-		location.put('2', ((long) numRows -3) | (((long)rowSize-3) << 32) );
-		location.put('3', ((long) numRows -4) | (((long)rowSize-4) << 32) );
-		location.put('4', ((long) numRows -5) | (((long)rowSize-5) << 32) );
-		this.rounds = rounds;
-
-		score.put('B', 0);
-		score.put('1', 0);
-		score.put('2', 0);
-		score.put('3', 0);
-		score.put('4', 0);
+		changed = true;
+		changedHeader = true;
 	}
 
 	public void change(char agent, byte move)
 	{
 		if(FLAGS_GAME_END == (flags & FLAGS_GAME_END))
 		{
+			System.err.println("No changes, game is over.");
 			return;
 		}
 		if(location.containsKey(agent))
 		{
 			if('n' == move)
 			{
+				System.err.println("Taking no move for agent '"+agent+"'");
 				return;
 			}
 			long loc = location.get(agent);
@@ -150,6 +165,7 @@ public class World implements Serializable
 			switch(move)
 			{
 				case 'u':
+					System.err.println(agent + " moves up");
 					newRow--;
 					while(0 > newRow)
 					{
@@ -157,12 +173,15 @@ public class World implements Serializable
 					}
 					break;
 				case 'd':
+					System.err.println(agent + " moves down");
 					newRow = (newRow + 1) % state.length;
 					break;
 				case 'r':
+					System.err.println(agent + " moves right");
 					newCol = (newCol + 1) % state[row].length;
 					break;
 				case 'l':
+					System.err.println(agent + " moves left");
 					newCol--;
 					while(0 > newCol)
 					{
@@ -254,7 +273,10 @@ public class World implements Serializable
 		else
 		{
 			System.err.println("New Agent " + agent + " first appears.");
-			score.put(agent, 0);
+			if(!score.containsKey(agent))
+			{
+				score.put(agent, 0);
+			}
 			setRandomEmpty(agent);
 		}
 		changed = true;
@@ -471,30 +493,47 @@ public class World implements Serializable
 	public static World fromFile(String path, int rounds) throws IOException
 	{
 		World retVal = new World(rounds);
-		int rows	= 0;
-		BufferedReader in = new BufferedReader(new FileReader(path));
-		String curLine = in.readLine();
+		retVal.load(path);
+		return retVal;
+	}
+
+	public void load(String path) throws IOException
+	{
+		load(new FileReader(path));
+	}
+
+	public void load(File path) throws IOException
+	{
+		load(new FileReader(path));
+	}
+
+	public void load(FileReader path) throws IOException
+	{
+		int 			rows	= 0;
+		BufferedReader 	in 		= new BufferedReader(path);
+		String 			curLine = in.readLine();
+		char[][]		state 	= null;
 		
 		Arrays.sort(valid);
 		
 		if(null != curLine)
 		{
-			retVal.state = new char[10][curLine.length()];
+			state = new char[10][curLine.length()];
 		}
 		
 		while(null != curLine)
 		{
-			if(rows >= retVal.state.length)
+			if(rows >= state.length)
 			{
-				char[][] state = new char[retVal.state.length*2][retVal.state[0].length];
-				for(int i = 0; i < retVal.state.length; i++)
+				char[][] newState = new char[state.length*2][state[0].length];
+				for(int i = 0; i < state.length; i++)
 				{
-					for(int j=0; j < retVal.state[i].length; j++)
+					for(int j=0; j < state[i].length; j++)
 					{
-						state[i][j] = retVal.state[i][j];
+						newState[i][j] = state[i][j];
 					}
 				}
-				retVal.state = state;
+				state = newState;
 			}
 			/* check for comments */
 			if(';' == curLine.charAt(0))
@@ -504,28 +543,28 @@ public class World implements Serializable
 					/* check for scores */
 					if(curLine.startsWith(";bug kill score:"))
 					{
-						retVal.SCORE_BUG_KILL = Integer.parseInt(curLine.substring(16));
-						System.err.println("Setting point value for killing a bug to " + retVal.SCORE_BUG_KILL);
+						SCORE_BUG_KILL = Integer.parseInt(curLine.substring(16));
+						System.err.println("Setting point value for killing a bug to " + SCORE_BUG_KILL);
 					}
 					else if(curLine.startsWith(";hunter kill score:"))
 					{
-						retVal.SCORE_HUNTER_KILL = Integer.parseInt(curLine.substring(19));
-						System.err.println("Setting point value for killing a hunter to " + retVal.SCORE_HUNTER_KILL);
+						SCORE_HUNTER_KILL = Integer.parseInt(curLine.substring(19));
+						System.err.println("Setting point value for killing a hunter to " + SCORE_HUNTER_KILL);
 					}
 					else if(curLine.startsWith(";powerup:"))
 					{
-						retVal.SCORE_POWERUP = Integer.parseInt(curLine.substring(9));
-						System.err.println("Setting point value for a hunter grabbing a powerup to " + retVal.SCORE_POWERUP);
+						SCORE_POWERUP = Integer.parseInt(curLine.substring(9));
+						System.err.println("Setting point value for a hunter grabbing a powerup to " + SCORE_POWERUP);
 					}
 					else if(curLine.startsWith(";stunned:"))
 					{
-						retVal.SCORE_STUNNED = Integer.parseInt(curLine.substring(9));
-						System.err.println("Setting point value for getting stunned to " + retVal.SCORE_STUNNED);
+						SCORE_STUNNED = Integer.parseInt(curLine.substring(9));
+						System.err.println("Setting point value for getting stunned to " + SCORE_STUNNED);
 					}
 					else if(curLine.startsWith(";killed:"))
 					{
-						retVal.SCORE_KILLED = Integer.parseInt(curLine.substring(8));
-						System.err.println("Setting point value for getting killed to " + retVal.SCORE_KILLED);
+						SCORE_KILLED = Integer.parseInt(curLine.substring(8));
+						System.err.println("Setting point value for getting killed to " + SCORE_KILLED);
 					}
 				}
 				catch(NumberFormatException ex)
@@ -536,7 +575,7 @@ public class World implements Serializable
 			}
 			else
 			{
-				for(int i = 0; i < retVal.state[rows].length; i++)
+				for(int i = 0; i < state[rows].length; i++)
 				{
 					char entry = curLine.charAt(i);
 					if(0 > Arrays.binarySearch(valid, entry))
@@ -546,42 +585,37 @@ public class World implements Serializable
 					if( (BUG_MIN <= entry && BUG_MAX >= entry) ||
 						((HUNTER_MIN) <= entry && HUNTER_MAX >= entry))
 					{
-						retVal.location.put(entry, ((long)rows) | (((long)i) << 32));
-						retVal.score.put(entry, 0);
+						location.put(entry, ((long)rows) | (((long)i) << 32));
+						if(!score.containsKey(entry))
+						{
+							score.put(entry, 0);
+						}
 					}
-					retVal.state[rows][i] = entry;
+					state[rows][i] = entry;
 				}
 				rows++;
 			}
 			curLine = in.readLine();
 		}
 
-		if(null == retVal.state)
+		if(null == state)
 		{
 			throw new RuntimeException("Couldn't read world properly from file.");
 		}
 		else
 		{
-			char[][] state = new char[rows][retVal.state[0].length];
-			for(int i = 0; i < state.length; i++)
+			changed = true;
+			changedHeader=true;
+			this.state = new char[rows][state[0].length];
+			for(int i = 0; i < rows; i++)
 			{
-				for(int j=0; j < state[i].length; j++)
+				for(int j=0; j < state[0].length; j++)
 				{
-					state[i][j] = retVal.state[i][j];
+					this.state[i][j] = state[i][j];
 				}
 			}
-			retVal.state = state;
 		}
-		return retVal;
-	}
-
-	public static World random()
-	{
-		int numRows = (int)(Math.random()*100) + 6;
-		int rowSize = (int)(Math.random()*100) + 6;
-		World returnVal = new World(rowSize, numRows);
-		
-		return returnVal;
+		return;
 	}
 
 	public byte[] serialize()
@@ -627,7 +661,7 @@ public class World implements Serializable
 		{
 			rowSize = state[0].length;
 		}
-		if((changed) || (null == headerCache))
+		if((changedHeader) || (null == headerCache))
 		{
 			if(null == headerCache)
 			{
@@ -641,7 +675,7 @@ public class World implements Serializable
 			headerCache[offset + 5] = (byte)((0x00FF0000 & numRows) >>> 16);
 			headerCache[offset + 6] = (byte)((0x0000FF00 & numRows) >>> 8);
 			headerCache[offset + 7] = (byte)(0x000000FF & numRows);
-			changed = false;
+			changedHeader = false;
 		}
 		System.arraycopy(headerCache, 0, buffer, offset, headerCache.length);
 	}
@@ -692,7 +726,7 @@ public class World implements Serializable
 	{
 		if(changed || null == cache)
 		{
-			if(null == cache)
+			if(null == cache || cache.length != state.length*state[0].length)
 			{
 				cache = new byte[state.length * state[0].length];
 			}

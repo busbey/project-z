@@ -18,6 +18,7 @@ ROUNDS = 500
 SERVERCLASSES = \
 	ChatMessage.java \
 	World.java \
+	RotatingWorld.java \
 	Worker.java \
 	StateWorker.java \
 	Server.java
