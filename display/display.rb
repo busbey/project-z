@@ -34,6 +34,7 @@ Find.find('../dependencies/lgpl/processing-0125/libraries/minim/library') { |pat
   end
 }
 
+include_class "java.util.concurrent.atomic.AtomicBoolean"
 include_class "processing.core.PApplet"
 include_class "processing.core.PImage"
 include_class "processing.core.PConstants"
@@ -41,6 +42,7 @@ include_class "ddf.minim.Minim"
 class ZViewer < PApplet
   def initialize(rows, columns, max_width = 1200, max_height = 750)
     super()
+    @draw_delta = AtomicBoolean.new();
     @rows = rows
     @columns = columns
     @images = Hash.new
@@ -88,10 +90,17 @@ class ZViewer < PApplet
       @display_height = potential_height
     end
     @black_top_block = PImage.new(@small_tile_width, @small_tile_height)
-    black = color(0, 0, 0);
+    black = color(0, 0, 0)
     (0...@small_tile_width).each {|x| (0...@small_tile_height).each {|y| @black_top_block.set(x, y, black) } }
     
     @dirty = Array.new(@rows * @columns,true) #initially all tiles are dirty
+    @draw_delta.set(false)
+    @refresh_thread = Thread.new do
+      while true do 
+	@draw_delta.set(false)
+	sleep 5
+      end
+    end
   end
 
   def setup
@@ -103,15 +112,13 @@ class ZViewer < PApplet
   def text=(text)
     @old_text = @text
     @text = text
-    @draw_delta = true
     redraw()
   end
 
   def play_sound(key)
     s = @sounds[key]
     if s
-      s.play
-      s.rewind
+      Thread.new { s.play; s.rewind }
     else
       STDERR.puts "Error playing '#{key}'"
     end
@@ -123,7 +130,8 @@ class ZViewer < PApplet
 
   def draw
     vertical_offset = @small_tile_height / 2
-    unless @draw_delta
+    unless @draw_delta.getAndSet(true)
+      STDERR.puts "REDRAWING EVERYtHING"
       #mark all tiles for redrawing
       (0...@text.length).each { |i| @dirty[i] = true }
       background 0
@@ -162,8 +170,6 @@ class ZViewer < PApplet
         end
       end
     }
-    
-    @draw_delta = false
   end
 end
 
@@ -225,7 +231,7 @@ class ZDisplayClient
         rows, columns, text, stuns, kills, chats,scores = read_state(t)
         viewer ||= create_window(rows, columns)
         viewer.text = text
-        STDERR.puts kills.inspect
+	STDERR.puts kills.inspect
         if kills.length > 0
           viewer.play_sound(kills[0][1] =~ /[0-9]/ ? 'player_death' : 'bug_death') 
         end
@@ -262,10 +268,8 @@ def create_window(rows, columns)
   frame.content_pane.add applet
   frame.default_close_operation = javax.swing.JFrame::EXIT_ON_CLOSE
   applet.init
-  sleep 0.1
   frame.pack
   frame.visible = true
-  sleep 0.1
   applet
 end
 
