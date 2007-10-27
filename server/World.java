@@ -37,11 +37,11 @@ public class World implements Serializable
 	
 	public static final int DEFAULT_ROUNDS_TO_EAT = 40;
 	
-	public long SCORE_BUG_KILL = 400l;
-	public long SCORE_HUNTER_KILL = 100l;
-	public long SCORE_STUNNED = 0l;
-	public long SCORE_KILLED = -100l;
-	public long SCORE_POWERUP = 0l;
+	public int SCORE_BUG_KILL = 400;
+	public int SCORE_HUNTER_KILL = 100;
+	public int SCORE_STUNNED = 0;
+	public int SCORE_KILLED = -100;
+	public int SCORE_POWERUP = 0;
 	
 	protected int roundsToEat =0;
 
@@ -64,7 +64,7 @@ public class World implements Serializable
 	protected byte flags = FLAGS_EMPTY;
 	HashMap<Character, Byte> agentFlags = new HashMap<Character, Byte>();
 	HashMap<Character, Long> location = new HashMap<Character, Long>();
-	HashMap<Character, Long> score = new HashMap<Character, Long>();
+	HashMap<Character, Integer> score = new HashMap<Character, Integer>();
 
 	protected int rounds = -1;
 
@@ -123,11 +123,11 @@ public class World implements Serializable
 		location.put('4', ((long) numRows -5) | (((long)rowSize-5) << 32) );
 		this.rounds = rounds;
 
-		score.put('B', 0l);
-		score.put('1', 0l);
-		score.put('2', 0l);
-		score.put('3', 0l);
-		score.put('4', 0l);
+		score.put('B', 0);
+		score.put('1', 0);
+		score.put('2', 0);
+		score.put('3', 0);
+		score.put('4', 0);
 	}
 
 	public void change(char agent, byte move)
@@ -196,7 +196,7 @@ public class World implements Serializable
 				}
 				else
 				{
-					long oldScore = 0l;
+					int oldScore = 0;
 					if(score.containsKey(agent))
 					{
 						oldScore = score.get(agent);
@@ -254,7 +254,7 @@ public class World implements Serializable
 		else
 		{
 			System.err.println("New Agent " + agent + " first appears.");
-			score.put(agent, 0l);
+			score.put(agent, 0);
 			setRandomEmpty(agent);
 		}
 		changed = true;
@@ -281,14 +281,14 @@ public class World implements Serializable
 	{
 		System.out.println("Agent " + target + " killed by " + by);
 		kills.add(new byte[]{(byte)by, (byte)target});
-		long oldScore = 0l;
+		int oldScore = 0;
 		if(score.containsKey(by))
 		{
 			oldScore = score.get(by);
 		}
 		oldScore += isBug(target) ? SCORE_BUG_KILL : SCORE_HUNTER_KILL;
 		score.put(by, oldScore);
-		oldScore = 0l;
+		oldScore = 0;
 		if(score.containsKey(target))
 		{
 			oldScore = score.get(target);
@@ -327,14 +327,14 @@ public class World implements Serializable
 		stuns.add(new byte[]{(byte)by, (byte)agent});
 		/* stun */
 		System.out.println("Agent " + agent + " stunned by " + by);
-		long oldScore = 0l;
+		int oldScore = 0;
 		if(score.containsKey(agent))
 		{
 			oldScore = score.get(agent);
 		}
 		oldScore += SCORE_STUNNED;
 		score.put(agent, oldScore);
-		oldScore = 0l;
+		oldScore = 0;
 		if(score.containsKey(by))
 		{
 			oldScore = score.get(by);
@@ -547,7 +547,7 @@ public class World implements Serializable
 						((HUNTER_MIN) <= entry && HUNTER_MAX >= entry))
 					{
 						retVal.location.put(entry, ((long)rows) | (((long)i) << 32));
-						retVal.score.put(entry, 0l);
+						retVal.score.put(entry, 0);
 					}
 					retVal.state[rows][i] = entry;
 				}
@@ -743,9 +743,9 @@ public class World implements Serializable
 		return rounds;
 	}
 
-	public HashMap<Character, Long> getScores()
+	public HashMap<Character, Integer> getScores()
 	{
-		HashMap<Character, Long> returnVal = new HashMap<Character, Long>();
+		HashMap<Character, Integer> returnVal = new HashMap<Character, Integer>();
 		returnVal.putAll(score);
 		return returnVal;
 	}

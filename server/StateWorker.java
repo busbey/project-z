@@ -133,7 +133,26 @@ import java.util.*;
 			numViews[1] = (byte)((0x00FF0000 & views) >>> 16);
 			numViews[2] = (byte)((0x0000FF00 & views) >>> 8);
 			numViews[3] = (byte)(0x000000FF & views);
-			
+			byte[] numScores = new byte[4];
+			HashMap<Character, Integer> scores = state.getScores();
+			int scoreCount = scores.size();
+			numScores[0] = (byte)((0xFF000000 & scoreCount) >>> 24);
+			numScores[1] = (byte)((0x00FF0000 & scoreCount) >>> 16);
+			numScores[2] = (byte)((0x0000FF00 & scoreCount) >>> 8);
+			numScores[3] = (byte)((0x000000FF & scoreCount));
+			byte[] serializedScores = new byte[scoreCount * 5];
+			int scoreIndex = 0;
+			for(Map.Entry<Character, Integer> entry : scores.entrySet())
+			{
+				char agent = entry.getKey();
+				int score = entry.getValue();
+				serializedScores[scoreIndex + 0] = (byte) agent;
+				serializedScores[scoreIndex + 1] = (byte)((0xFF000000 & score) >>> 24);
+				serializedScores[scoreIndex + 2] = (byte)((0x00FF0000 & score) >>> 16);
+				serializedScores[scoreIndex + 3] = (byte)((0x0000FF00 & score) >>> 8);
+				serializedScores[scoreIndex + 4] = (byte)((0x000000FF & score));
+				scoreIndex+=5;
+			}
 			int chatIndex = 0;
 			for(Map.Entry<Character, ChatMessage> message : chats.entrySet())
 			{
@@ -163,7 +182,7 @@ import java.util.*;
 				{
 					newState = new byte[1 + agentInfo.length  + boardHeader.length + canonicalBoard.length + 4
 											+ (serializedBoards.size() * (1 + canonicalBoard.length)) + 4 
-											+ serializedTrueChats.length];
+											+ serializedTrueChats.length + numScores.length + serializedScores.length];
 					newState[0] = state.flags(agent);
 					int offset = 1;
 					System.arraycopy(agentInfo, 0, newState, offset, agentInfo.length);
@@ -187,6 +206,10 @@ import java.util.*;
 					offset += numChats.length;
 					System.arraycopy(serializedTrueChats, 0, newState, offset, serializedTrueChats.length);
 					offset += serializedTrueChats.length;
+					System.arraycopy(numScores, 0, newState, offset, numScores.length);
+					offset += numScores.length;
+					System.arraycopy(serializedScores, 0, newState, offset, serializedScores.length);
+					offset += serializedScores.length;
 				}
 				synchronized(out)
 				{

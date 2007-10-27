@@ -20,7 +20,12 @@ require 'yaml'
 require 'enumerator'
 require 'socket'
 require 'find'
-
+def to_signed (n)
+	length = 32
+	mid = 2**(length-1)
+	max_unsigned = 2**length
+	(n>=mid) ? n - max_unsigned : n
+end
 $CLASSPATH << File.expand_path("../dependencies/lgpl/processing-0125/core.jar")
 Find.find('../dependencies/lgpl/processing-0125/libraries/minim/library') { |path|
   if path =~ /\.jar$/
@@ -196,9 +201,16 @@ def read_state(f)
   numChats = f.read(4).unpack('N')[0]
   chats = []
   puts "chat messages this round: " + numChats.to_s
-  f.read(numChats * 4).unpack('C').each_cons(4) { |c| chats << c }
+  f.read(numChats * 4).unpack('a*')[0].split(//).each_cons(4) { |c| chats << c }
+  numScores = f.read(4).unpack('N')[0]
+  puts "there were '#{numScores}' scores"
+  scores = []
+  1.upto(numScores) do 
+  	agent,score = f.read(5).unpack('CN')
+	scores << [agent.chr,to_signed(score)]
+  end
   
-  return rows, columns, text, stuns, kills, chats 
+  return rows, columns, text, stuns, kills, chats, scores 
 end
 
 class ZDisplayClient
@@ -210,7 +222,7 @@ class ZDisplayClient
       #STDERR.puts "#{$!.message}\n#{$!.backtrace}"
     #else
       while true
-        rows, columns, text, stuns, kills, chats = read_state(t)
+        rows, columns, text, stuns, kills, chats,scores = read_state(t)
         viewer ||= create_window(rows, columns)
         viewer.text = text
         STDERR.puts kills.inspect
@@ -232,6 +244,12 @@ class ZDisplayClient
             puts "'" + speaker + "' says " + subject + " should move " + action + (sender.eql? speaker ? "\n" : " [lie]\n")
           end
         end
+		unless scores.empty?
+		  puts "Scores -"
+		  scores.each do |subject, score|
+		    puts "\t#{subject}: #{score} "
+		  end
+		end
       end
     #end
   end
