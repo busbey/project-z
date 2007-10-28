@@ -1,6 +1,6 @@
 Problem: 
 
-	Create a pair of agents (labeled [1-9]) that work together to hunt
+	Create a pair of agents (labeled [0-9]) that work together to hunt
 down bugs (labeled [B-N]) within an m by n map.
 	
 	Rounds are delimited by the server sending you a state update.
