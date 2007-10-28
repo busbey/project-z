@@ -19,12 +19,12 @@
 
 import net.java.games.input.*;
 
-public class JoystickMover extends UserInputMover
+public class JoystickAgent extends UserInputAgent
 {
 	Component pad = null;
 	Controller controller = null;
 	
-	public JoystickMover()
+	public JoystickAgent()
 	{
 		super();
 		Controller[] controllers = ControllerEnvironment.getDefaultEnvironment().getControllers();
@@ -41,9 +41,11 @@ public class JoystickMover extends UserInputMover
 
 		if(null == joystick)
 		{
+			System.err.println("library path: " + System.getProperty("java.library.path", "none"));
 			throw new RuntimeException("No controllers connected.");
 		}
-		System.err.println("Using controller '" + joystick.getName() +"'");
+		String name = joystick.getName();
+		System.err.println("Using controller '" + name +"'");
 		pad = joystick.getComponent(Component.Identifier.Axis.POV);
 		controller = joystick;
 	}
@@ -62,6 +64,7 @@ public class JoystickMover extends UserInputMover
 		if(null != pad)
 		{
 			float data = pad.getPollData();
+			System.err.println("polled data: " + data);
 			if(Component.POV.UP == data)
 			{
 				ret = Direction.UP;

@@ -13,28 +13,33 @@
 #  You should have received a copy of the GNU General Public License along with
 #  this program.  If not, see <http://www.gnu.org/licenses/>.
 #  
-BUG_PATTERN = '[B-N]'
 DEFAULT_HOST = 'localhost'
 DEFAULT_PORT = 1337
+BUG_PORT = 7331
 
-RANDOMCLASSES = \
-	RandomAgent.java \
-	Agent.java 
-SMARTCLASSES = \
-	SmarterAgent.java \
-	Agent.java
+classpath=.:../../dependencies/bsd/jutils/jutils.jar:../../dependencies/bsd/jinput/jinput.jar
 
-all: random smart
-random: $(RANDOMCLASSES:.java=.class)
-smart: $(SMARTCLASSES:.java=.class)
+CLASSES = \
+    Agent.java \
+	JoystickAgent.java
+
+all: joystick
+joystick: $(CLASSES:.java=.class)
+	@echo "Don't forget that you need to put the jni files from ../../dependencies/bsd/jinput into your java.library path.  on Linux/Unix do this by setting LD_LIBRARY_PATH.  On OS X copy the files into ~/Library/Java/Extensions.  On Windows, add to PATH.  make "joystick-test" to see if it works"
+joystick-test: 
+	java -classpath $(classpath):../../dependencies/bsd/jinput/jinput-test.jar net.java.games.input.test.ControllerReadTest 
 clean:
 	rm -rf *.class
-hunter1go: smart
-	java Agent $(DEFAULT_HOST) $(DEFAULT_PORT) SmarterAgent $(BUG_PATTERN)
-hunter2go: random
-	java Agent $(DEFAULT_HOST) $(DEFAULT_PORT) RandomAgent
-	
+hunter1go: joystick
+	java -classpath $(classpath) Agent $(DEFAULT_HOST) $(DEFAULT_PORT) JoystickAgent
+hunter2go: joystick
+	#java -classpath $(classpath) -Djava.library.path=$(librarypath) Agent $(DEFAULT_HOST) $(DEFAULT_PORT) JoystickAgent
+	java -classpath $(classpath) Agent $(DEFAULT_HOST) $(DEFAULT_PORT) JoystickAgent
+buggo: joystick
+	#java -classpath $(classpath) -Djava.library.path=$(librarypath) Agent $(DEFAULT_HOST) $(BUG_PORT) JoystickAgent
+	java -classpath $(classpath) Agent $(DEFAULT_HOST) $(BUG_PORT) JoystickAgent
+
 .SUFFIXES: .java .class
 .java.class:
-	javac $*.java
+	javac -classpath $(classpath) $*.java
 

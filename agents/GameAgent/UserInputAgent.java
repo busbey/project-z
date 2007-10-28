@@ -17,14 +17,14 @@
  * this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-public abstract class UserInputMover implements Mover
+public abstract class UserInputAgent extends Agent
 {
 	public final static long POLL_WAIT = 5;
 
 	protected abstract void poll();
 	protected abstract Direction getData();
 
-	public UserInputMover()
+	public UserInputAgent()
 	{
 	    Thread poll = new Thread(new Runnable()
 		{
@@ -47,8 +47,9 @@ public abstract class UserInputMover implements Mover
 		poll.start();
 	}
 
-    public Direction respondToChange (State newState)
+    public void respondToChange ()
 	{
-		return getData();
+		writeMove(getData());
+		return;
 	}
 }
