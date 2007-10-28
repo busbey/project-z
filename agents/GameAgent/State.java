@@ -20,16 +20,16 @@ import java.util.List;
 
 public class State {
     
-	private boolean killerBug, wasKilled, wasStunned, killedSomeone;
-	private byte player;
-	private int rows, columns;
-	private byte[][] board;
-	private List<Message> messages;
+	protected boolean killerBug, wasKilled, wasStunned, killedSomeone;
+	protected byte player;
+	protected int rows, columns;
+	protected byte[][] board;
+	protected List<Message> messages;
 
-	private final static byte KILLER_BUG = 0x01;
-	private final static byte WAS_KILLED = 0x02;
-	private final static byte WAS_STUNNED = 0x04;
-	private final static byte KILLED_SOMEONE = 0x08;
+	protected final static byte KILLER_BUG = 0x01;
+	protected final static byte WAS_KILLED = 0x02;
+	protected final static byte WAS_STUNNED = 0x04;
+	protected final static byte KILLED_SOMEONE = 0x08;
 
 	public final static byte GAME_ENDED = (byte) 0xff;
 	

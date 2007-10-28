@@ -64,7 +64,6 @@ public class JoystickAgent extends UserInputAgent
 		if(null != pad)
 		{
 			float data = pad.getPollData();
-			System.err.println("polled data: " + data);
 			if(Component.POV.UP == data)
 			{
 				ret = Direction.UP;

@@ -16,14 +16,19 @@
 DEFAULT_HOST = 'localhost'
 DEFAULT_PORT = 1337
 BUG_PORT = 7331
+PASS_HOST = 'localhost'
+PASS_PORT = 10001
+POWERUP_PATTERN = '[P]'
 
 classpath=.:../../dependencies/bsd/jutils/jutils.jar:../../dependencies/bsd/jinput/jinput.jar
 
 CLASSES = \
     Agent.java \
-	JoystickAgent.java
+	JoystickAgent.java \
+	PassthroughJoystickAgent.java
 
 all: joystick
+smart: $(SMARTCLASSES:.java=.class)
 joystick: $(CLASSES:.java=.class)
 	@echo "Don't forget that you need to put the jni files from ../../dependencies/bsd/jinput into your java.library path.  on Linux/Unix do this by setting LD_LIBRARY_PATH.  On OS X copy the files into ~/Library/Java/Extensions.  On Windows, add to PATH.  make "joystick-test" to see if it works"
 joystick-test: 
@@ -35,9 +40,10 @@ hunter1go: joystick
 hunter2go: joystick
 	#java -classpath $(classpath) -Djava.library.path=$(librarypath) Agent $(DEFAULT_HOST) $(DEFAULT_PORT) JoystickAgent
 	java -classpath $(classpath) Agent $(DEFAULT_HOST) $(DEFAULT_PORT) JoystickAgent
-buggo: joystick
-	#java -classpath $(classpath) -Djava.library.path=$(librarypath) Agent $(DEFAULT_HOST) $(BUG_PORT) JoystickAgent
+joystickgo: joystick
 	java -classpath $(classpath) Agent $(DEFAULT_HOST) $(BUG_PORT) JoystickAgent
+passthroughgo: joystick
+	java -classpath $(classpath) Agent $(DEFAULT_HOST) $(BUG_PORT) PassthroughJoystickAgent
 
 .SUFFIXES: .java .class
 .java.class:
