@@ -104,6 +104,7 @@ public class Server
 		boolean clean = false;
 		int fogRadius = -1;
 		boolean fogDist = FixedRadiusFilter.SQUARE_DISTANCE;
+		boolean fixedOrFlex = true;
 		ArrayList<File> maps = new ArrayList<File>();
 		HashMap<InetAddress,ArrayList<Character>> bugACL = null;
 		HashMap<InetAddress,ArrayList<Character>> hunterACL = null;
@@ -228,6 +229,11 @@ public class Server
 					{
 						System.err.println("Enabling Fog Of War...");
 						fogRadius = 5;
+						if(i+1 < args.length && "flex".equals(args[i+1]))
+						{
+							fixedOrFlex = false;
+							i++;
+						}
 						if(i+1 < args.length && "square".equals(args[i+1]))
 						{
 							fogDist=FixedRadiusFilter.SQUARE_DISTANCE;
@@ -261,7 +267,15 @@ public class Server
 			}
 			if(0 < fogRadius)
 			{
-				world.setFilter(new FixedRadiusFilter(fogRadius, fogDist));
+				if(fixedOrFlex)
+				{
+					world.setFilter(new FixedRadiusFilter(fogRadius, fogDist));
+				}
+				else
+				{
+					/* Set up a filter that removes 1 square of sight every other round moving, and puts back 2 per round standing still. */
+					world.setFilter(new InverseMoveRadiusFilter(fogRadius, fogDist, 1, 2, 2, 1));
+				}
 			}
 			server = new Server(DEFAULT_BUG_PORT, DEFAULT_HUNTER_PORT, DEFAULT_DISPLAY_PORT, world, DEFAULT_ROUND_TIME, bugACL, hunterACL, displayACL);
 			/* change maps?  */

@@ -46,6 +46,10 @@ public class FixedRadiusFilter extends WorldFilter
 	 */
  	public char[][] filter (char[][] state, final char agent)
 	{
+		return filter(state, agent, radius);
+	}
+	protected char[][] filter (char[][] state, final char agent, final int radius)
+	{
 		/* initialize these such that if they're not on the map, they can't see anything. */
 		int agentX=-1*(radius+1);
 		int agentY=-1*(radius+1);
