@@ -68,7 +68,7 @@ outer:	for(int i = 0; i < state.length; i++)
 		{
 			for(int j = 0; j < state[i].length; j++)
 			{
-				if(radius < (squareOrMan ? squareDistance(agentX, agentY, i, j):manhattenDistance(agentX,agentY,i,j)))
+				if(radius < (squareOrMan ? squareDistance(agentX, agentY, i, j, state.length, state[i].length):manhattenDistance(agentX,agentY,i,j,state.length, state[i].length)))
 				{
 					filtered[i][j] = 'X';
 				}
@@ -84,20 +84,28 @@ outer:	for(int i = 0; i < state.length; i++)
 	/**
 	 * return the maximum of the x-axis distand and y-axis distance.
 	*/
-	protected int squareDistance(int x1, int y1, int x2, int y2)
+	protected int squareDistance(int x1, int y1, int x2, int y2, int height, int width)
 	{
-		int xdist = Math.abs(x1 - x2);
-		int ydist = Math.abs(y1 - y2);
+		int xdist1 = Math.abs(x2 - x1);
+		int xdist2 = height - Math.abs(x1 - x2);
+		int xdist = xdist1 < xdist2 ? xdist1 : xdist2;
+		int ydist1 = Math.abs(y2 - y1);
+		int ydist2 = width - Math.abs(y1 - y2);
+		int ydist = ydist1 < ydist2 ? ydist1 : ydist2;
 		return xdist > ydist ? xdist : ydist;
 	}
 
 	/**
 	 * return the number of squares it takes to cover the distance, no diagonals.
 	 */
-	protected int manhattenDistance(int x1, int y1, int x2, int y2)
+	protected int manhattenDistance(int x1, int y1, int x2, int y2, int height, int width)
 	{
-		int xdist = Math.abs(x1-x2);
-		int ydist = Math.abs(y1-y2);
+		int xdist1 = Math.abs(x2 - x1);
+		int xdist2 = height - Math.abs(x1 - x2);
+		int xdist = xdist1 < xdist2 ? xdist1 : xdist2;
+		int ydist1 = Math.abs(y2 - y1);
+		int ydist2 = width - Math.abs(y1 - y2);
+		int ydist = ydist1 < ydist2 ? ydist1 : ydist2;
 		return xdist + ydist;
 	}
 }
