@@ -278,14 +278,14 @@ import java.net.*;
 								   	in case of invalid message, 
 								   	throw away what we have and move on. 
 								 */
-								if(	('1' <= firstByte && '9' >= firstByte) ||
-									('B' <= firstByte && 'N' >= firstByte))
+								if(	(World.HUNTER_MIN <= firstByte && World.HUNTER_MAX >= firstByte) ||
+									(World.BUG_MIN <= firstByte && World.BUG_MAX >= firstByte))
 								{
 									byte speaker = firstByte;
 									byte subject = inStream.readByte();
 									byte action = inStream.readByte();
-									if( ('1' <= subject && '9' >= subject) ||
-										('B' <= subject && 'N' >= subject))
+									if( (World.HUNTER_MIN <= subject && World.HUNTER_MAX >= subject) ||
+										(World.BUG_MIN <= subject && World.BUG_MAX >= subject))
 									{
 										/* valid subject */
 										switch(action)
