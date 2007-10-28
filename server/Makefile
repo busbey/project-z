@@ -17,6 +17,7 @@ MAP = ../worlds/tiles
 ROUNDS = 500
 SERVERCLASSES = \
 	ChatMessage.java \
+	WorldFilter.java \
 	World.java \
 	RotatingWorld.java \
 	Worker.java \

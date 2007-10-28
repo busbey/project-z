@@ -76,6 +76,8 @@ public class World implements Serializable
 	protected boolean changed = true;
 	protected boolean changedHeader = true;
 
+	protected WorldFilter filter = new WorldFilter();
+
 	/** @brief create an uninitialized world */
 	protected World()
 	{
@@ -441,12 +443,12 @@ public class World implements Serializable
 		location.put(target, ( ((long) row) | (((long) col) << 32) ));
 	}
 
-	public boolean isBug(char agent)
+	public static boolean isBug(char agent)
 	{
 		return BUG_MIN <=agent && BUG_MAX >= agent;
 	}
 
-	public boolean isHunter(char agent)
+	public static boolean isHunter(char agent)
 	{
 		return HUNTER_MIN <= agent && HUNTER_MAX >= agent;
 	}
@@ -724,25 +726,43 @@ public class World implements Serializable
 	 */
 	public int serializeBoard(byte[] buffer, int start, char agent)
 	{
-		if(changed || null == cache)
+		int used = -1;
+		if('\0' == agent)
 		{
-			if(null == cache || cache.length != state.length*state[0].length)
+			if(changed || null == cache)
 			{
-				cache = new byte[state.length * state[0].length];
-			}
-			int index = 0;
-			/*XXX we assume uniform row lengths */
-			for(int i = 0; i < state.length; i++)
-			{
-				for(int j=0; j < state[0].length; j++, index++)
+				if(null == cache || cache.length != state.length*state[0].length)
 				{
-					cache[index] = (byte)(state[i][j]);
+					cache = new byte[state.length * state[0].length];
+				}
+				int index = 0;
+				/*XXX we assume uniform row lengths */
+				for(int i = 0; i < state.length; i++)
+				{
+					for(int j=0; j < state[0].length; j++, index++)
+					{
+						cache[index] = (byte)(state[i][j]);
+					}
+				}
+				changed = false;
+			}
+			System.arraycopy(cache, 0, buffer, start, cache.length);
+			used = cache.length;
+		}
+		else
+		{
+			used = 0;
+			char[][] filteredState = filter.filter(state, agent);
+			/*XXX we assume uniform row lengths */
+			for(int i = 0; i < filteredState.length; i++)
+			{
+				for(int j=0; j < filteredState[0].length; j++, used++,start++)
+				{
+						buffer[start] = (byte)(filteredState[i][j]);
 				}
 			}
-			changed = false;
 		}
-		System.arraycopy(cache, 0, buffer, start, cache.length);
-		return cache.length;
+		return used;
 	}
 	public byte[] serializeBoard(char agent)
 	{
@@ -784,7 +804,8 @@ public class World implements Serializable
 		return returnVal;
 	}
 
-	public String flagString () {
+	public String flagString () 
+	{
 		String value = "None.";
 		if(FLAGS_GAME_END == (flags & FLAGS_GAME_END))
 		{
@@ -795,5 +816,15 @@ public class World implements Serializable
 			value = " [bug kills]";
 		}
 		return value;
+	}
+
+	public void setFilter (WorldFilter newFilter) 
+	{
+		filter = newFilter;
+	}
+
+	public void clearFilter()
+	{
+		filter = new WorldFilter();
 	}
 }
