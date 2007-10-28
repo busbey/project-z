@@ -54,10 +54,11 @@ public class Server
 	{
 	}
 	
-	public Server(int bugPort, int hunterPort, int displayPort, RotatingWorld state, HashMap<Character, ChatMessage> chats, long roundTime, HashMap<InetAddress, ArrayList<Character>> bugAcl, HashMap<InetAddress, ArrayList<Character>> hunterAcl, HashMap<InetAddress, ArrayList<Character>> displayAcl) throws IOException
+	public Server(int bugPort, int hunterPort, int displayPort, RotatingWorld state, long roundTime, HashMap<InetAddress, ArrayList<Character>> bugAcl, HashMap<InetAddress, ArrayList<Character>> hunterAcl, HashMap<InetAddress, ArrayList<Character>> displayAcl) throws IOException
 	{
 		HashMap<Character, Byte> actions = new HashMap<Character, Byte>();
 		HashMap<Character, ArrayList<byte[]>> clients = new HashMap<Character, ArrayList<byte[]>>();
+		HashMap<Character, ChatMessage> chats = new HashMap<Character, ChatMessage>();
 		
 		StateWorker update = new StateWorker(state, actions, chats, clients, roundTime);
 		this.world = state;
@@ -101,6 +102,8 @@ public class Server
 		Server server = null;
 		int changeEvery = -1;
 		boolean clean = false;
+		int fogRadius = -1;
+		boolean fogDist = FixedRadiusFilter.SQUARE_DISTANCE;
 		ArrayList<File> maps = new ArrayList<File>();
 		HashMap<InetAddress,ArrayList<Character>> bugACL = null;
 		HashMap<InetAddress,ArrayList<Character>> hunterACL = null;
@@ -109,8 +112,9 @@ public class Server
 		{
 			if(args.length > 0)
 			{
-				for(int i = 0; i < (args.length -1); i++)
+				for(int i = 0; i < (args.length); i++)
 				{
+					System.err.println(args[i]);
 					if("--batch".equals(args[i]))
 					{
 						block = false;
@@ -180,6 +184,7 @@ public class Server
 					{
 						ArrayList<File> toCheck = new ArrayList<File>();
 						toCheck.add(new File(args[i+1]));
+						i++;
 						do
 						{
 							File file = toCheck.remove(0);
@@ -219,6 +224,30 @@ public class Server
 					{
 						clean = true;
 					}
+					else if("--fog".equals(args[i]))
+					{
+						System.err.println("Enabling Fog Of War...");
+						fogRadius = 5;
+						if(i+1 < args.length && "square".equals(args[i+1]))
+						{
+							fogDist=FixedRadiusFilter.SQUARE_DISTANCE;
+							i++;
+						}
+						else if(i+1 < args.length && "manhattan".equals(args[i+1]))
+						{
+							fogDist=FixedRadiusFilter.MANHATTAN_DISTANCE;
+							i++;
+						}
+						try
+						{
+							fogRadius = Integer.parseInt(args[i+1]);
+							i++;
+						}
+						catch(RuntimeException re)
+						{
+							System.err.println ("No fog distance defined. defaulting to 5 squares.");
+						}
+					}
 				}
 			}
 			final RotatingWorld world;
@@ -230,8 +259,11 @@ public class Server
 			{
 				world = new RotatingWorld(maps, rounds);
 			}
-			final HashMap<Character, ChatMessage> chats = new HashMap<Character, ChatMessage>();
-			server = new Server(DEFAULT_BUG_PORT, DEFAULT_HUNTER_PORT, DEFAULT_DISPLAY_PORT, world, chats, DEFAULT_ROUND_TIME, bugACL, hunterACL, displayACL);
+			if(0 < fogRadius)
+			{
+				world.setFilter(new FixedRadiusFilter(fogRadius, fogDist));
+			}
+			server = new Server(DEFAULT_BUG_PORT, DEFAULT_HUNTER_PORT, DEFAULT_DISPLAY_PORT, world, DEFAULT_ROUND_TIME, bugACL, hunterACL, displayACL);
 			/* change maps?  */
 			Timer boardChanger = new Timer("Board Changer", true);
 			if(-1 < changeEvery)
@@ -241,8 +273,6 @@ public class Server
 				{
 					public void run()
 					{
-						synchronized(chats)
-						{
 						synchronized(world)
 						{
 							try
@@ -255,7 +285,6 @@ public class Server
 								ioex.printStackTrace();
 								System.exit(-1);
 							}
-						}
 						}
 					}
 				};

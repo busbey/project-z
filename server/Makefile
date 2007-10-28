@@ -22,6 +22,7 @@ SERVERCLASSES = \
 	RotatingWorld.java \
 	Worker.java \
 	StateWorker.java \
+	FixedRadiusFilter.java \
 	Server.java
 
 all: jar
