@@ -44,6 +44,7 @@ public class World implements Serializable
 	public int SCORE_STUNNED = 0;
 	public int SCORE_KILLED = -100;
 	public int SCORE_POWERUP = 0;
+	public int ROUNDS_PER_FRAME = 9;
 	
 	protected int roundsToEat =0;
 
@@ -62,7 +63,14 @@ public class World implements Serializable
 										'J', 'K', 'L', 'M', 'N', '0', '1', '2', '3',
 										'4', '5', '6', '7', '8', '9', 'O', 'P'
 										};
+	public static final char FRAME_SEPARATOR = '=';
 	protected char[][] state = null; 
+
+	protected char[][][] frames = null;
+	protected int currentFrame = -1;
+
+	protected int roundsToFrame = ROUNDS_PER_FRAME;
+	
 	protected byte flags = FLAGS_EMPTY;
 	protected HashMap<Character, Byte> agentFlags = new HashMap<Character, Byte>();
 	protected HashMap<Character, Long> location = new HashMap<Character, Long>();
@@ -423,6 +431,25 @@ public class World implements Serializable
 		}
 		stuns.clear();
 		kills.clear();
+		if(null != frames && 0 < frames.length)
+		{
+			roundsToFrame -= num;
+			if(0 >= roundsToFrame)
+			{
+				currentFrame = (currentFrame+1)%frames.length;
+				for(int i = 0; i < state.length; i++)
+				{
+					for(int j=0; j < state[i].length; j++)
+					{
+						if(!isBug(state[i][j]) && !isHunter(state[i][j]))
+						{
+							state[i][j] = frames[currentFrame][i][j];
+						}
+					}
+				}
+				roundsToFrame = ROUNDS_PER_FRAME;
+			}
+		}
 	}
 
 	public void setRandomEmpty(char target)
@@ -517,28 +544,35 @@ public class World implements Serializable
 		int 			rows	= 0;
 		BufferedReader 	in 		= new BufferedReader(path);
 		String 			curLine = in.readLine();
-		char[][]		state 	= null;
+		char[][][]		frames	= null;
+		int				curFrame = 0;
 		
 		Arrays.sort(valid);
 		
 		if(null != curLine)
 		{
-			state = new char[10][curLine.length()];
+			frames = new char[10][10][curLine.length()];
 		}
 		
 		while(null != curLine)
 		{
-			if(rows >= state.length)
+			if(curFrame >= frames.length || rows >= frames[curFrame].length)
 			{
-				char[][] newState = new char[state.length*2][state[0].length];
-				for(int i = 0; i < state.length; i++)
+				int newNumFrames = curFrame >= frames.length ? curFrame*2 : frames.length;
+				int newNumRows = rows >= frames[frames.length - 1].length ? rows*2 : frames[frames.length - 1].length;
+				int maxCopy = curFrame < frames.length ? (curFrame+1) : frames.length;
+				char[][][] newFrame = new char[newNumFrames][newNumRows][frames[frames.length - 1][0].length];
+				for(int k = 0; k < maxCopy; k++)
 				{
-					for(int j=0; j < state[i].length; j++)
+					for(int i = 0; i < frames[k].length; i++)
 					{
-						newState[i][j] = state[i][j];
+						for(int j=0; j < frames[k][i].length; j++)
+						{
+							newFrame[k][i][j] = frames[k][i][j];
+						}
 					}
 				}
-				state = newState;
+				frames = newFrame;
 			}
 			/* check for comments */
 			if(';' == curLine.charAt(0))
@@ -571,6 +605,11 @@ public class World implements Serializable
 						SCORE_KILLED = Integer.parseInt(curLine.substring(8));
 						System.err.println("Setting point value for getting killed to " + SCORE_KILLED);
 					}
+					else if(curLine.startsWith(";rounds per frame:"))
+					{
+						ROUNDS_PER_FRAME = Integer.parseInt(curLine.substring(18));
+						System.err.println("Setting ave rounds per frame to " + ROUNDS_PER_FRAME);
+					}
 				}
 				catch(NumberFormatException ex)
 				{
@@ -578,14 +617,22 @@ public class World implements Serializable
 					ex.printStackTrace();
 				}
 			}
+			/* check for frame separators. */
+			else if(FRAME_SEPARATOR == curLine.charAt(0))
+			{
+				/* */
+				System.err.println("Found frame marker");
+				curFrame++;
+				rows = 0;
+			}
 			else
 			{
-				for(int i = 0; i < state[rows].length; i++)
+				for(int i = 0; i < frames[curFrame][rows].length; i++)
 				{
 					char entry = curLine.charAt(i);
 					if(0 > Arrays.binarySearch(valid, entry))
 					{
-						throw new IOException("invalid world state map.");
+						throw new IOException("invalid world state map. '"+entry+"' encountered on line " + ((curFrame)*frames[0].length + curFrame + rows) + " col " + i + "\n" + curLine);
 					}
 					if( (BUG_MIN <= entry && BUG_MAX >= entry) ||
 						((HUNTER_MIN) <= entry && HUNTER_MAX >= entry))
@@ -596,14 +643,14 @@ public class World implements Serializable
 							score.put(entry, 0);
 						}
 					}
-					state[rows][i] = entry;
+					frames[curFrame][rows][i] = entry;
 				}
 				rows++;
 			}
 			curLine = in.readLine();
 		}
 
-		if(null == state)
+		if(null == frames)
 		{
 			throw new RuntimeException("Couldn't read world properly from file.");
 		}
@@ -611,14 +658,27 @@ public class World implements Serializable
 		{
 			changed = true;
 			changedHeader=true;
-			this.state = new char[rows][state[0].length];
-			for(int i = 0; i < rows; i++)
+			this.frames = new char[curFrame+1][rows][frames[curFrame][0].length];
+			System.err.println("Compacting to " + (curFrame+1) + " frames of " + rows + "x" + frames[curFrame][0].length);
+			for(int k = 0; k <= curFrame; k++)
 			{
-				for(int j=0; j < state[0].length; j++)
+				for(int i = 0; i < rows; i++)
 				{
-					this.state[i][j] = state[i][j];
+					for(int j=0; j < frames[curFrame][0].length; j++)
+					{
+						this.frames[k][i][j] = frames[k][i][j];
+					}
 				}
 			}
+			this.state = new char[this.frames[0].length][this.frames[0][0].length];
+			for(int i = 0; i < state.length; i++)
+			{
+				for(int j=0; j < state[i].length; j++)
+				{
+					this.state[i][j] = this.frames[0][i][j];
+				}
+			}
+			this.currentFrame = 0;
 		}
 		return;
 	}
@@ -834,6 +894,16 @@ public class World implements Serializable
 			value = "None.";
 		}
 		return value;
+	}
+
+	public int getHeight()
+	{
+		return state.length;
+	}
+
+	public int getWidth()
+	{
+		return state[0].length;
 	}
 
 	public void setFilter (WorldFilter newFilter) 

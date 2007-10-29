@@ -93,7 +93,7 @@ import java.util.*;
 			System.err.println("\tClearing out " + actions.size() + " actions.");
 			actions.clear();
 			System.out.println("\tFlags:" + state.flagString());
-			System.out.println("\tCurrent World \n{" + state.toString() + "\n}");
+			System.out.println("\tCurrent World "+ state.getWidth()+ "x" + state.getHeight() +"\n{" + state.toString() + "\n}");
 			System.out.println("\tScores: " + state.getScores().toString());
 		}
 

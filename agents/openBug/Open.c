@@ -41,6 +41,7 @@ inline int positionThreat(State* state, const int row, const int col)
 	char area = state->board[row][col];
 	switch(area)
 	{
+		case '0':
 		case '1':
 		case '2':
 		case '3':
