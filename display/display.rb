@@ -240,6 +240,7 @@ end
 class ZDisplayClient
   def connect(hostname, port=8668)
     t = TCPSocket.new(hostname, port)
+    viewer = nil
     loop do
       rows, columns, text, stuns, kills, chats,scores = read_state(t)
       viewer ||= create_window(rows, columns)
@@ -293,6 +294,7 @@ def update_scores(scores)
 end
 
 def create_window(rows, columns)
+  puts "MAKING WIND"
   frame = javax.swing.JFrame.new "Bug Hunter"
   frame.content_pane.layout = BorderLayout.new
   applet = ZViewer.new(rows, columns)
