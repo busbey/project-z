@@ -43,6 +43,7 @@ include_class "java.awt.GridLayout"
 include_class "java.awt.BorderLayout"
 include_class "javax.swing.ImageIcon"
 include_class "java.awt.image.BufferedImage"
+
 class ZViewer < PApplet
   def initialize(rows, columns, max_width = 1200, max_height = 680)
     super()
@@ -110,12 +111,12 @@ class ZViewer < PApplet
     @draw_delta.set(false)
     @refresh_thread = Thread.new do
       while true do 
-  @draw_delta.set(false)
-  sleep 5
+        @draw_delta.set(false)
+        sleep 5
       end
     end
   end
-
+  
   def setup
     size @display_width, @display_height  
     background 0
@@ -136,6 +137,7 @@ class ZViewer < PApplet
       STDERR.puts "Error playing '#{key}'"
     end
   end
+  
   def dimensions(columns, rows, tile_width, tile_height) 
     vertical_offset = tile_height / 2
     [columns * tile_width, tile_height + (rows - 1) * vertical_offset]
@@ -154,15 +156,15 @@ class ZViewer < PApplet
       (0...@text.length).each { |i| 
         if @text[i] != @old_text[i]
           k = i
-    #mark cell and cell above as dirty
-    final = [0, i - @columns].max
-    while k >= final
-      @dirty[k] = true
-      final = [0, k - 2 * @columns].max if @text[k..k] =~ /[a-zP]/ || @old_text[k..k] =~ /[a-zP]/   #powerups need to have the upper two rows cleared as well
-      k -= @columns
-    end
+          #mark cell and cell above as dirty
+          final = [0, i - @columns].max
+          while k >= final
+            @dirty[k] = true
+            final = [0, k - 2 * @columns].max if @text[k..k] =~ /[a-zP]/ || @old_text[k..k] =~ /[a-zP]/   #powerups need to have the upper two rows cleared as well
+            k -= @columns
+          end
         
-    #mark all cells below as dirty
+          #mark all cells below as dirty
           (i + @columns...@text.length).step(@columns) { |k| @dirty[k] = true }
         end
       }
@@ -175,7 +177,7 @@ class ZViewer < PApplet
         
         vertical_shift = r * vertical_offset
         image(@black_top_block, c * @small_tile_width, vertical_shift) if r == 0 #redraw black background on top row
-  image(@images[" "], c * @small_tile_width, vertical_shift)  #redraw base tile 
+        image(@images[" "], c * @small_tile_width, vertical_shift)  #redraw base tile 
         tile_type = @text[i..i]
         if tile_type != " "
           image(@images[tile_type], c * @small_tile_width, vertical_shift - vertical_offset/2) if @images[tile_type]
@@ -183,15 +185,6 @@ class ZViewer < PApplet
       end
     }
   end
-end
-
-def random_string(rows, columns) 
-  possible = " OB1234"
-  text = ""
-  (rows * columns).times { 
-    text << possible[rand(possible.length)]
-  }
-  text
 end
 
 def read_state(f)
@@ -209,19 +202,19 @@ def read_state(f)
   puts "board is col x row: #{columns} x #{rows}"
   
   text = f.read(rows * columns)
-  if (0x01 == flag & 0x01) do
+  if (0x01 == flag & 0x01)
   	text.gsub!(/[B-N]/) {|agent| agent.downcase }
 	# there must be a simpler way to do this substitution...
-	text.gsub!(/1/) { "!" }
-	text.gsub!(/2/) { "@" }
-	text.gsub!(/3/) { "#" }
-	text.gsub!(/4/) { "$" }
-	text.gsub!(/5/) { "%" }
-	text.gsub!(/6/) { "^" }
-	text.gsub!(/7/) { "&" }
-	text.gsub!(/8/) { "*" }
-	text.gsub!(/9/) { "(" }
-	text.gsub!(/0/) { ")" }
+    text.gsub!(/1/, '!')
+	  text.gsub!(/2/, '@')
+	  text.gsub!(/3/, '#')
+	  text.gsub!(/4/, '$')
+	  text.gsub!(/5/, '%')
+	  text.gsub!(/6/, '^')
+	  text.gsub!(/7/, '&')
+	  text.gsub!(/8/, '*')
+	  text.gsub!(/9/, '(')
+	  text.gsub!(/0/, ')')
   end
   puts "canonical board : #{text}"
   numViews = f.read(4).unpack('N')[0]
@@ -236,9 +229,9 @@ def read_state(f)
   numScores = f.read(4).unpack('N')[0]
   puts "there were '#{numScores}' scores"
   scores = []
-  1.upto(numScores) do 
+  numScores.times do 
     agent,score = f.read(5).unpack('CN')
-  scores << [agent.chr,to_signed(score)]
+    scores << [agent.chr,to_signed(score)]
   end
   
   return rows, columns, text, stuns, kills, chats, scores 
@@ -246,39 +239,39 @@ end
 
 class ZDisplayClient
   def connect(hostname, port=8668)
-      t = TCPSocket.new(hostname, port)
-      while true
-        rows, columns, text, stuns, kills, chats,scores = read_state(t)
-        viewer ||= create_window(rows, columns)
-        viewer.text = text
-        STDERR.puts kills.inspect
-        unless kills.empty?
-          viewer.play_sound(kills[0][1] =~ /[0-9]/ ? 'player_death' : 'bug_death') 
-          kills.each do |killer, killed|
-            puts "'#{killer}' killed '#{killed}"
-          end 
+    t = TCPSocket.new(hostname, port)
+    loop do
+      rows, columns, text, stuns, kills, chats,scores = read_state(t)
+      viewer ||= create_window(rows, columns)
+      viewer.text = text
+      STDERR.puts kills.inspect
+      unless kills.empty?
+        viewer.play_sound(kills[0][1] =~ /[0-9]/ ? 'player_death' : 'bug_death') 
+        kills.each do |killer, killed|
+          puts "'#{killer}' killed '#{killed}"
+        end 
+      end
+      unless stuns.empty?
+        viewer.play_sound('player_stun')
+        stuns.each do |stunner, stunned|
+          puts "'#{stunner}' stunned '#{stunned}'"
         end
-        unless stuns.empty?
-          viewer.play_sound('player_stun')
-          stuns.each do |stunner, stunned|
-            puts "'#{stunner}' stunned '#{stunned}'"
-          end
+      end
+      chats.each do |sender, speaker, subject, action| 
+        puts "'#{speaker}' says '#{subject}' should move '#{action}' #{sender.eql?(speaker) ? '' : ' [lie]'}"
+      end
+      unless scores.empty?
+        grouped_scores = Hash.new { |h,k| h[k] = 0 }
+        scores.each { |pair|
+          subject, score = pair
+          $groups.each { |g|  grouped_scores[g] += score if g =~ subject }
+        }
+        update_scores(grouped_scores)
+        puts "Scores -"
+        grouped_scores.each do |subject, score|
+          puts "\t#{subject}: #{score} "
         end
-        chats.each do |sender, speaker, subject, action| 
-          puts "'#{speaker}' says '#{subject}' should move '#{action}' #{sender.eql?(speaker) ? '' : ' [lie]'}"
-        end
-        unless scores.empty?
-          grouped_scores = Hash.new { |h,k| h[k] = 0 }
-          scores.each { |pair|
-            subject, score = pair
-            $groups.each { |g|  grouped_scores[g] += score if g =~ subject }
-          }
-          update_scores(grouped_scores)
-          puts "Scores -"
-          grouped_scores.each do |subject, score|
-            puts "\t#{subject}: #{score} "
-          end
-        end
+      end
     end
   end
 end
