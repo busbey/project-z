@@ -20,8 +20,8 @@
 #include <stdlib.h>		/* exit, abs */
 #include <sys/time.h>	/* gettimeofday */
 
-#define LOOK_AHEAD 25
-#define ATTRACT_AMOUNT 15
+#define LOOK_AHEAD 2500
+#define ATTRACT_AMOUNT 35
 
 /** @brief handle command line args */
 void 
