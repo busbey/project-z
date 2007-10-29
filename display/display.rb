@@ -20,6 +20,7 @@ require 'yaml'
 require 'enumerator'
 require 'socket'
 require 'find'
+require 'optparse'
 def to_signed (n)
   length = 32
   mid = 2**(length-1)
@@ -29,7 +30,6 @@ end
 $CLASSPATH << File.expand_path("../dependencies/lgpl/processing-0125/core.jar")
 Find.find('../dependencies/lgpl/processing-0125/libraries/minim/library') { |path|
   if path =~ /\.jar$/
-    puts 'adding path'
     $CLASSPATH << File.expand_path(path)
   end
 }
@@ -39,8 +39,12 @@ include_class "processing.core.PApplet"
 include_class "processing.core.PImage"
 include_class "processing.core.PConstants"
 include_class "ddf.minim.Minim"
+include_class "java.awt.GridLayout"
+include_class "java.awt.BorderLayout"
+include_class "javax.swing.ImageIcon"
+include_class "java.awt.image.BufferedImage"
 class ZViewer < PApplet
-  def initialize(rows, columns, max_width = 1200, max_height = 750)
+  def initialize(rows, columns, max_width = 1200, max_height = 680)
     super()
     @draw_delta = AtomicBoolean.new();
     @rows = rows
@@ -52,6 +56,16 @@ class ZViewer < PApplet
     File.open('images.yaml') { |f|
       YAML::load(f).each { |k,v|
         i = loadImage(v)
+        $score_labels.each { |s, l|
+          if k.to_s =~ s  
+            icon = ImageIcon.new(v)
+            w = (icon.icon_width / 2).to_i
+            h = (icon.icon_height / 2).to_i
+            bi = BufferedImage.new(w,h,BufferedImage::TYPE_INT_ARGB)
+            bi.graphics.drawImage(icon.image, 0, 0, w, h, nil)
+            l.icon = ImageIcon.new(bi)
+          end
+        }
         @images[k.to_s] = i
         @tile_width = i.width
         @tile_height = i.height
@@ -64,7 +78,6 @@ class ZViewer < PApplet
         @sounds[k.to_s] = Minim.loadFile(v)
       }
     }
-
     potential_width, potential_height = dimensions(@columns, @rows, @tile_width, @tile_height)
     if potential_height > max_height || potential_width > max_width
       shrinkage = [max_height * 1.0 / potential_height, max_width * 1.0 / potential_width].min
@@ -255,27 +268,70 @@ class ZDisplayClient
           puts "'#{speaker}' says '#{subject}' should move '#{action}' #{sender.eql?(speaker) ? '' : ' [lie]'}"
         end
         unless scores.empty?
+          grouped_scores = Hash.new { |h,k| h[k] = 0 }
+          scores.each { |pair|
+            subject, score = pair
+            $groups.each { |g|  grouped_scores[g] += score if g =~ subject }
+          }
+          update_scores(grouped_scores)
           puts "Scores -"
-          scores.each do |subject, score|
+          grouped_scores.each do |subject, score|
             puts "\t#{subject}: #{score} "
+          end
         end
-      end
     end
   end
 end
 
+def add_score_list(panel)
+  score_panel = javax.swing.JPanel.new
+  score_panel.layout = GridLayout.new(1, $groups.length)
+  
+  $score_labels.each { |g, l|
+    score_panel.add(l)
+  }
+  panel.add(score_panel, BorderLayout::SOUTH) 
+end
+
+def update_scores(scores)
+  $score_labels.each { |g, l|
+    l.text = scores[g].to_s
+  }
+end
+
 def create_window(rows, columns)
   frame = javax.swing.JFrame.new "Bug Hunter"
+  frame.content_pane.layout = BorderLayout.new
   applet = ZViewer.new(rows, columns)
   applet.text = " " * rows * columns
+  
   frame.content_pane.add applet
+  add_score_list(frame.content_pane)
   frame.default_close_operation = javax.swing.JFrame::EXIT_ON_CLOSE
+  
   applet.init
-  frame.pack
+  frame.extended_state = (frame.extended_state | javax.swing.JFrame::MAXIMIZED_BOTH);
+  
   frame.visible = true
   applet
 end
 
-host = ARGV[0]
-host ||= "localhost"
+host = "localhost"
+$groups = []
+$score_labels = {}
+opts = OptionParser.new do |opts|
+  opts.on("-h", "--host HOSTNAME") do |h|
+    host = h
+  end
+  opts.on("--groups GROUPFILE") do |g|
+    File.open(g) { |f|
+      YAML::load(f).each { |k|
+        g = Regexp.new(k.to_s)
+        $groups << g
+        $score_labels[g] = javax.swing.JLabel.new('0')
+      }
+    }
+  end
+end
+opts.parse!(ARGV)
 ZDisplayClient.new.connect(host)
