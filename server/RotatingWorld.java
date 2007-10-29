@@ -58,6 +58,7 @@ public class RotatingWorld extends World
 	{
 		if(reset)
 		{
+			flags |= SET_ROUND_CHANGE;
 			score.clear();
 			agentFlags.clear();
 		}

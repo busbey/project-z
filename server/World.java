@@ -30,10 +30,12 @@ public class World implements Serializable
 	public static final byte SET_AGENT_STUN = 0x04;
 	public static final byte SET_AGENT_DIED = 0x02;
 	public static final byte SET_BUG_EATS = 0x1;
+	public static final byte SET_ROUND_CHANGE = 0x10;
 	public static final byte CLEAR_AGENT_KILLED = (byte)(0xF7);
 	public static final byte CLEAR_AGENT_STUN = (byte)(0xFB);
 	public static final byte CLEAR_AGENT_DIED = (byte)(0xFD);
 	public static final byte CLEAR_BUG_EATS = (byte)(0xFE);
+	public static final byte CLEAR_ROUND_CHANGE = (byte)(0xEF);
 	
 	public static final int DEFAULT_ROUNDS_TO_EAT = 40;
 	
@@ -399,6 +401,7 @@ public class World implements Serializable
 				return;
 			}
 		}
+		flags &= CLEAR_ROUND_CHANGE;
 		if(0 != (flags & SET_BUG_EATS))
 		{
 			roundsToEat -= num;
@@ -806,14 +809,29 @@ public class World implements Serializable
 
 	public String flagString () 
 	{
-		String value = "None.";
+		String value = null;
 		if(FLAGS_GAME_END == (flags & FLAGS_GAME_END))
 		{
 			value = " [game over]";
 		}
-		else if (SET_BUG_EATS == (flags & SET_BUG_EATS))
+		else
 		{
-			value = " [bug kills]";
+			if (SET_BUG_EATS == (flags & SET_BUG_EATS))
+			{
+				value = " [bug kills]";
+			}
+			if(SET_ROUND_CHANGE == (flags & SET_ROUND_CHANGE))
+			{
+				if(null == value)
+				{
+					value = "";
+				}
+				value += " [round change]";
+			}
+		}
+		if(null == value)
+		{
+			value = "None.";
 		}
 		return value;
 	}
