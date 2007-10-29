@@ -122,6 +122,7 @@ class State:
     WAS_KILLED = 0x02
     WAS_STUNNED = 0x04
     KILLED_SOMEONE = 0x08
+	ROUND_CHANGED = 0x10
     GAME_ENDED = 0xff
 
     def __init__ (self, player, rows, columns):
@@ -129,6 +130,7 @@ class State:
         self.wasStunned = False
         self.wasKilled = False
         self.killedSomeone = False
+		self.roundChanged = False
         self.player = player
         self.rows = rows
         self.columns = columns
@@ -154,9 +156,10 @@ class State:
         self.wasKilled = ((flag & State.WAS_KILLED) == State.WAS_KILLED)
         self.wasStunned = ((flag & State.WAS_STUNNED) == State.WAS_STUNNED)
         self.killedSomeone = ((flag & State.KILLED_SOMEONE) == State.KILLED_SOMEONE)
+        self.roundChanged = ((flag & State.ROUND_CHANGED) == State.ROUND_CHANGED)
 
     def flagString (self):
-        if (not (self.killerBug or self.wasKilled or self.wasStunned or self.killedSomeone)):
+        if (not (self.killerBug or self.wasKilled or self.wasStunned or self.killedSomeone or self.roundChanged)):
             return ' None.'
         value = ''
         if (self.killerBug):
@@ -167,6 +170,8 @@ class State:
             value = value + ' [Player stunned last round]'
         if (self.killedSomeone):
             value = value + ' [Player killed someone last round]'
+		if (self.roundChanged):
+			value = value + ' [Round changed]'
         return value
 
 if __name__ == '__main__':

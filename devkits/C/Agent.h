@@ -48,6 +48,7 @@ typedef struct State
 					stunned:1,
 					died:1,
 					killed:1,
+					round:1,
 					gameOver:1;
 	unsigned char 	player;
 	unsigned int 	rows;
