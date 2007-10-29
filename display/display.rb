@@ -196,7 +196,20 @@ def read_state(f)
   puts "board is col x row: #{columns} x #{rows}"
   
   text = f.read(rows * columns)
-  text.gsub!(/[B-N]/) {|agent| agent.downcase } if (0x01 == flag & 0x01)
+  if (0x01 == flag & 0x01) do
+  	text.gsub!(/[B-N]/) {|agent| agent.downcase }
+	# there must be a simpler way to do this substitution...
+	text.gsub!(/1/) { "!" }
+	text.gsub!(/2/) { "@" }
+	text.gsub!(/3/) { "#" }
+	text.gsub!(/4/) { "$" }
+	text.gsub!(/5/) { "%" }
+	text.gsub!(/6/) { "^" }
+	text.gsub!(/7/) { "&" }
+	text.gsub!(/8/) { "*" }
+	text.gsub!(/9/) { "(" }
+	text.gsub!(/0/) { ")" }
+  end
   puts "canonical board : #{text}"
   numViews = f.read(4).unpack('N')[0]
   puts "there are #{numViews} agent-specific boards"
