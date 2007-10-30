@@ -24,6 +24,7 @@ SERVERCLASSES = \
 	StateWorker.java \
 	FixedRadiusFilter.java \
 	InverseMoveRadiusFilter.java \
+	ServerUI.java \
 	Server.java
 
 all: jar

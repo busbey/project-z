@@ -304,6 +304,7 @@ public class Server
 				};
 				boardChanger.scheduleAtFixedRate(change, changeEvery*1000l, changeEvery*1000l);
 			}
+			ServerUI ui = new ServerUI(world);
 			if(block)
 			{
 				System.in.read();

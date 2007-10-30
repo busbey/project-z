@@ -72,4 +72,9 @@ public class RotatingWorld extends World
 		}
 		curBoard = boardNum;
 	}
+
+	public File[] getMaps()
+	{
+		return boards.toArray(new File[0]);
+	}
 }
