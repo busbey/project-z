@@ -119,6 +119,40 @@ outer:	for(int i = 0; i < state.length; i++)
 		return filter(state, agent, agentInfo.radius);
 	}
 
+	/** XXX Accessors. I do hate java. */
+	public void setPenaltyRate(int rate)
+	{
+		penaltyRate = rate;
+	}
+	public int getPenaltyRate()
+	{
+		return penaltyRate;
+	}
+	public void setPenaltyMoves(int moves)
+	{
+		penaltyMoves = moves;
+	}
+	public int getPenaltyMoves()
+	{
+		return penaltyMoves;
+	}
+	public void setGainRate(int rate)
+	{
+		gainRate = rate;
+	}
+	public int getGainRate()
+	{
+		return gainRate;
+	}
+	public void setGainMoves(int moves)
+	{
+		gainMoves = moves;
+	}
+	public int getGainMoves()
+	{
+		return gainMoves;
+	}
+
 	protected class MoveInfo
 	{
 		public boolean moveOrStill= false;

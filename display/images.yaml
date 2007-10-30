@@ -1,51 +1,51 @@
 ---
-" ": cute/Dirt Block.png 
-1: cute/Character Pink Girl.png
-5: cute/Character Pink Girl.png
-2: cute/Character Horn Girl.png
-6: cute/Character Horn Girl.png
-3: cute/Character Princess Girl.png
-7: cute/Character Princess Girl.png
-4: cute/Character Cat Girl.png
-8: cute/Character Cat Girl.png
-9: cute/Character Boy.png
-0: cute/Character Boy.png
-"!": cute/Character Pink Girl.png
-"@": cute/Character Pink Girl.png
-"#": cute/Character Horn Girl.png
-"$": cute/Character Horn Girl.png
-"%": cute/Character Princess Girl.png
-"^": cute/Character Princess Girl.png
-"&": cute/Character Cat Girl.png
-"*": cute/Character Cat Girl.png
-"(": cute/Character Boy.png
-")": cute/Character Boy.png
-B: cute/Enemy Bug.png
-b: cute/Enemy Bug Red Starred.png
-C: cute/Enemy Bug Blue.png
-c: cute/Enemy Bug Blue Starred.png
-D: cute/Enemy Bug Purple.png
-d: cute/Enemy Bug Purple Starred.png
-E: cute/Enemy Bug Purple.png
-e: cute/Enemy Bug Purple Starred.png
-F: cute/Enemy Bug Purple.png
-f: cute/Enemy Bug Purple Starred.png
-G: cute/Enemy Bug Purple.png
-g: cute/Enemy Bug Purple Starred.png
-H: cute/Enemy Bug Purple.png
-h: cute/Enemy Bug Purple Starred.png
-I: cute/Enemy Bug Purple.png
-i: cute/Enemy Bug Purple Starred.png
-J: cute/Enemy Bug Purple.png
-j: cute/Enemy Bug Purple Starred.png
-K: cute/Enemy Bug Purple.png
-k: cute/Enemy Bug Purple Starred.png
-L: cute/Enemy Bug Purple.png
-l: cute/Enemy Bug Purple Starred.png
-M: cute/Enemy Bug Purple.png
-m: cute/Enemy Bug Purple Starred.png
-N: cute/Enemy Bug Purple.png
-n: cute/Enemy Bug Purple Starred.png
-O: cute/Tree Short.png
-P: cute/Selector Star.png
+" ": ../dependencies/media/cute/Dirt Block.png 
+1: ../dependencies/media/cute/Character Pink Girl.png
+5: ../dependencies/media/cute/Character Pink Girl.png
+2: ../dependencies/media/cute/Character Horn Girl.png
+6: ../dependencies/media/cute/Character Horn Girl.png
+3: ../dependencies/media/cute/Character Princess Girl.png
+7: ../dependencies/media/cute/Character Princess Girl.png
+4: ../dependencies/media/cute/Character Cat Girl.png
+8: ../dependencies/media/cute/Character Cat Girl.png
+9: ../dependencies/media/cute/Character Boy.png
+0: ../dependencies/media/cute/Character Boy.png
+"!": ../dependencies/media/cute/Character Pink Girl.png
+"@": ../dependencies/media/cute/Character Pink Girl.png
+"#": ../dependencies/media/cute/Character Horn Girl.png
+"$": ../dependencies/media/cute/Character Horn Girl.png
+"%": ../dependencies/media/cute/Character Princess Girl.png
+"^": ../dependencies/media/cute/Character Princess Girl.png
+"&": ../dependencies/media/cute/Character Cat Girl.png
+"*": ../dependencies/media/cute/Character Cat Girl.png
+"(": ../dependencies/media/cute/Character Boy.png
+")": ../dependencies/media/cute/Character Boy.png
+B: ../dependencies/media/cute/Enemy Bug.png
+b: ../dependencies/media/cute/Enemy Bug Red Starred.png
+C: ../dependencies/media/cute/Enemy Bug Blue.png
+c: ../dependencies/media/cute/Enemy Bug Blue Starred.png
+D: ../dependencies/media/cute/Enemy Bug Purple.png
+d: ../dependencies/media/cute/Enemy Bug Purple Starred.png
+E: ../dependencies/media/cute/Enemy Bug Purple.png
+e: ../dependencies/media/cute/Enemy Bug Purple Starred.png
+F: ../dependencies/media/cute/Enemy Bug Purple.png
+f: ../dependencies/media/cute/Enemy Bug Purple Starred.png
+G: ../dependencies/media/cute/Enemy Bug Purple.png
+g: ../dependencies/media/cute/Enemy Bug Purple Starred.png
+H: ../dependencies/media/cute/Enemy Bug Purple.png
+h: ../dependencies/media/cute/Enemy Bug Purple Starred.png
+I: ../dependencies/media/cute/Enemy Bug Purple.png
+i: ../dependencies/media/cute/Enemy Bug Purple Starred.png
+J: ../dependencies/media/cute/Enemy Bug Purple.png
+j: ../dependencies/media/cute/Enemy Bug Purple Starred.png
+K: ../dependencies/media/cute/Enemy Bug Purple.png
+k: ../dependencies/media/cute/Enemy Bug Purple Starred.png
+L: ../dependencies/media/cute/Enemy Bug Purple.png
+l: ../dependencies/media/cute/Enemy Bug Purple Starred.png
+M: ../dependencies/media/cute/Enemy Bug Purple.png
+m: ../dependencies/media/cute/Enemy Bug Purple Starred.png
+N: ../dependencies/media/cute/Enemy Bug Purple.png
+n: ../dependencies/media/cute/Enemy Bug Purple Starred.png
+O: ../dependencies/media/cute/Tree Short.png
+P: ../dependencies/media/cute/Selector Star.png
 X: notcute/cloud.png

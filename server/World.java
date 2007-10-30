@@ -70,6 +70,8 @@ public class World implements Serializable
 	protected int currentFrame = -1;
 
 	protected int roundsToFrame = ROUNDS_PER_FRAME;
+
+	protected boolean animate = true;
 	
 	protected byte flags = FLAGS_EMPTY;
 	protected HashMap<Character, Byte> agentFlags = new HashMap<Character, Byte>();
@@ -431,7 +433,7 @@ public class World implements Serializable
 		}
 		stuns.clear();
 		kills.clear();
-		if(null != frames && 1 < frames.length)
+		if(null != frames && 1 < frames.length && animate)
 		{
 			roundsToFrame -= num;
 			if(0 >= roundsToFrame)
@@ -914,5 +916,15 @@ public class World implements Serializable
 	public void clearFilter()
 	{
 		filter = new WorldFilter();
+	}
+
+	public boolean getAnimate()
+	{
+		return animate;
+	}
+
+	public void setAnimate(boolean anim)
+	{
+		animate = anim;
 	}
 }

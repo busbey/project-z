@@ -112,4 +112,17 @@ outer:	for(int i = 0; i < state.length; i++)
 		int ydist = ydist1 < ydist2 ? ydist1 : ydist2;
 		return xdist + ydist;
 	}
+
+	/**
+	 * @brief change the radius.
+	 */
+	protected void setRadius(int radius)
+	{
+	 	this.radius = radius;
+	}
+
+	protected int getRadius()
+	{
+		return this.radius;
+	}
 }
