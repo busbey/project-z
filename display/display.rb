@@ -323,7 +323,9 @@ opts = OptionParser.new do |opts|
       YAML::load(f).each { |k|
         g = Regexp.new(k.to_s)
         $groups << g
-        $score_labels[g] = javax.swing.JLabel.new('0')
+        l = javax.swing.JLabel.new('0')
+        $score_labels[g] = l  
+        l.font = l.font.deriveFont(36.0)
       }
     }
   end
