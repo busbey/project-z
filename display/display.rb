@@ -189,7 +189,7 @@ end
 
 def read_state(f)
   flag, numStuns = f.read(5).unpack('CN')
-  puts "flags: #{flag.to_s(16)}"
+  STDERR.puts "flags: #{flag.to_s(16)}"
   puts "there were '#{numStuns}' stuns"
   stuns = []
   f.read(numStuns * 2).unpack('a*')[0].split(//).each_cons(2) { |stun| stuns << stun }
@@ -202,6 +202,8 @@ def read_state(f)
   puts "board is col x row: #{columns} x #{rows}"
   
   text = f.read(rows * columns)
+  new_board = ( 0x10 == flag &  0x10)
+  
   if (0x01 == flag & 0x01)
   	text.gsub!(/[B-N]/) {|agent| agent.downcase }
 	# there must be a simpler way to do this substitution...
@@ -234,7 +236,7 @@ def read_state(f)
     scores << [agent.chr,to_signed(score)]
   end
   
-  return rows, columns, text, stuns, kills, chats, scores 
+  return rows, columns, text, stuns, kills, chats, scores, new_board 
 end
 
 class ZDisplayClient
@@ -242,10 +244,11 @@ class ZDisplayClient
     t = TCPSocket.new(hostname, port)
     viewer = nil
     loop do
-      rows, columns, text, stuns, kills, chats,scores = read_state(t)
+      rows, columns, text, stuns, kills, chats,scores,new_board = read_state(t)
       viewer ||= create_window(rows, columns)
       viewer.text = text
       STDERR.puts kills.inspect
+    
       unless kills.empty?
         viewer.play_sound(kills[0][1] =~ /[0-9]/ ? 'player_death' : 'bug_death') 
         kills.each do |killer, killed|
@@ -273,6 +276,9 @@ class ZDisplayClient
           puts "\t#{subject}: #{score} "
         end
       end
+      if new_board
+        viewer.play_sound('board_change')
+      end
     end
   end
 end
@@ -294,7 +300,6 @@ def update_scores(scores)
 end
 
 def create_window(rows, columns)
-  puts "MAKING WIND"
   frame = javax.swing.JFrame.new "Bug Hunter"
   frame.content_pane.layout = BorderLayout.new
   applet = ZViewer.new(rows, columns)

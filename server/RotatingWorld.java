@@ -133,9 +133,9 @@ public class RotatingWorld extends World
 	/** XXX like most of hte world related functions, call ties without a lock on the object is bad */
 	public void loadBoard(int boardNum, boolean reset) throws IOException
 	{
+		flags |= SET_ROUND_CHANGE;
 		if(reset)
 		{
-			flags |= SET_ROUND_CHANGE;
 			score.clear();
 			agentFlags.clear();
 		}

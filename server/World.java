@@ -74,6 +74,7 @@ public class World implements Serializable
 	protected boolean animate = true;
 	
 	protected byte flags = FLAGS_EMPTY;
+	protected boolean lastRotate = false;
 	protected HashMap<Character, Byte> agentFlags = new HashMap<Character, Byte>();
 	protected HashMap<Character, Long> location = new HashMap<Character, Long>();
 	protected HashMap<Character, Integer> score = new HashMap<Character, Integer>();
@@ -411,7 +412,12 @@ public class World implements Serializable
 				return;
 			}
 		}
-		flags &= CLEAR_ROUND_CHANGE;
+	// 	keep track if last round was a rotation round
+		if (lastRotate)
+		{
+			flags &= CLEAR_ROUND_CHANGE;
+		}
+		lastRotate = (0 != (flags & SET_ROUND_CHANGE)); 
 		if(0 != (flags & SET_BUG_EATS))
 		{
 			roundsToEat -= num;
