@@ -53,6 +53,83 @@ public class RotatingWorld extends World
 		loadBoard((curBoard+1)%boards.size(), reset);
 	}
 
+	Timer boardChanger = null;
+	boolean willReset = false;
+	int changeRate = 0;
+	public void rotate(int changeEvery, boolean reset)
+	{
+		if(null != boardChanger)
+		{
+			boardChanger.cancel();
+		}
+		boardChanger = new Timer("Board Changer", true);
+		final RotatingWorld world = this;
+		if(0 < changeEvery)
+		{
+			willReset = reset;
+			changeRate = changeEvery;
+			TimerTask change = new TimerTask()
+			{
+				public void run()
+				{
+					synchronized(world)
+					{
+						try
+						{
+							System.err.println("rotating world... " + (willReset ? "reseting scores":"keeping scores"));
+							world.rotate(willReset);
+						}
+						catch(IOException ioex)
+						{
+							ioex.printStackTrace();
+							System.exit(-1);
+						}
+					}
+				}
+			};
+			boardChanger.scheduleAtFixedRate(change, changeEvery*1000l, changeEvery*1000l);
+		}
+	}
+
+	public int changeEvery()
+	{
+		int change = 0;
+		if(null != boardChanger)
+		{
+			change = changeRate;
+		}
+		return change;
+	}
+
+	public boolean willReset()
+	{
+		boolean ret = false;
+		if(null != boardChanger)
+		{
+			ret = willReset;
+		}
+		return ret;
+	}
+
+	public void stopRotating()
+	{
+		if(null != boardChanger)
+		{
+			boardChanger.cancel();
+			boardChanger = null;
+		}
+	}
+	
+	public boolean isRotating()
+	{
+		return null != boardChanger;
+	}
+
+	public int curBoard()
+	{
+		return curBoard;
+	}
+	
 	/** XXX like most of hte world related functions, call ties without a lock on the object is bad */
 	public void loadBoard(int boardNum, boolean reset) throws IOException
 	{

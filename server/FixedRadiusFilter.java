@@ -116,12 +116,12 @@ outer:	for(int i = 0; i < state.length; i++)
 	/**
 	 * @brief change the radius.
 	 */
-	protected void setRadius(int radius)
+	public void setRadius(int radius)
 	{
 	 	this.radius = radius;
 	}
 
-	protected int getRadius()
+	public int getRadius()
 	{
 		return this.radius;
 	}

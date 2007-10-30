@@ -98,6 +98,7 @@ public class Server
 	public static void main(String[] args)
 	{
 		boolean block = true;
+		boolean ui = false;
 		int rounds = -1;
 		Server server = null;
 		int changeEvery = -1;
@@ -225,6 +226,10 @@ public class Server
 					{
 						clean = true;
 					}
+					else if("--ui".equals(args[i]))
+					{
+						ui = true;
+					}
 					else if("--fog".equals(args[i]))
 					{
 						System.err.println("Enabling Fog Of War...");
@@ -279,32 +284,14 @@ public class Server
 			}
 			server = new Server(DEFAULT_BUG_PORT, DEFAULT_HUNTER_PORT, DEFAULT_DISPLAY_PORT, world, DEFAULT_ROUND_TIME, bugACL, hunterACL, displayACL);
 			/* change maps?  */
-			Timer boardChanger = new Timer("Board Changer", true);
 			if(-1 < changeEvery)
 			{
-				final boolean _clean = clean;
-				TimerTask change = new TimerTask()
-				{
-					public void run()
-					{
-						synchronized(world)
-						{
-							try
-							{
-								System.err.println("rotating world... " + (_clean ? "reseting scores":"keeping scores"));
-								world.rotate(_clean);
-							}
-							catch(IOException ioex)
-							{
-								ioex.printStackTrace();
-								System.exit(-1);
-							}
-						}
-					}
-				};
-				boardChanger.scheduleAtFixedRate(change, changeEvery*1000l, changeEvery*1000l);
+				world.rotate(changeEvery, clean);
 			}
-			ServerUI ui = new ServerUI(world);
+			if(ui)
+			{
+				ServerUI serverui = new ServerUI(world);
+			}
 			if(block)
 			{
 				System.in.read();
@@ -323,8 +310,8 @@ public class Server
 					}
 				}
 			}
+			world.stopRotating();
 			server.close();
-			boardChanger.cancel();
 		} 
 		catch (IOException ex)
 		{

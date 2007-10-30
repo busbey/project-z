@@ -908,6 +908,11 @@ public class World implements Serializable
 		return state[0].length;
 	}
 
+	public WorldFilter getFilter()
+	{
+		return filter;
+	}
+
 	public void setFilter (WorldFilter newFilter) 
 	{
 		filter = newFilter;
