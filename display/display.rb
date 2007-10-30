@@ -45,15 +45,14 @@ include_class "javax.swing.ImageIcon"
 include_class "java.awt.image.BufferedImage"
 
 class ZViewer < PApplet
-  def initialize(rows, columns, max_width = 1200, max_height = 680)
+  def initialize()
     super()
     @draw_delta = AtomicBoolean.new();
-    @rows = rows
-    @columns = columns
     @images = Hash.new
+    @real_images = Hash.new
     @tile_width = 0
     @tile_height = 0
-    @text = " " * (rows * columns) 
+    @text = " " 
     File.open('images.yaml') { |f|
       YAML::load(f).each { |k,v|
         i = loadImage(v)
@@ -67,7 +66,7 @@ class ZViewer < PApplet
             l.icon = ImageIcon.new(bi)
           end
         }
-        @images[k.to_s] = i
+        @real_images[k.to_s] = i
         @tile_width = i.width
         @tile_height = i.height
       }
@@ -79,6 +78,22 @@ class ZViewer < PApplet
         @sounds[k.to_s] = Minim.loadFile(v)
       }
     }
+    @rows = 0
+    @columns = 0
+    @loaded = false
+    @refresh_thread = Thread.new do
+      while true do 
+        @draw_delta.set(false)
+        sleep 5
+      end
+    end
+  end
+  
+  def board_change(rows, columns, max_width = 1200, max_height = 680)
+    return if rows == @rows and columns == @columns
+    
+    @rows = rows
+    @columns = columns
     potential_width, potential_height = dimensions(@columns, @rows, @tile_width, @tile_height)
     if potential_height > max_height || potential_width > max_width
       shrinkage = [max_height * 1.0 / potential_height, max_width * 1.0 / potential_width].min
@@ -87,17 +102,19 @@ class ZViewer < PApplet
       @small_tile_width = (@tile_width * shrinkage).floor
      
       #resize images
-      @new_images = {}
-      @images.each { |k,v| 
+      @real_images.each { |k,v| 
         img = PImage.new(@small_tile_width, @small_tile_height)
         img.copy(v, 0, 0, @tile_width, @tile_height, 0, 0, @small_tile_width, @small_tile_height) 
-        @new_images[k] = img
+        @images[k] = img
       }
-      @images = @new_images
 
       @display_width = @small_tile_width * columns
       @display_height = @small_tile_height * rows
     else
+      @real_images.each { |k,v|
+        @images[k] = v
+      }
+
       @small_tile_height = @tile_height
       @small_tile_width = @tile_width
       @display_width = potential_width
@@ -107,14 +124,9 @@ class ZViewer < PApplet
     black = color(0, 0, 0)
     (0...@small_tile_width).each {|x| (0...@small_tile_height).each {|y| @black_top_block.set(x, y, black) } }
     
-    @dirty = Array.new(@rows * @columns,true) #initially all tiles are dirty
+    @dirty = Hash.new { h[k] = true} #Array.new(@rows * @columns,true) #initially all tiles are dirty
     @draw_delta.set(false)
-    @refresh_thread = Thread.new do
-      while true do 
-        @draw_delta.set(false)
-        sleep 5
-      end
-    end
+    @loaded = true
   end
   
   def setup
@@ -144,6 +156,7 @@ class ZViewer < PApplet
   end
 
   def draw
+    return unless @loaded
     vertical_offset = @small_tile_height / 2
     unless @draw_delta.getAndSet(true)
       #mark all tiles for redrawing
@@ -203,7 +216,6 @@ def read_state(f)
   
   text = f.read(rows * columns)
   new_board = ( 0x10 == flag &  0x10)
-  
   if (0x01 == flag & 0x01)
   	text.gsub!(/[B-N]/) {|agent| agent.downcase }
 	# there must be a simpler way to do this substitution...
@@ -241,13 +253,15 @@ end
 
 class ZDisplayClient
   def connect(hostname, port=8668)
+    viewer = create_window()
     t = TCPSocket.new(hostname, port)
-    viewer = nil
     loop do
       rows, columns, text, stuns, kills, chats,scores,new_board = read_state(t)
-      viewer ||= create_window(rows, columns)
+      if new_board
+        viewer.board_change(rows, columns)
+      end
       viewer.text = text
-      STDERR.puts kills.inspect
+      puts kills.inspect
     
       unless kills.empty?
         viewer.play_sound(kills[0][1] =~ /[0-9]/ ? 'player_death' : 'bug_death') 
@@ -299,12 +313,13 @@ def update_scores(scores)
   }
 end
 
-def create_window(rows, columns)
+def create_window()
   frame = javax.swing.JFrame.new "Bug Hunter"
   frame.content_pane.layout = BorderLayout.new
-  applet = ZViewer.new(rows, columns)
-  applet.text = " " * rows * columns
-  
+  applet = ZViewer.new()
+  applet.board_change(1,1)
+  applet.text = " "
+   
   frame.content_pane.add applet
   add_score_list(frame.content_pane)
   frame.default_close_operation = javax.swing.JFrame::EXIT_ON_CLOSE
