@@ -29,8 +29,8 @@ public class ServerUI extends JFrame
 {
 	protected final World world;
 
-	protected final String[] bugStormCommand = {"echo", "\"Bug Storm!\""};
-	protected final String[] blockerCommand = {"echo","\"Blockers!\""};
+	protected final String[] bugStormCommand = {"./bugstorm.sh", "../agents"};
+	protected final String[] blockerCommand = {"./blockers.sh","../agents/openBug"};
 	
 	public ServerUI(World passedworld)
 	{
@@ -314,7 +314,7 @@ public class ServerUI extends JFrame
 				}
 			}
 		});
-		JButton outsider = new JButton(new ImageIcon("../dependencies/media/cute/Character Boy.png"));
+		JButton outsider = new JButton(new ImageIcon("../dependencies/media/cute/Character Pink Boy.png"));
 		outsider.addActionListener(new ActionListener()
 		{
 			public void actionPerformed(ActionEvent e)
