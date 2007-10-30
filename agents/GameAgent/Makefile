@@ -25,7 +25,8 @@ classpath=.:../../dependencies/bsd/jutils/jutils.jar:../../dependencies/bsd/jinp
 CLASSES = \
     Agent.java \
 	JoystickAgent.java \
-	PassthroughJoystickAgent.java
+	PassthroughJoystickAgent.java \
+	Game.java
 
 all: joystick
 smart: $(SMARTCLASSES:.java=.class)
@@ -44,6 +45,8 @@ joystickgo: joystick
 	java -classpath $(classpath) Agent $(DEFAULT_HOST) $(BUG_PORT) JoystickAgent
 passthroughgo: joystick
 	java -classpath $(classpath) Agent $(DEFAULT_HOST) $(BUG_PORT) PassthroughJoystickAgent
+game: all
+	java -classpath $(classpath) Game "Manual Override" ../../dependencies/media/cute/Enemy\ Bug\ Blue\ Cropped.png ${DEFAULT_HOST} ${DEFAULT_PORT}
 
 .SUFFIXES: .java .class
 .java.class:
