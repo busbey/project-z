@@ -431,7 +431,7 @@ public class World implements Serializable
 		}
 		stuns.clear();
 		kills.clear();
-		if(null != frames && 0 < frames.length)
+		if(null != frames && 1 < frames.length)
 		{
 			roundsToFrame -= num;
 			if(0 >= roundsToFrame)
