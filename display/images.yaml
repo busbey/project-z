@@ -1,25 +1,25 @@
 ---
 " ": ../dependencies/media/cute/Dirt Block.png 
-1: ../dependencies/media/cute/Character Pink Girl.png
-5: ../dependencies/media/cute/Character Pink Girl.png
+1: ../dependencies/media/cute/Character Green Girl.png
+5: ../dependencies/media/cute/Character Green Girl.png
 2: ../dependencies/media/cute/Character Horn Girl.png
 6: ../dependencies/media/cute/Character Horn Girl.png
 3: ../dependencies/media/cute/Character Princess Girl.png
 7: ../dependencies/media/cute/Character Princess Girl.png
 4: ../dependencies/media/cute/Character Cat Girl.png
 8: ../dependencies/media/cute/Character Cat Girl.png
-9: ../dependencies/media/cute/Character Boy.png
-0: ../dependencies/media/cute/Character Boy.png
-"!": ../dependencies/media/cute/Character Pink Girl.png
-"@": ../dependencies/media/cute/Character Pink Girl.png
+9: ../dependencies/media/cute/Character Pink Boy.png
+0: ../dependencies/media/cute/Character Pink Boy.png
+"!": ../dependencies/media/cute/Character Green Girl.png
+"@": ../dependencies/media/cute/Character Green Girl.png
 "#": ../dependencies/media/cute/Character Horn Girl.png
 "$": ../dependencies/media/cute/Character Horn Girl.png
 "%": ../dependencies/media/cute/Character Princess Girl.png
 "^": ../dependencies/media/cute/Character Princess Girl.png
 "&": ../dependencies/media/cute/Character Cat Girl.png
 "*": ../dependencies/media/cute/Character Cat Girl.png
-"(": ../dependencies/media/cute/Character Boy.png
-")": ../dependencies/media/cute/Character Boy.png
+"(": ../dependencies/media/cute/Character Pink Boy.png
+")": ../dependencies/media/cute/Character Pink Boy.png
 B: ../dependencies/media/cute/Enemy Bug.png
 b: ../dependencies/media/cute/Enemy Bug Red Starred.png
 C: ../dependencies/media/cute/Enemy Bug Blue.png
