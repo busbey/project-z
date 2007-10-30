@@ -86,8 +86,8 @@ class MarbleBug < Agent
          end
       end
 
-      ((@current[0]-1).modulo(state.rows)..(@current[0]+1).modulo(state.rows)).each do |xx|
-         ((@current[1]-1).modulo(state.columns)..(@current[1]+1).modulo(state.columns)).each do |yy|
+      ((@current[0]-1)..(@current[0]+1)).each do |xx|
+         ((@current[1]-1)..(@current[1]+1)).each do |yy|
             case state.board[xx][yy]
             when state.player
                price_board[xx][yy] = @costs[:self]
