@@ -182,7 +182,7 @@ public class Server
 						}
 						i = j - 1;
 					}
-					else if("--map".equals(args[i]))
+					else if("--map".equals(args[i]) || "--maps".equals(args[i]))
 					{
 						ArrayList<File> toCheck = new ArrayList<File>();
 						toCheck.add(new File(args[i+1]));
