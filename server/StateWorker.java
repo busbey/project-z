@@ -25,13 +25,15 @@ import java.util.*;
 		HashMap<Character, Byte> actions;
 		HashMap<Character, ChatMessage> chats;
 		
-		StateWorker(World state, HashMap<Character, Byte> actions, HashMap<Character, ChatMessage> chats, HashMap<Character, ArrayList<byte[]>> clients, long roundTime)
+		char[] disposable;
+		StateWorker(World state, HashMap<Character, Byte> actions, HashMap<Character, ChatMessage> chats, HashMap<Character, ArrayList<byte[]>> clients, long roundTime, char[] toRemove)
 		{
 			this.clients = clients;
 			this.roundTime = roundTime;
 			this.state = state;
 			this.actions = actions;
 			this.chats = chats;
+			this.disposable = toRemove;
 		}
 
 		public void run()
@@ -104,7 +106,14 @@ import java.util.*;
 		*/
 		protected void updateClients()
 		{
-			ArrayList<Character> toRemove = new ArrayList<Character>();
+			/* remove people who are in our list of dispoables and not connected */
+			for(char agent : disposable)
+			{
+				if(!clients.containsKey(agent))
+				{
+					state.removeAgent(agent);
+				}
+			}
 			System.err.println("\tSerializing state for clients");
 			byte[] canonicalBoard = state.serializeBoard('\0');
 			byte[] agentInfo = state.serializeAgentInfo();

@@ -54,13 +54,13 @@ public class Server
 	{
 	}
 	
-	public Server(int bugPort, int hunterPort, int displayPort, RotatingWorld state, long roundTime, HashMap<InetAddress, ArrayList<Character>> bugAcl, HashMap<InetAddress, ArrayList<Character>> hunterAcl, HashMap<InetAddress, ArrayList<Character>> displayAcl) throws IOException
+	public Server(int bugPort, int hunterPort, int displayPort, RotatingWorld state, long roundTime, HashMap<InetAddress, ArrayList<Character>> bugAcl, HashMap<InetAddress, ArrayList<Character>> hunterAcl, HashMap<InetAddress, ArrayList<Character>> displayAcl, char[] bugstorm) throws IOException
 	{
 		HashMap<Character, Byte> actions = new HashMap<Character, Byte>();
 		HashMap<Character, ArrayList<byte[]>> clients = new HashMap<Character, ArrayList<byte[]>>();
 		HashMap<Character, ChatMessage> chats = new HashMap<Character, ChatMessage>();
 		
-		StateWorker update = new StateWorker(state, actions, chats, clients, roundTime);
+		StateWorker update = new StateWorker(state, actions, chats, clients, roundTime, bugstorm);
 		this.world = state;
 		bug = new Worker('B', true, new ServerSocket(bugPort), clients, actions, chats, bugAcl);
 		hunter = new Worker('0', true, new ServerSocket(hunterPort), clients, actions, chats, hunterAcl);
@@ -110,6 +110,7 @@ public class Server
 		HashMap<InetAddress,ArrayList<Character>> bugACL = null;
 		HashMap<InetAddress,ArrayList<Character>> hunterACL = null;
 		HashMap<InetAddress,ArrayList<Character>> displayACL = null;
+		String bugstorm = "";
 		try
 		{
 			if(args.length > 0)
@@ -128,6 +129,10 @@ public class Server
 						catch(NumberFormatException ec)
 						{
 						}
+					}
+					else if("--bugstorm".equals(args[i]))
+					{
+						bugstorm=args[i+1];
 					}
 					else if("--acl".equals(args[i]))
 					{
@@ -282,7 +287,7 @@ public class Server
 					world.setFilter(new InverseMoveRadiusFilter(fogRadius, fogDist, 1, 2, 2, 1));
 				}
 			}
-			server = new Server(DEFAULT_BUG_PORT, DEFAULT_HUNTER_PORT, DEFAULT_DISPLAY_PORT, world, DEFAULT_ROUND_TIME, bugACL, hunterACL, displayACL);
+			server = new Server(DEFAULT_BUG_PORT, DEFAULT_HUNTER_PORT, DEFAULT_DISPLAY_PORT, world, DEFAULT_ROUND_TIME, bugACL, hunterACL, displayACL, bugstorm.toCharArray());
 			/* change maps?  */
 			if(-1 < changeEvery)
 			{

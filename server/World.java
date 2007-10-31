@@ -158,6 +158,18 @@ public class World implements Serializable
 		changedHeader = true;
 	}
 
+	public void removeAgent(char agent)
+	{
+		if(location.containsKey(agent))
+		{
+			long loc = location.get(agent);
+			int row = (int)(loc & (0xFFFFFFFF));
+			int col = (int)(loc >>> 32);
+			state[row][col] = EMPTY;
+			location.remove(agent);
+		}
+	}
+
 	public void change(char agent, byte move)
 	{
 		if(FLAGS_GAME_END == (flags & FLAGS_GAME_END))
