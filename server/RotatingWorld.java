@@ -130,10 +130,28 @@ public class RotatingWorld extends World
 		return curBoard;
 	}
 	
+	FileWriter scorefile=null;
+
+	public void setScorefile(FileWriter file)
+	{
+		scorefile = file;
+	}
+	
 	/** XXX like most of hte world related functions, call ties without a lock on the object is bad */
 	public void loadBoard(int boardNum, boolean reset) throws IOException
 	{
 		flags |= SET_ROUND_CHANGE;
+		if(null != scorefile)
+		{
+			long time = System.currentTimeMillis();
+			for(Map.Entry<Character, Integer> entry : score.entrySet())
+			{
+				char agent = entry.getKey();
+				int roundScore = entry.getValue();
+				scorefile.write(time + "," + curBoard + "," + reset + "," + agent + "," + roundScore +"\n");
+			}
+			scorefile.flush();
+		}
 		if(reset)
 		{
 			score.clear();

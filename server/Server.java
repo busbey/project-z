@@ -111,6 +111,7 @@ public class Server
 		HashMap<InetAddress,ArrayList<Character>> hunterACL = null;
 		HashMap<InetAddress,ArrayList<Character>> displayACL = null;
 		String bugstorm = "";
+		FileWriter scorefile = null;
 		try
 		{
 			if(args.length > 0)
@@ -133,6 +134,14 @@ public class Server
 					else if("--bugstorm".equals(args[i]))
 					{
 						bugstorm=args[i+1];
+					}
+					else if("--scorefile".equals(args[i]))
+					{
+						File file = new File(args[i+1]);
+						if(file.exists() && file.isFile() && file.canWrite())
+						{
+							scorefile = new FileWriter(file, true);
+						}
 					}
 					else if("--acl".equals(args[i]))
 					{
@@ -274,6 +283,10 @@ public class Server
 			else
 			{
 				world = new RotatingWorld(maps, rounds);
+			}
+			if(null != scorefile)
+			{
+				world.setScorefile(scorefile);
 			}
 			if(0 < fogRadius)
 			{
