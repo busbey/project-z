@@ -632,7 +632,6 @@ public class World implements Serializable
 			else if(FRAME_SEPARATOR == curLine.charAt(0))
 			{
 				/* */
-				System.err.println("Found frame marker");
 				curFrame++;
 				rows = 0;
 			}
