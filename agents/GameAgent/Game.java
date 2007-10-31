@@ -23,7 +23,7 @@ public class Game
 	public static final String[] launchBackgroundBug = {"./runbug.sh"};
 	public static void usage()
 	{
-		System.err.println("usage: java Game stationName path/to/image");
+		System.err.println("usage: java Game stationName path/to/image serverName serverPort passthroughPort");
 	}
 
 	public static void main (String[] args)
@@ -34,8 +34,10 @@ public class Game
 			return;
 		}
 		String hostname = args[2];
-		int port = Integer.parseInt(args[3]);
+		int port = Integer.valueOf(args[3]);
+		int listen = Integer.valueOf(args[4]);
 		JFrame mainWindow = new JFrame(args[0]);
+		mainWindow.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		ImageIcon bug = new ImageIcon(args[1]);
 		mainWindow.setBackground(Color.BLACK);
 		bug.setImage(bug.getImage().getScaledInstance(800, -1, Image.SCALE_SMOOTH));
@@ -55,7 +57,7 @@ public class Game
 				gd = ge.getDefaultScreenDevice();
 				gd.setFullScreenWindow(mainWindow);
 			}
-			PassthroughJoystickAgent joystick = new PassthroughJoystickAgent();
+			PassthroughJoystick joystick = new PassthroughJoystick(hostname, port, listen);
 			try
 			{
 				Runtime.getRuntime().exec(launchBackgroundBug);
@@ -63,13 +65,15 @@ public class Game
 			catch(IOException iex)
 			{
 			}
-			joystick.init(null);
-
-			if (!joystick.openConnection(hostname, port)) 
-			{
-				return;
-			}
-			joystick.runAgent();
+			Thread joy = new Thread(joystick);
+			joy.setDaemon(true);
+			joy.start();
+			System.err.println("Push any key to exit...");
+			System.in.read();
+		}
+		catch(Exception e)
+		{
+			e.printStackTrace();
 		}
 		finally
 		{

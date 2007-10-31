@@ -2,15 +2,16 @@ This agent is actually a video game!
 
 the intent is that players will look at a display and then use this agent to play a bug on it.  each player will use a joystick.   
 
+make all
+	compiles all the java
+	tells you where to put the jni libraries
+	
 flow:
-
-show scores
--> hit start
--> play for x minutes
--> enter name
--> loop
-
-support multiple players?
+only 1 game per workstation, runs full screen exclusive.
+	make game1 - starts the frist player
+	make game2 - starts the second player
+	player1.sh - does the above, but as a script you can put on the desktop and make clickable (you'll have to getInfo and change the starting app)
+	player2.sh - ditto, but for game 2
 
 License:
 #  Copyright (C) 2007  Sean Busbey, Roman Garnett, Brad Skaggs, Paul Ostazeski

@@ -23,9 +23,7 @@ POWERUP_PATTERN = '[P]'
 classpath=.:../../dependencies/bsd/jutils/jutils.jar:../../dependencies/bsd/jinput/jinput.jar
 
 CLASSES = \
-    Agent.java \
-	JoystickAgent.java \
-	PassthroughJoystickAgent.java \
+	PassthroughJoystick.java \
 	Game.java
 
 all: joystick
@@ -37,16 +35,15 @@ joystick-test:
 clean:
 	rm -rf *.class
 hunter1go: joystick
-	java -classpath $(classpath) Agent $(DEFAULT_HOST) $(DEFAULT_PORT) JoystickAgent
+	java -classpath $(classpath) PassthroughJoystick $(DEFAULT_HOST) $(BUG_PORT) $(PASS_PORT)
 hunter2go: joystick
-	#java -classpath $(classpath) -Djava.library.path=$(librarypath) Agent $(DEFAULT_HOST) $(DEFAULT_PORT) JoystickAgent
-	java -classpath $(classpath) Agent $(DEFAULT_HOST) $(DEFAULT_PORT) JoystickAgent
-joystickgo: joystick
-	java -classpath $(classpath) Agent $(DEFAULT_HOST) $(BUG_PORT) JoystickAgent
-passthroughgo: joystick
-	java -classpath $(classpath) Agent $(DEFAULT_HOST) $(BUG_PORT) PassthroughJoystickAgent
-game: all
-	java -classpath $(classpath) Game "Manual Override" ../../dependencies/media/cute/Enemy\ Bug\ Blue\ Cropped.png ${DEFAULT_HOST} ${DEFAULT_PORT}
+	java -classpath $(classpath) PassthroughJoystick $(DEFAULT_HOST) $(BUG_PORT) $(PASS_PORT)
+buggo: joystick
+	java -classpath $(classpath) PassthroughJoystick $(DEFAULT_HOST) $(BUG_PORT) $(PASS_PORT)
+game1: all
+	java -classpath $(classpath) Game "Player One" ../../dependencies/media/cute/Enemy\ Bug\ Cropped.png ${DEFAULT_HOST} ${BUG_PORT} ${PASS_PORT}
+game2: all
+	java -classpath $(classpath) Game "Player Two" ../../dependencies/media/cute/Enemy\ Bug\ Blue\ Cropped.png ${DEFAULT_HOST} ${BUG_PORT} ${PASS_PORT}
 
 .SUFFIXES: .java .class
 .java.class:

@@ -237,7 +237,7 @@ public class PassthroughJoystick implements Runnable
 								if(startButton.getDeadZone() < button)
 								{
 									useAgent = !useAgent;
-									System.err.println(useAgent ? "Forwarding moves from agent." : "Taking moves from Joystick.");
+									System.err.println(useAgent ? agentRunning ? "Forwarding moves from agent." : "Waiting for agent." : "Taking moves from Joystick.");
 								}
 								lastData = button;
 							}

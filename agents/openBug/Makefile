@@ -36,3 +36,5 @@ hunter2go: random
 	./random -h $(DEFAULT_HOST) -p $(DEFAULT_PORT)
 buggo: open 
 	./open -h $(DEFAULT_HOST) -p $(BUG_PORT) $(PASSABLE_PATTERN) $(POWERUP_PATTERN) $(HUNTER_PATTERN)
+pass: open 
+	./open -h $(DEFAULT_HOST) -p 10001 $(PASSABLE_PATTERN) $(POWERUP_PATTERN) $(HUNTER_PATTERN)
