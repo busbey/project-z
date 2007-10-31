@@ -449,7 +449,10 @@ public class World implements Serializable
 				{
 					for(int j=0; j < state[i].length; j++)
 					{
-						if(!isBug(state[i][j]) && !isHunter(state[i][j]))
+						if(	!isBug(state[i][j]) && 
+							!isHunter(state[i][j]) &&
+							(!(POWERUP == state[i][j] && EMPTY == frames[currentFrame][i][j]))
+							)
 						{
 							state[i][j] = frames[currentFrame][i][j];
 						}

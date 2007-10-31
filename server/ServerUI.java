@@ -330,8 +330,19 @@ public class ServerUI extends JFrame
 				}
 			}
 		});
+		JButton powerup = new JButton(new ImageIcon("../dependencies/media/cute/Star.png"));
+		powerup.addActionListener(new ActionListener()
+		{
+			public void actionPerformed(ActionEvent e)
+			{
+				System.err.println( "Dropping in a powerup...");
+				world.setRandomEmpty(world.POWERUP);
+			}
+		});
+
 		buttons.add(bugStorm);
 		buttons.add(outsider);
+		buttons.add(powerup);
 		agents.add(buttons, BorderLayout.CENTER);
 		add(agents);
 		pack();
