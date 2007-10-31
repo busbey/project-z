@@ -23,7 +23,7 @@ import java.util.*;
 import java.net.*;
 import java.io.*;
 
-public class PassthroughJoystick 
+public class PassthroughJoystick implements Runnable
 {
 	protected volatile boolean useAgent = true;
 	protected volatile boolean agentRunning = false;
@@ -33,7 +33,7 @@ public class PassthroughJoystick
 	final ArrayList<byte[]> actions = new ArrayList<byte[]>();
 	
 	/* parts of the joystick we need. */
-	Component startButton;
+	Component startButton = null;
 	Component pad = null;
 	Controller controller = null;
 	/* if we poll too often, the network won't be able to handle things 
@@ -41,7 +41,7 @@ public class PassthroughJoystick
 
 		XXX rounds are 250 ms, so poll 2x.
 	*/
-	protected final long POLL_WAIT = 125*10000000;
+	protected final long POLL_WAIT = 5*10000000;
 
 	/* networking info */
 	String hostname = null;
@@ -70,6 +70,7 @@ public class PassthroughJoystick
 		String name = joystick.getName();
 		System.err.println("Using controller '" + name +"'");
 		pad = joystick.getComponent(Component.Identifier.Axis.POV);
+		startButton = joystick.getComponent(Component.Identifier.Button._9);
 		controller = joystick;
 
 		/* save off the network info. */
@@ -132,7 +133,7 @@ public class PassthroughJoystick
 							state[offset + 7] = (byte)(0x000000FF & rows);
 							offset+=8;
 							// and pull off the board
-							inStream.readFully(state, offset, cols*rows);
+							serverIn.readFully(state, offset, cols*rows);
 							offset+=cols*rows;
 							final int chats = serverIn.readInt();
 							tmp = new byte[1+1+4+4+cols*rows+4+chats*3];
@@ -146,7 +147,7 @@ public class PassthroughJoystick
 							state[offset + 3] = (byte)(0x000000FF & chats);
 							offset+=4;
 							// and pull off the chats.
-							inStream.readFully(state,offset,chats*3);
+							serverIn.readFully(state,offset,chats*3);
 							offset+=chats*3;
 							synchronized(states)
 							{
@@ -222,7 +223,7 @@ public class PassthroughJoystick
 				{
 					long start;
 					long end;
-					long lastData = -1l;
+					float lastData = -1.0f;
 					while(running)
 					{
 						start = System.nanoTime();
@@ -230,14 +231,15 @@ public class PassthroughJoystick
 						/* always need to check for the start button */
 						if(null != startButton)
 						{
-							final float start = startButton.getPollData();
-							if(start != lastData)
+							final float button = startButton.getPollData();
+							if(button != lastData)
 							{
-								if(startButton.getDeadZone() < start)
+								if(startButton.getDeadZone() < button)
 								{
 									useAgent = !useAgent;
+									System.err.println(useAgent ? "Forwarding moves from agent." : "Taking moves from Joystick.");
 								}
-								lastData = start;
+								lastData = button;
 							}
 						}
 						/* moves? only if we're active.  */
@@ -265,17 +267,17 @@ public class PassthroughJoystick
 								}
 								synchronized(actions)
 								{
-									actions.add({move});
+									actions.add(new byte[]{move});
 								}
 							}
 						}
 						end = System.nanoTime();
 						final long elapsed = end - start;
-						if(elapased < POLL_WAIT)
+						if(elapsed < POLL_WAIT)
 						{
 							try
 							{
-								Thread.sleep((POLL_WAIT - elapsed)*1000000);
+								Thread.sleep((POLL_WAIT - elapsed)/1000000);
 							}
 							catch(Exception ex)
 							{
@@ -323,7 +325,7 @@ public class PassthroughJoystick
 												Thread.yield();
 												try
 												{
-													Thread.sleep(50);
+													Thread.sleep(POLL_WAIT/1000000);
 												}
 												catch(InterruptedException iex)
 												{
@@ -360,7 +362,7 @@ public class PassthroughJoystick
 													{
 														synchronized(actions)
 														{
-															actions.add({firstByte});
+															actions.add(new byte[]{firstByte});
 														}
 													}
 													break;
@@ -375,7 +377,7 @@ public class PassthroughJoystick
 													{
 														synchronized(actions)
 														{
-															actions.add({speaker,subject,action});
+															actions.add(new byte[]{speaker,subject,action});
 														}
 													}
 													break;
@@ -397,16 +399,13 @@ public class PassthroughJoystick
 	}
 
 
-	public static void main(String[] args)
+	public static void main(String[] args) throws IOException
 	{
-		PassthroughJoystick pj = new PassthroughJoystick(args[0], Integer.getValue(args[1]), Integer.getValue(args[2]));
+		PassthroughJoystick pj = new PassthroughJoystick(args[0], Integer.valueOf(args[1]), Integer.valueOf(args[2]));
 		Thread pjThread = new Thread(pj);
 		pjThread.setDaemon(true);
 		pjThread.start();
 		System.out.println("Press any key to exit...");
-		while(System.in.read())
-		{
-		}
-		
+		System.in.read();
 	}
 }
