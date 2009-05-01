@@ -14,6 +14,8 @@
  * this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+package com.google.code.p.project-z;
+
 public enum Direction {
 	
 	NONE ('n'), 

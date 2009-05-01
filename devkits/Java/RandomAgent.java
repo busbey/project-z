@@ -16,6 +16,8 @@
 
 import java.util.Random;
 
+package com.google.code.p.project-z;
+
 public class RandomAgent extends Agent {
 	
 	private Random random;

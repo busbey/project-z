@@ -18,6 +18,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+package com.google.code.p.project-z;
+
 public class State {
     
 	private boolean killerBug, wasKilled, wasStunned, killedSomeone, roundChanged;

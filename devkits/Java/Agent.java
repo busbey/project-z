@@ -23,6 +23,8 @@ import java.io.DataInputStream;
 import java.io.EOFException;
 import java.io.IOException;
 
+package com.google.code.p.project-z;
+
 public abstract class Agent {
     
 	private DataInputStream inStream;

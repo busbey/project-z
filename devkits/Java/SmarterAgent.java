@@ -19,6 +19,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+package com.google.code.p.project-z;
+
 public class SmarterAgent extends Agent {
   
 	private Random random;
