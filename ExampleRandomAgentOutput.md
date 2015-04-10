@@ -1,0 +1,1 @@
+Same as ExampleAgentOutput, but should make a random move each turn and send a message saying that they will move in another randomly chosen direction on the next round.
